@@ -1,0 +1,26 @@
+version: '3.8'
+
+volumes:
+  postgres_data_development:
+    
+networks:
+  default: # this docker-compose network
+    name: api_development_network
+    driver: bridge
+
+services:
+  development:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api_development
+    env_file:
+      # Ensure that the variables in .env match the same variables in devcontainer.json
+      - .env
+    volumes:
+      - ../..:/workspaces:cached
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally. 
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+

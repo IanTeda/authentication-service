@@ -1,0 +1,29 @@
+[package]
+name = "rust_starter"
+authors = ["Ian Teda <ian@teda.id.au>"]
+version = "0.1.0"
+edition = "2021"
+description = "A Rust starter repository"
+documentation = "https://ianteda.github.io/personal_ledger/"
+homepage = "https://github.com/IanTeda/rust_starter"
+repository = "https://github.com/IanTeda/rust_starter"
+readme = "README.md"
+license-file = "LICENSE.txt"
+keywords = ["rust", "starter", "boilerplate"]
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "rust_starter"
+path = "src/main.rs"
+
+[dependencies]
+prost = "0.12"
+thiserror = "1"
+tokio = { version = "1.38.0", features = ["full"] }
+tonic = { version = "0.11.0",features = ["tls"] }
+tonic-reflection = "0.11.0"
+
+[build-dependencies]
+tonic-build = { version="0.11", features = ["prost"] }

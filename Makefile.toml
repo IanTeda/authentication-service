@@ -1,0 +1,61 @@
+###############################################################################
+## CARGO MAKEFILE
+## Rust task runner and build tool.
+##
+## https://github.com/sagiegurari/cargo-make
+## $ cargo install --force cargo-make
+## ############################################################################
+
+## https://github.com/watchexec/cargo-watch
+## $ cargo make watch
+[tasks.watch]
+install_crate = "cargo-watch"
+command = "cargo"
+args = [
+    "watch",
+    "--clear",
+    "--quiet",
+    "--exec", "run",
+    "--watch", "src"
+]
+
+## https://github.com/xd009642/tarpaulin
+## $ cargo make tarpaulin
+[tasks.coverage]
+install_crate = "cargo-tarpaulin"
+command = "cargo"
+args = ["tarpaulin", "--ignore-tests"]
+
+## Create Database
+## $ sqlx database create
+[tasks.db_create]
+install_crate = "sqlx-cli"
+command = "sqlx"
+args = ["database", "create"]
+
+## Migrate database
+## $ sqlx migrate run
+[tasks.db_migrate]
+install_crate = "sqlx-cli"
+command = "sqlx"
+args = ["migrate", "run"]
+
+[tasks.db]
+dependencies = ["db_create", "db_migrate"]
+
+[tasks.sqlx_prepare]
+install_crate = "sqlx-cli"
+command = "cargo"
+args = ["sqlx", "prepare", "--", "--bin", "personal_ledger_server" ]
+
+# $ cargo make docker_image
+# docker build --network host --tag personal_ledger_server --file Dockerfile .
+[tasks.docker_image]
+command = "docker"
+args = [
+    "build", 
+    "--network", "host", 
+    "--tag", "personal_ledger_server", 
+    "--file", "Dockerfile", 
+    "."
+]

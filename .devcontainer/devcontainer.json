@@ -1,0 +1,72 @@
+{
+    "name": "Rust Development Container",
+
+    // Use docker-compose file
+    "dockerComposeFile": "docker-compose.yaml",
+
+    // docker-compose entry
+    "service": "development",
+
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+    // Features to add to the dev container. More info: https://containers.dev/features.
+    "features": {
+        "ghcr.io/devcontainers-contrib/features/neovim-apt-get:1": {}
+    },
+    
+    "mounts": [
+        // Persist cargo cache in docker volume
+        {
+            "source": "devcontainer-cargo-cache-${devcontainerId}",
+            "target": "/usr/local/cargo",
+            "type": "volume"
+        },
+        // Share host ~/.ssh folder with devcontainer
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/root/.ssh,readonly,type=bind"
+    ],
+    
+    // Use 'forwardPorts' to make a list of ports inside the container available locally.
+    // Only needed if requiring access outside of vscode
+    // "forwardPorts": [
+        // docker-compose_service_name:service_name_port
+        // Service name cannot have a underscore "_"
+        // "development:8091", // API Server port
+    // ],
+
+    // Add label to VS Code ports in status bar
+    // "portsAttributes": {
+        // "development:8091": {
+        //     "label": "Server API"
+        // },
+    // },
+     
+    // Use 'postCreateCommand' to run commands after the container is created.
+    "postCreateCommand": "rustc --version", // Confirm rust is working in the container
+    
+    // Configure tool-specific properties.
+    "customizations": {
+        "vscode": {
+            "settings": {
+                // VS Code don't watch files under ./target
+                "files.watcherExclude": {
+                    "**/target/**": true
+                },
+                "rust-analyzer.checkOnSave.command": "clippy"
+            },
+            // Add the IDs of extensions you want installed when the container is created.
+            "extensions": [
+                "rust-lang.rust-analyzer", // Rust language server
+                "serayuzgur.crates", // Simplify Rust crate management
+                "tamasfe.even-better-toml", // Syntax highlighting for TOML documents
+                "usernamehw.errorlens", // Improve language diagnostic features 
+                "vadimcn.vscode-lldb", // Debugger
+                "streetsidesoftware.code-spell-checker", // Spell check
+                "streetsidesoftware.code-spell-checker-australian-english" // Australian english dictionary
+            ]
+        }
+    },
+    
+    // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+    // Root is needed, else cargo build complains about permissions
+    "remoteUser": "root"
+}

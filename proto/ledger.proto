@@ -1,0 +1,19 @@
+//-- ./proto/ping.proto
+
+syntax = "proto3";
+
+package ledger;
+
+// The ping service definition.
+service Rpc {
+  // Sends a ping
+  rpc Ping (Empty) returns (PongResponse) {}
+}
+
+// The ping request message is empty.
+message Empty {}
+
+// The response message containing the pong.
+message PongResponse {
+  string message = 1;
+}

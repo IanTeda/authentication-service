@@ -1,0 +1,33 @@
+{
+    "cSpell.ignoreWords": [
+        "actix",
+        "chrono",
+        "clippy",
+        "datetime",
+        "devcontainer",
+        "reqwest",
+        "rustc",
+        "sqlx",
+        "thiserror",
+        "timestamptz",
+    ],
+    "cSpell.words": [
+        "analyzer",
+        "customizations",
+        "devcontainers",
+        "errorlens",
+        "jeremychone",
+        "neovim",
+        "ossp",
+        "proto",
+        "Protobuf",
+        "protos",
+        "rustup",
+        "serayuzgur",
+        "tamasfe",
+        "usernamehw",
+        "vadimcn"
+    ],
+    "rust-analyzer.discoverProjectRunner": null,
+    "rust-analyzer.cargo.buildScripts.enable": true
+}

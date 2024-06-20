@@ -1,0 +1,47 @@
+# This docker-compose file is used to test the Dockerfile biuld with a Postgres
+# container
+---
+version: '3.8'
+
+volumes:
+  postgres_dev_data:
+    
+networks:
+  default: # this docker-compose network
+    name: postgres_network
+    driver: bridge
+
+services:
+  # https://hub.docker.com/_/postgres/tags
+  postgres:
+    image: postgres:${POSTGRES_VERSION:-latest}
+    container_name: postgres_dev
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./pg_uuidv7.so:/usr/lib/postgresql/16/lib/pg_uuidv7.so
+      - ./pg_uuidv7--1.5.sql:/usr/share/postgresql/16/extension/pg_uuidv7--1.5.sql
+      - ./pg_uuidv7.control:/usr/share/postgresql/16/extension/pg_uuidv7.control
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=personal_ledger_dev
+      - POSTGRES_HOSTNAME=postgres
+    healthcheck:
+      test: pg_isready -U postgres -h 127.0.0.1
+      interval: 5s
+
+  # https://hub.docker.com/_/postgres/tags
+  adminer:
+    image: adminer:${ADMINER_VERSION:-latest}
+    container_name: adminer_dev
+    restart: unless-stopped
+    ports:
+      - 8088:8080
+    environment:
+      - ADMINER_DEFAULT_SERVER=localhost
+      - ADMINER_DESIGN=galkaev
+    depends_on:
+      - postgres
