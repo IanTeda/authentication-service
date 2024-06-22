@@ -11,8 +11,8 @@ mod ledger {
     //-- Bring protobuf's into scope.
     tonic::include_proto!("ledger"); // The string specified here must match the proto package name
 
-    pub(crate) const RPC_DESCRIPTOR_SET: &[u8] =
-        tonic::include_file_descriptor_set!("rpc_descriptor");
+    pub(crate) const DESCRIPTOR_SET: &[u8] =
+        tonic::include_file_descriptor_set!("ledger_descriptor");
 }
 
 use ledger::rpc_server::{Rpc, RpcServer};
@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rpc = RpcService::default();
 
     let reflections = tonic_reflection::server::Builder::configure()
-        .register_encoded_file_descriptor_set(ledger::RPC_DESCRIPTOR_SET)
+        .register_encoded_file_descriptor_set(ledger::DESCRIPTOR_SET)
         .build()?;
 
     Server::builder()
