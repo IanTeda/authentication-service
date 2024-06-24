@@ -1,15 +1,15 @@
 [package]
-name = "rust_starter"
+name = "personal_ledger_backend"
 authors = ["Ian Teda <ian@teda.id.au>"]
 version = "0.1.0"
 edition = "2021"
-description = "A Rust starter repository"
-documentation = "https://ianteda.github.io/personal_ledger/"
-homepage = "https://github.com/IanTeda/rust_starter"
-repository = "https://github.com/IanTeda/rust_starter"
+description = "The backend for Personal Ledger"
+documentation = "https://github.com/IanTeda/personal_ledger_backend"
+homepage = "https://github.com/IanTeda/personal_ledger_backend"
+repository = "https://github.com/IanTeda/personal_ledger_backend"
 readme = "README.md"
 license-file = "LICENSE.txt"
-keywords = ["rust", "starter", "boilerplate"]
+keywords = ["rust", "grpc", "finance"]
 
 [lib]
 path = "src/lib.rs"
@@ -19,11 +19,35 @@ name = "rust_starter"
 path = "src/main.rs"
 
 [dependencies]
+config = { version = "0.14.0", default-features = false, features = ["yaml"] }
 prost = "0.12"
+secrecy = { version = "0.8.0", features = ["serde"] }
+serde = { version = "1.0.193", features = ["derive"] }
+serde-aux = { version = "4.5.0" }
+serde_json = "1.0.108"
+sqlx = { version = "0.7.4", features = [
+    "chrono",
+    "macros",
+    "migrate",
+    "postgres",
+    "runtime-tokio-rustls",
+    "uuid",
+]}
+strum = { version = "0.26", features = ["derive"] }
 thiserror = "1"
 tokio = { version = "1.38.0", features = ["full"] }
 tonic = { version = "0.11.0",features = ["tls"] }
 tonic-reflection = "0.11.0"
+tracing = { version = "0.1" }
+tracing-actix-web = "0.7"
+tracing-bunyan-formatter = { version = "0.3" }
+tracing-log = { version = "0.2" }
+tracing-subscriber = { version = "0.3", features = [
+    "env-filter",
+    "fmt",
+    "json",
+    "registry",
+] }
 
 [build-dependencies]
 tonic-build = { version="0.11", features = ["prost"] }

@@ -11,10 +11,9 @@
 //! * [How to Handle Errors in Rust: A Comprehensive Guide](https://dev.to/nathan20/how-to-handle-errors-in-rust-a-comprehensive-guide-1cco)
 //! * [Rust Error Types Explained: Building Robust Error Handling](https://marketsplash.com/rust-error-types/)
 
-
 /// Static errors types
 #[derive(thiserror::Error, Debug)]
-pub enum Error {
+pub enum BackendError {
 	//-- Generic Errors
 	/// For starter, to remove as code matures.
 	#[error("Generic error: {0}")]
@@ -32,5 +31,24 @@ pub enum Error {
 	//-- External errors
 	/// Derive IO errors
 	#[error(transparent)]
-	IO(#[from] std::io::Error)
+	IO(#[from] std::io::Error),
+	// Config errors
+	#[error(transparent)]
+    Config(#[from] config::ConfigError),
+	// Tonic Reflections errors
+	#[error(transparent)]
+    TonicReflection(#[from] tonic_reflection::server::Error),
+	// Tonic transport errors
+	#[error(transparent)]
+    TonicTransport(#[from] tonic::transport::Error),
+	// Standard network address error
+	#[error(transparent)]
+    AddressParse(#[from] std::net::AddrParseError),
+	// Environmental parse error
+	// #[error(transparent)]
+	// EnvironmentParse(#[from] std::env::VarError),
+	#[error(transparent)]
+    LogError(#[from] tracing_log::log::SetLoggerError),
+	#[error(transparent)]
+    TracingError(#[from] tracing::dispatcher::SetGlobalDefaultError),
 }

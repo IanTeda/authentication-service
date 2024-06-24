@@ -1,0 +1,14 @@
+# Server configuration
+server:
+  port: 8081
+  address: "0.0.0.0"
+  log_level: "info"
+
+# Postgres database config
+database:
+  host: "postgres"
+  port: 5432
+  username: "postgres"
+  password: "postgres"
+  database_name: "personal_ledger"
+  require_ssl: false

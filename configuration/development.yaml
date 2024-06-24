@@ -1,0 +1,9 @@
+# Server configuration
+server:
+  log_level: "debug"
+
+# Postgres database config
+database:
+  username: "personal_ledger"
+  password: "super_secret8_password"
+  database_name: "personal_ledger_dev"
