@@ -8,8 +8,9 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL,
     is_active BOOLEAN NOT NULL,
-    created_on TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    created_on TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
+
 
 -- Create an index's for quicker find
 -- https://www.slingacademy.com/article/postgresql-how-to-set-index-on-a-table-column/

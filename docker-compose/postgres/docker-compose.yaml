@@ -4,7 +4,7 @@
 version: '3.8'
 
 volumes:
-  postgres_dev_data:
+  personal_ledger_dev:
     
 networks:
   default: # this docker-compose network
@@ -15,19 +15,16 @@ services:
   # https://hub.docker.com/_/postgres/tags
   postgres:
     image: postgres:${POSTGRES_VERSION:-latest}
-    container_name: postgres_dev
+    container_name: backend_postgres
     restart: unless-stopped
     ports:
       - 5432:5432
     volumes:
-      - postgres_dev_data:/var/lib/postgresql/data
-      - ./pg_uuidv7.so:/usr/lib/postgresql/16/lib/pg_uuidv7.so
-      - ./pg_uuidv7--1.5.sql:/usr/share/postgresql/16/extension/pg_uuidv7--1.5.sql
-      - ./pg_uuidv7.control:/usr/share/postgresql/16/extension/pg_uuidv7.control
+      - personal_ledger_dev:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=personal_ledger_dev
+      - POSTGRES_DB=postgres
       - POSTGRES_HOSTNAME=postgres
     healthcheck:
       test: pg_isready -U postgres -h 127.0.0.1
@@ -36,7 +33,7 @@ services:
   # https://hub.docker.com/_/postgres/tags
   adminer:
     image: adminer:${ADMINER_VERSION:-latest}
-    container_name: adminer_dev
+    container_name: backend_adminer
     restart: unless-stopped
     ports:
       - 8088:8080
