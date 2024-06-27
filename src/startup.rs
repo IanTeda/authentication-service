@@ -1,30 +1,31 @@
 // -- ./startup.rs
 
-#![allow(unused)] // For beginning only.
+// #![allow(unused)] // For beginning only.
 
 
 //! A helper function for starting the Tonic server.
 //! ---
 
-use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::net::SocketAddr;
 
+// use sqlx::PgPool;
 use tonic::transport::{server::Router, Server};
 
 use crate::{
     configuration::Settings,
-    grpc::{
-        ledger::{self, rpc_server::RpcServer, DESCRIPTOR_SET}, RpcService
-    },
-    prelude::*
+    prelude::*, rpc::{ledger::{self, rpc_server::RpcServer}, RpcService}
 };
 
 /// Application port and server instance
-pub struct Application {
-	port: u16,
-	server: Router,
+pub struct TonicServer {
+	// port: u16,
+    // database: PgPool,
+    socket: SocketAddr,
+    router: Router
 }
 
-impl Application {
+impl TonicServer {
+    /// Build the Tonic server instance.
     pub async fn build(settings: Settings)
     -> Result<Self, BackendError> {
         let address = format!("{}:{}",
@@ -33,24 +34,28 @@ impl Application {
         );
         let socket: SocketAddr = address.parse()?;
 
-	    let rpc_service = RpcService::default();
+	    let rpc_service: RpcService = RpcService::default();
 
         let reflections_server = tonic_reflection::server::Builder::configure()
             .register_encoded_file_descriptor_set(ledger::DESCRIPTOR_SET)
             .build()?;
 
-        let server = Server::builder()
+        let router = Server::builder()
             .add_service(reflections_server)
             .add_service(RpcServer::new(rpc_service));
 
-        let port = socket.port();
+        // let port = socket.port();
 
         Ok(Self {
-            port,
-            server
+            socket,
+            router
         })
-
     }
 
+    /// Run the Tonic server instance
+    pub async fn run(self) -> Result<(), BackendError> {
+        self.router.serve(self.socket).await?;
+        Ok(())
+    }
 }
 

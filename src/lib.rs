@@ -5,5 +5,8 @@
 pub mod configuration;
 pub mod error;
 pub mod prelude;
+pub mod rpc;
+pub mod services;
+pub mod startup;
 pub mod telemetry;
 pub mod utils;
