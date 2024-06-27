@@ -55,7 +55,7 @@ pub enum LogLevels {
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct ApplicationSettings {
     // The host address the api should bind to
-    pub address: String,
+    pub ip_address: String,
     /// The port that the api should bind to
 	#[serde(deserialize_with = "deserialize_number_from_string")]
 	pub port: u16,
@@ -117,7 +117,7 @@ impl DatabaseSettings {
 #[strum(serialize_all = "snake_case")]
 pub enum Environment {
 	Development,
-    Testing,
+  Testing,
 	Production,
 }
 
