@@ -213,10 +213,10 @@ impl Settings {
 
         let configuration = settings_builder.try_deserialize::<Settings>()?;
 
-        println!(
-            "\n----------- CONFIGURATION ----------- \n{:?} \n-------------------------------------",
-            configuration
-        );
+        // println!(
+        //     "\n----------- CONFIGURATION ----------- \n{:?} \n-------------------------------------",
+        //     configuration
+        // );
 
         // Convert the configuration values into Settings type
         Ok(configuration)

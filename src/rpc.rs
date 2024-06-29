@@ -17,7 +17,7 @@
 
 use crate::prelude::*;
 
-use tonic::{transport::Server, Request, Response, Status};
+use tonic::{Request, Response, Status};
 
 pub mod ledger {
 	tonic::include_proto!("ledger");
@@ -25,14 +25,14 @@ pub mod ledger {
 		tonic::include_file_descriptor_set!("ledger_descriptor");
 }
 
-use ledger::rpc_server::{Rpc, RpcServer};
+use ledger::rpc_server::Rpc;
 use ledger::{Empty, PongResponse};
 
 #[derive(Debug, Default)]
-pub struct RpcService {}
+pub struct LedgerService {}
 
 #[tonic::async_trait]
-impl Rpc for RpcService {
+impl Rpc for LedgerService {
 	async fn ping(
 		&self,
 		_request: Request<Empty>, // Accept request of type HelloRequest
