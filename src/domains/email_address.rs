@@ -15,6 +15,8 @@ use validator::ValidateEmail;
 pub struct EmailAddress(String);
 
 impl EmailAddress {
+    /// Returns a Result of EmailAddress if the input satisfies all our validation
+    /// constraints
     pub fn parse(s: impl Into<String>) -> Result<EmailAddress, BackendError> {
         let s = s.into();
         if s.trim().is_empty() {

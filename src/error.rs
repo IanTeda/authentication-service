@@ -23,15 +23,14 @@ pub enum BackendError {
 	Static(&'static str),
 
 	//-- Module errors
-	// #[error("{name:?} is not a valid Thing name.")]
-	// ConfigUnsupportedEnvironmentError {
-	// 	environment: String,
-	// },
 	#[error("Email address was empty")]
 	EmailIsEmpty,
 
 	#[error("Email format is invalid: {0}")]
 	EmailFormatInvalid(String),
+
+	#[error("Name format is invalid: {0}")]
+	UserNameFormatInvalid(String),
 
 	//-- External errors
 	/// Derive IO errors

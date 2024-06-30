@@ -52,6 +52,7 @@ tracing-subscriber = { version = "0.3", features = [
     "json",
     "registry",
 ] }
+unicode-segmentation = "1.11.0"
 validator = { version = "0.18", features = ["derive"] }
 
 [build-dependencies]
