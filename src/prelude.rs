@@ -6,7 +6,7 @@
 //! intended to be imported by all server code, for convenience.
 
 // Re-export the crate Error.
-#[allow(unused_imports)]
+// #[allow(unused_imports)]
 pub use crate::error::BackendError;
 
 // Alias Result to be the crate Result.

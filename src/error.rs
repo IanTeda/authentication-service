@@ -27,6 +27,11 @@ pub enum BackendError {
 	// ConfigUnsupportedEnvironmentError {
 	// 	environment: String,
 	// },
+	#[error("Email address was empty")]
+	EmailIsEmpty,
+
+	#[error("Email format is invalid: {0}")]
+	EmailFormatInvalid(String),
 
 	//-- External errors
 	/// Derive IO errors
