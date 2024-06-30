@@ -32,6 +32,9 @@ pub enum BackendError {
 	#[error("Name format is invalid: {0}")]
 	UserNameFormatInvalid(String),
 
+	#[error("Password does not meet minimum requirements")]
+	PasswordFormatInvalid,
+
 	//-- External errors
 	/// Derive IO errors
 	#[error(transparent)]

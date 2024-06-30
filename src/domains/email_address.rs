@@ -17,16 +17,16 @@ pub struct EmailAddress(String);
 impl EmailAddress {
     /// Returns a Result of EmailAddress if the input satisfies all our validation
     /// constraints
-    pub fn parse(s: impl Into<String>) -> Result<EmailAddress, BackendError> {
-        let s = s.into();
-        if s.trim().is_empty() {
+    pub fn parse(email: impl Into<String>) -> Result<EmailAddress, BackendError> {
+        let email = email.into();
+        if email.trim().is_empty() {
             return Err(BackendError::EmailIsEmpty);
         }
 
-        if s.validate_email() {
-            Ok(Self(s))
+        if email.validate_email() {
+            Ok(Self(email))
         } else {
-            Err(BackendError::EmailFormatInvalid(s))
+            Err(BackendError::EmailFormatInvalid(email))
         }
     }
 }
@@ -42,7 +42,6 @@ impl std::fmt::Display for EmailAddress {
         self.0.fmt(f)
     }
 }
-
 
 #[cfg(test)]
 mod tests {

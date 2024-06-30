@@ -21,8 +21,23 @@ impl Default for UserName {
 	}
 }
 
+impl AsRef<str> for UserName {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for UserName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 impl UserName {
-	pub fn parse(name: impl Into<String>) -> Result<UserName, BackendError> {
+	pub fn parse(
+		name: impl Into<String>
+	) 
+	-> Result<UserName, BackendError> {
 		let name: String = name.into();
 
 		// `.trim()` returns a view over the input `name` without trailing whitespace-like
@@ -33,7 +48,7 @@ impl UserName {
 		// character: `å` is a single grapheme, but it is composed of two characters
 		// (`a` and `̊`).
 		//
-		// `graphemes` returns an iterator over the graphemes in the input `s`.
+		// `graphemes` returns an iterator over the graphemes in the input `name`.
 		// `true` specifies that we want to use the extended grapheme definition set,
 		// the recommended one.
 		let is_too_long = name.graphemes(true).count() > 256;
