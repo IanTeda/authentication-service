@@ -33,7 +33,7 @@ impl TonicServer {
     pub async fn build(settings: Settings, database: Pool<Postgres>)
     -> Result<Self, BackendError> {
 
-        let database = database;
+        // let database = database;
 
         let address = format!(
             "{}:{}",
@@ -57,6 +57,7 @@ impl TonicServer {
 
         // Build RPC server router
         let router = Server::builder()
+            .trace_fn(|_| tracing::info_span!("Tonic"))
             .add_service(reflections_server)
             .add_service(ledger_server);
 
@@ -69,8 +70,17 @@ impl TonicServer {
 
     /// Run the Tonic server instance
     pub async fn run(self) -> Result<(), BackendError> {
+
+        let address = format!(
+            "{}:{}",
+            self.listener.local_addr()?.ip(),
+            self.listener.local_addr()?.port(),
+        );
+        tracing::info!("Tonic server started at '{}'", address);
+
         let incoming = tokio_stream::wrappers::TcpListenerStream::new(self.listener);
         self.router.serve_with_incoming(incoming).await?;
+
         Ok(())
     }
 }

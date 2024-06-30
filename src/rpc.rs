@@ -33,11 +33,18 @@ pub struct LedgerService {}
 
 #[tonic::async_trait]
 impl Rpc for LedgerService {
+
+	#[tracing::instrument(
+		name = "Ping endpoint",
+		skip(self),
+		// fields(
+		// 	Request = %_request
+		// ),
+	)]
 	async fn ping(
 		&self,
 		_request: Request<Empty>, // Accept request of type HelloRequest
 	) -> Result<Response<PongResponse>, Status> {
-		// Return an instance of type HelloReply
 
 		let reply: PongResponse = PongResponse {
 			message: "Pong...".to_string(),

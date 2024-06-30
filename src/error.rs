@@ -44,11 +44,18 @@ pub enum BackendError {
 	// Standard network address error
 	#[error(transparent)]
     AddressParse(#[from] std::net::AddrParseError),
+
 	// Environmental parse error
 	// #[error(transparent)]
 	// EnvironmentParse(#[from] std::env::VarError),
+
 	#[error(transparent)]
     LogError(#[from] tracing_log::log::SetLoggerError),
+
 	#[error(transparent)]
     TracingError(#[from] tracing::dispatcher::SetGlobalDefaultError),
+
+	#[error(transparent)]
+    SqlxMigration(#[from] sqlx::migrate::MigrateError),
+	// sqlx::migrate::MigrateError
 }
