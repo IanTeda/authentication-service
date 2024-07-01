@@ -36,5 +36,13 @@
         "vadimcn"
     ],
     "rust-analyzer.discoverProjectRunner": null,
-    "rust-analyzer.cargo.buildScripts.enable": true
+    "rust-analyzer.cargo.buildScripts.enable": true,
+    "protoc": {
+        "path": "/usr/bin/protoc",
+        "compile_on_save": false,
+        "options": [
+            "--proto_path=protos/v3",
+            "--proto_path=${workspaceRoot}/proto",
+        ]
+    }
 }
