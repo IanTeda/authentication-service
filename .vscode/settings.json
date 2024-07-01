@@ -37,6 +37,7 @@
     ],
     "rust-analyzer.discoverProjectRunner": null,
     "rust-analyzer.cargo.buildScripts.enable": true,
+    "rust-analyzer.check.command": "clippy",
     "protoc": {
         "path": "/usr/bin/protoc",
         "compile_on_save": false,
