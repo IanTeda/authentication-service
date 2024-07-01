@@ -1,0 +1,8 @@
+//-- ./proto/common.proto
+
+syntax = "proto3";
+
+package ledger;
+
+// Empty message.
+message Empty {}

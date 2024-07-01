@@ -1,41 +1,8 @@
-//-- ./proto/ping.proto
+//-- ./proto/ledger.proto
 
 syntax = "proto3";
 
 package ledger;
 
-// The Utilties service definition.
-service Utilities {
-  // Sends a ping
-  rpc Ping (Empty) returns (PingResponse) {}
-}
-
-// Empty message.
-message Empty {}
-
-// The response message containing the pong.
-message PingResponse {
-  string message = 1;
-}
-
-service Users {
-  rpc CreateUser (CreateUserRequest) returns (UserResponse);
-}
-
-message UserResponse {
-  string id = 1;
-  string email = 2;
-  string first_name = 3;
-  string last_name = 4;
-  string role = 5;
-  bool is_active = 6;
-  string created_on = 7;
-}
-
-message CreateUserRequest {
-  string email = 1;
-  string first_name = 2;
-  string last_name = 3;
-  string role = 4;
-  bool is_active = 5;
-}
+import "utilities.proto";
+import "users.proto";

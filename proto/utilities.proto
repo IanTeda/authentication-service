@@ -1,0 +1,18 @@
+//-- ./proto/ledger.proto
+
+syntax = "proto3";
+
+package ledger;
+
+import "common.proto";
+
+// The Utilities service definition.
+service Utilities {
+  // Sends a ping
+  rpc Ping (Empty) returns (PingResponse) {}
+}
+
+// The response message containing the pong.
+message PingResponse {
+  string message = 1;
+}

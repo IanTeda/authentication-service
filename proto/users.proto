@@ -1,6 +1,10 @@
+//-- ./proto/users.proto
+
 syntax = "proto3";
 
-package user;
+package ledger;
+
+import "common.proto";
 
 service User {
   rpc CreateUser (CreateUserRequest) returns (UserResponse);
@@ -9,8 +13,6 @@ service User {
   // rpc UpdateUser (CreateUserRequest) returns (UserResponse);
   // rpc DeleteUser (UserRequest) returns (DeleteUserResponse);
 }
-
-message Empty {}
 
 message UserResponse {
   string id = 1;
