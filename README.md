@@ -130,7 +130,9 @@ grpcurl -plaintext\
 GRPCUI
 
 ```zsh
-grpcui --plaintext '[::1]:50051'
+grpcui --plaintext \
+  -proto ./proto/ledger.proto \
+ '127.0.0.1:8091'
 ```
 
 
@@ -186,6 +188,7 @@ Project Link: [https://github.com/IanTeda/personal_ledger](https://github.com/Ia
 * [Building gRPC APIs with Rust](https://konghq.com/blog/engineering/building-grpc-apis-with-rust)
 * [Build and Deploy a gRPC](https://www.koyeb.com/tutorials/build-and-deploy-a-grpc-web-app-using-rust-tonic-and-react)
 * [Let's build a gRPC server and client in Rust with tonic](https://www.thorsten-hans.com/grpc-services-in-rust-with-tonic/)
+* [bentwire/tonic-template](https://github.com/bentwire/tonic-template/blob/dubplate/build.rs)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

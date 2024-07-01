@@ -12,9 +12,11 @@
 
 use crate::{
     configuration::{DatabaseSettings, Settings},
-    prelude::*, 
-    rpc::{ledger::{self, rpc_server::RpcServer}, LedgerService}
+    prelude::*, rpc::{self, get_router, proto::utilities_server::UtilitiesServer}, 
 };
+
+use crate::rpc::proto;
+use crate::rpc::utilities::UtilitiesService;
 
 use sqlx::{postgres::PgPoolOptions, PgPool, Pool, Postgres};
 use tokio::net::TcpListener;
@@ -33,7 +35,9 @@ impl TonicServer {
     pub async fn build(settings: Settings, database: Pool<Postgres>)
     -> Result<Self, BackendError> {
 
-        // let database = database;
+        let database = database;
+
+        let router = rpc::get_router()?;
 
         let address = format!(
             "{}:{}",
@@ -43,23 +47,6 @@ impl TonicServer {
         // We are using listener as it will bind a random port when port setting
         // is '0'. This is important for integration test server spawn.
         let listener = TcpListener::bind(address).await?;
-        
-        // Build reflection server
-        let reflections_server = 
-            tonic_reflection::server::Builder::configure()
-                .register_encoded_file_descriptor_set(ledger::DESCRIPTOR_SET)
-                .build()?;
-
-        // Build ledger rpc server
-        let ledger_server = RpcServer::new(
-            LedgerService::default()
-        );
-
-        // Build RPC server router
-        let router = Server::builder()
-            .trace_fn(|_| tracing::info_span!("Tonic"))
-            .add_service(reflections_server)
-            .add_service(ledger_server);
 
         Ok(Self {
             database,

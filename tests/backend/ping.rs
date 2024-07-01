@@ -2,7 +2,7 @@
 
 use crate::helpers::*;
 
-use personal_ledger_backend::rpc::ledger::Empty;
+use personal_ledger_backend::rpc::proto::Empty;
 
 use sqlx::{Pool, Postgres};
 

@@ -421,6 +421,7 @@ dependencies = [
  "android-tzdata",
  "iana-time-zone",
  "num-traits",
+ "serde",
  "windows-targets 0.52.5",
 ]
 
@@ -1434,6 +1435,7 @@ checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
 name = "personal_ledger_backend"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "claims",
  "config",
  "fake",
@@ -1456,6 +1458,7 @@ dependencies = [
  "tracing-log 0.2.0",
  "tracing-subscriber",
  "unicode-segmentation",
+ "uuid",
  "validator",
 ]
 
@@ -2859,6 +2862,7 @@ dependencies = [
  "atomic",
  "getrandom",
  "md-5",
+ "serde",
  "sha1_smol",
 ]
 
