@@ -1,7 +1,12 @@
+//-- ./src/rpc/users.rs
+
+//! Return a result containing a RPC Utilities server
+
 #![allow(unused)] // For development only
 
 use crate::prelude::*;
-use crate::rpc::endpoints;
 
-use endpoints::user_server;
-use endpoints::{Empty, PongResponse};
+// use super::proto::users_server::Users;
+// use super::proto::{CreateUserRequest, UserResponse};
+
+use tonic::{Request, Response, Status};

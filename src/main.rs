@@ -6,10 +6,9 @@ mod configuration;
 mod error;
 mod prelude;
 mod rpc;
-mod services;
 mod startup;
 mod telemetry;
-mod utils;
+mod utilities;
 
 use crate::prelude::*;
 
