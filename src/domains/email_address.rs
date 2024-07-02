@@ -9,9 +9,11 @@
 
 use crate::prelude::*;
 
+use serde::{Deserialize, Serialize};
+use sqlx::Decode;
 use validator::ValidateEmail;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, Decode, PartialEq)]
 pub struct EmailAddress(String);
 
 impl EmailAddress {

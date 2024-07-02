@@ -9,9 +9,11 @@
 
 use crate::prelude::*;
 
+use serde::{Deserialize, Serialize};
+use sqlx::Decode;
 use unicode_segmentation::UnicodeSegmentation;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Decode)]
 pub struct UserName(String);
 
 /// Implementation of the default Thing for creating a new thing.
