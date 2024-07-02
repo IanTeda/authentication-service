@@ -100,6 +100,7 @@ pub async fn select_user_index(
 		r#"
 			SELECT * 
 			FROM users 
+			ORDER BY id
 			LIMIT $1 OFFSET $2
 		"#,
 		&limit,
@@ -123,7 +124,7 @@ pub mod tests {
 	use crate::database::users::{insert_user, model::tests::create_random_user};
 
 	use fake::Fake;
-use sqlx::{Pool, Postgres};
+	use sqlx::{Pool, Postgres};
 
 	// Override with more flexible error
 	pub type Result<T> = core::result::Result<T, Error>;
