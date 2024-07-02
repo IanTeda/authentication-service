@@ -14,22 +14,19 @@ service User {
   // rpc DeleteUser (UserRequest) returns (DeleteUserResponse);
 }
 
+message CreateUserRequest {
+  string email = 1;
+  string user_name = 2;
+  string password = 3;
+  bool is_active = 4;
+}
+
 message UserResponse {
   string id = 1;
   string email = 2;
-  string first_name = 3;
-  string last_name = 4;
-  string role = 5;
-  bool is_active = 6;
-  string created_on = 7;
-}
-
-message CreateUserRequest {
-  string email = 1;
-  string first_name = 2;
-  string last_name = 3;
-  string role = 4;
-  bool is_active = 5;
+  string user_name = 3;
+  bool is_active = 4;
+  string created_on = 5;
 }
 
 message UserRequest {

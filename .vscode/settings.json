@@ -20,6 +20,7 @@
         "grpcui",
         "ianteda",
         "jeremychone",
+        "nanos",
         "neovim",
         "ossp",
         "prost",
@@ -38,6 +39,7 @@
     "rust-analyzer.discoverProjectRunner": null,
     "rust-analyzer.cargo.buildScripts.enable": true,
     "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.completion.snippets.custom": { },
     "protoc": {
         "path": "/usr/bin/protoc",
         "compile_on_save": false,
@@ -45,5 +47,14 @@
             "--proto_path=protos/v3",
             "--proto_path=${workspaceRoot}/proto",
         ]
-    }
+    },
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "driver": "PostgreSQL",
+            "name": "Backend",
+            "connectString": "postgrespostgres://postgres:postgres@localhost:5432/"
+        }
+    ],
 }
