@@ -10,6 +10,17 @@ use crate::{
 	prelude::*
 };
 
+/// Insert a `Thing` into the database, returning the `Thing` created.
+///
+/// # Parameters
+///
+/// * `thing` - A Thing instance
+/// * `database` - An Sqlx database connection pool
+/// ---
+#[tracing::instrument(
+	name = "Insert a new User into the database."
+	skip(user, database)
+)]
 pub async fn insert_user(
 	user: &UserModel,
 	database: &sqlx::Pool<sqlx::Postgres>,
