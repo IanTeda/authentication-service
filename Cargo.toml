@@ -18,7 +18,7 @@ unsafe_code = "forbid"
 path = "src/lib.rs"
 
 [[bin]]
-name = "rust_starter"
+name = "personal_ledger_backend"
 path = "src/main.rs"
 
 [dependencies]
@@ -29,7 +29,7 @@ chrono = { version = "0.4.22", default-features = false, features = [
 ] }
 prost = "0.12"
 secrecy = { version = "0.8.0", features = ["serde"] }
-serde = { version = "1.0.193", features = ["derive"] }
+serde = { version = "1.0.198", features = ["derive"] }
 serde-aux = { version = "4.5.0" }
 serde_json = "1.0.108"
 sqlx = { version = "0.7.4", features = [

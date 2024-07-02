@@ -65,4 +65,7 @@ pub enum BackendError {
 	#[error(transparent)]
     SqlxMigration(#[from] sqlx::migrate::MigrateError),
 	// sqlx::migrate::MigrateError
+
+	#[error(transparent)]
+    Sqlx(#[from] sqlx::Error),
 }

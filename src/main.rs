@@ -28,11 +28,9 @@ async fn main() -> Result<(), BackendError> {
 
 	telemetry::init_tracing(tracing_subscriber)?;
 
-	let database = 
-		startup::get_database(&settings.database).await?;
+	let database = startup::get_database(&settings.database).await?;
 
-	let tonic_server = 
-		startup::TonicServer::build(settings, database).await?;
+	let tonic_server = startup::TonicServer::build(settings, database).await?;
 	let _ = tonic_server.run().await;
 
 	Ok(())
