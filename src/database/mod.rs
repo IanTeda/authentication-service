@@ -2,4 +2,4 @@
 
 //! Wrapper around database tables
 
-mod users;
+pub mod users;

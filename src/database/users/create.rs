@@ -55,7 +55,7 @@ pub mod tests {
 	// Bring module functions into test scope
 	use super::*;
 
-	use crate::database::users::model::tests::create_random_user;
+	use crate::database::users::model::tests::generate_random_user;
 
 	use sqlx::{Pool, Postgres};
 
@@ -68,7 +68,7 @@ pub mod tests {
 	async fn create_database_record(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_test_user = create_random_user()?;
+		let random_test_user = generate_random_user()?;
 		// println!("{test_thing:#?}");
 
 		//-- Execute Function (Act)

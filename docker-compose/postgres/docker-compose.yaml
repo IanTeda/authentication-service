@@ -1,7 +1,6 @@
 # This docker-compose file is used to test the Dockerfile biuld with a Postgres
 # container
 ---
-version: '3.8'
 
 volumes:
   personal_ledger_dev:

@@ -54,7 +54,7 @@ pub mod tests {
 	// Bring module functions into test scope
 	use super::*;
 
-	use crate::database::users::{insert_user, model::tests::create_random_user};
+	use crate::database::users::{insert_user, model::tests::generate_random_user};
 
 	use fake::Fake;
 	use sqlx::{Pool, Postgres};
@@ -68,7 +68,7 @@ pub mod tests {
 	async fn delete_user_record_by_id(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_test_user = create_random_user()?;
+		let random_test_user = generate_random_user()?;
         insert_user(&random_test_user, &database).await?;
 		// println!("{test_thing:#?}");
 
@@ -89,9 +89,9 @@ pub mod tests {
 	async fn delete_user_false(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_test_user = create_random_user()?;
+		let random_test_user = generate_random_user()?;
         insert_user(&random_test_user, &database).await?;
-        let random_user_id = create_random_user()?.id;
+        let random_user_id = generate_random_user()?.id;
 		// println!("{test_thing:#?}");
 
 		//-- Execute Function (Act)

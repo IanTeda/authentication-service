@@ -40,6 +40,7 @@ impl TryFrom<CreateUserRequest> for UserModel {
         Ok(Self { id, email, user_name, password_hash, is_active, created_on })
     }
 }
+
 //-- Unit Tests
 #[cfg(test)]
 pub mod tests {
@@ -57,7 +58,7 @@ pub mod tests {
 	pub type Result<T> = core::result::Result<T, Error>;
 	pub type Error = Box<dyn std::error::Error>;
 
-	pub fn create_random_user() -> Result<UserModel> {
+	pub fn generate_random_user() -> Result<UserModel> {
 		// Generate random DateTime after UNIX time epoch (00:00:00 UTC on 1 January 1970)
 		let random_datetime: DateTime<Utc> = DateTimeAfter(chrono::DateTime::UNIX_EPOCH).fake();
 		// Convert datetime to a UUID timestamp
@@ -102,7 +103,7 @@ pub mod tests {
 	fn convert_tonic_request_to_user_model() -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate random user to construct Tonic Request
-		let random_user = create_random_user()?;
+		let random_user = generate_random_user()?;
 		// Request will consume random_user so lets clone for asserts
 		let tonic_user = random_user.clone();
 		// Build Tonic request

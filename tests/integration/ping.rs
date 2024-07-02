@@ -2,7 +2,7 @@
 
 use crate::helpers::*;
 
-use personal_ledger_backend::rpc::proto::Empty;
+use personal_ledger_backend::rpc::proto::{utilities_client::UtilitiesClient, Empty};
 
 use sqlx::{Pool, Postgres};
 
@@ -14,9 +14,10 @@ async fn ping_returns_pong(database: Pool<Postgres>) -> Result<()> {
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
     //-- Execute Test (Act)
-    let mut tonic_client = spawn_test_client(tonic_server.address).await?;
+    let mut client = 
+        UtilitiesClient::connect(tonic_server.address).await?;
     let request_empty = tonic::Request::new(Empty {});
-    let response = tonic_client.ping(request_empty)
+    let response = client.ping(request_empty)
         .await?
         .into_inner();
     // println!("{response:#?}");

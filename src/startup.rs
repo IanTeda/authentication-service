@@ -37,7 +37,7 @@ impl TonicServer {
 
         let database = database;
 
-        let router = rpc::get_router()?;
+        let router = rpc::get_router(&database)?;
 
         let address = format!(
             "{}:{}",

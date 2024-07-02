@@ -121,7 +121,7 @@ pub mod tests {
 	// Bring module functions into test scope
 	use super::*;
 
-	use crate::database::users::{insert_user, model::tests::create_random_user};
+	use crate::database::users::{insert_user, model::tests::generate_random_user};
 
 	use fake::Fake;
 	use sqlx::{Pool, Postgres};
@@ -135,7 +135,7 @@ pub mod tests {
 	async fn get_user_record_by_id(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_test_user = create_random_user()?;
+		let random_test_user = generate_random_user()?;
         insert_user(&random_test_user, &database).await?;
 		// println!("{test_thing:#?}");
 
@@ -165,7 +165,7 @@ pub mod tests {
 	async fn get_user_record_by_email(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_test_user = create_random_user()?;
+		let random_test_user = generate_random_user()?;
         insert_user(&random_test_user, &database).await?;
 		// println!("{test_thing:#?}");
 
@@ -197,7 +197,7 @@ pub mod tests {
         let random_count: i64 = (10..30).fake::<i64>();
         let mut test_vec: Vec<UserModel> = Vec::new();
         for _count in 0..random_count {
-            let test_user = create_random_user()?;
+            let test_user = generate_random_user()?;
             test_vec.push(insert_user(&test_user, &pool).await?);
         }
 
@@ -222,7 +222,6 @@ pub mod tests {
 
         assert_eq!(records.len() as i64, expected_records);
         assert_eq!(random_record_thing.id, random_test_thing.id);
-
 
         Ok(())
     }

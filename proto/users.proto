@@ -6,7 +6,7 @@ package ledger;
 
 import "common.proto";
 
-service User {
+service Users {
   rpc CreateUser (CreateUserRequest) returns (UserResponse);
   // rpc ReadUser (UserRequest) returns (UserResponse);
   // rpc ReadAllUsers (Empty) returns (ReadAllUsersResponse);

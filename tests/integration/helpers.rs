@@ -3,9 +3,6 @@
 // #![allow(unused)] // For beginning only.
 
 use personal_ledger_backend::{configuration::Settings, startup};
-// use personal_ledger_backend::rpc::endpoints::rpc_client::RpcClient;
-use personal_ledger_backend::rpc::proto::utilities_client::UtilitiesClient;
-use tonic::transport::Channel;
 
 use sqlx::{Pool, Postgres};
 
@@ -46,11 +43,5 @@ pub async fn spawn_test_server(database: Pool<Postgres>) -> Result<TestServer> {
 	});
 
 	Ok(TestServer { address })
-}
-
-/// Spawn a test client
-pub async fn spawn_test_client(address: impl Into<String>) -> Result<UtilitiesClient<Channel>> {
-	let client = UtilitiesClient::connect(address.into()).await?;
-	Ok(client)
 }
 

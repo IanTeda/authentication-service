@@ -3,6 +3,8 @@
 // #![allow(unused)] // For beginning only.
 
 mod configuration;
+mod database;
+mod domains;
 mod error;
 mod prelude;
 mod rpc;

@@ -55,7 +55,7 @@ pub mod tests {
 	// Bring module functions into test scope
 	use super::*;
 
-	use crate::database::users::{insert_user, model::tests::create_random_user};
+	use crate::database::users::{insert_user, model::tests::generate_random_user};
 
 	use sqlx::{Pool, Postgres};
 
@@ -68,11 +68,11 @@ pub mod tests {
 	async fn create_database_record(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate random user for testing
-		let original_random_test_user = create_random_user()?;
+		let original_random_test_user = generate_random_user()?;
         insert_user(&original_random_test_user, &database).await?;
 
         // Generate new data for updating the database
-		let random_test_user = create_random_user()?;
+		let random_test_user = generate_random_user()?;
         let mut updated_random_test_user = original_random_test_user.clone();
         updated_random_test_user.email = random_test_user.email;
         updated_random_test_user.user_name = random_test_user.user_name;

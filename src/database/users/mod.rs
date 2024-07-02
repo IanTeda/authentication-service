@@ -4,7 +4,6 @@
  
 #![allow(unused)] // For development only
 
-
 mod model;
 mod create;
 mod read;
