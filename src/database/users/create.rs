@@ -1,90 +1,83 @@
 //-- ./src/database/users/create.rs
 
-//! The Users create [insert] into database
+//! Create [insert] User into the database, returning a Result with a UserModel instance
 //! ---
 
-#![allow(unused)] // For development only
+// #![allow(unused)] // For development only
 
-use chrono::{DateTime, Utc};
-use uuid::Uuid;
+use crate::{
+	database::users::UserModel,
+	prelude::*
+};
 
-use crate::{domains::{EmailAddress, UserName}, prelude::*};
+pub async fn create_user(
+	user: &UserModel,
+	database: &sqlx::Pool<sqlx::Postgres>,
+) -> Result<UserModel, BackendError> {
 
-use super::model::UserModel;
-use crate::rpc::proto::CreateUserRequest;
-
-impl TryFrom<CreateUserRequest> for UserModel {
-    type Error = BackendError;
-
-    fn try_from(value: CreateUserRequest) -> Result<Self, Self::Error> {
-		let id = Uuid::now_v7();
-		let email = EmailAddress::parse(value.email)?;
-		let user_name = UserName::parse(value.user_name)?;
-		let password_hash = value.password;
-		let is_active = value.is_active;
-		let created_on = Utc::now();
-
-        Ok(Self { id, email, user_name, password_hash, is_active, created_on })
-    }
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Clone, sqlx::FromRow)]
-pub struct CreatedUser {
-	pub id: Uuid,
-	pub email: String,
-	pub user_name: String,
-	pub password_hash: String,
-	pub is_active: bool,
-	pub created_on: DateTime<Utc>,
-}
-
-// pub async fn create(
-// 	user: UserModel,
-// 	database: &sqlx::Pool<sqlx::Postgres>,
-// ) -> Result<UserModel, BackendError> {
-
+	let created_user = sqlx::query_as!(
+		UserModel,
+		r#"
+            INSERT INTO users (id, email, user_name, password_hash, is_active, created_on) 
+            VALUES ($1, $2, $3, $4, $5, $6) 
+            RETURNING *
+        "#,
+		user.id,
+		user.email.as_ref(),
+		user.user_name.as_ref(),
+		user.password_hash,
+		user.is_active,
+		user.created_on
+	)
+	.fetch_one(database)
+	.await?;
+	
+	tracing::debug!("Record inserted into database: {created_user:#?}");
     
-// 	Ok(database_record)
-// }
+	Ok(created_user)
+}
 
 //-- Unit Tests
 #[cfg(test)]
 pub mod tests {
 
-	use crate::database::users::model::tests::create_random_user;
-
 	// Bring module functions into test scope
 	use super::*;
+
+	use crate::database::users::model::tests::create_random_user;
+
+	use sqlx::{Pool, Postgres};
 
 	// Override with more flexible error
 	pub type Result<T> = core::result::Result<T, Error>;
 	pub type Error = Box<dyn std::error::Error>;
 
-	#[test]
-	fn convert_create_user_request_to_user_model() -> Result<()> {
+	// Test inserting into database
+	#[sqlx::test]
+	async fn create_database_record(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
-		let random_user = create_random_user()?;
-		let tonic_user = random_user.clone();
-		let tonic_request: CreateUserRequest = CreateUserRequest {
-			email: tonic_user.email.as_ref().to_string(),
-			user_name: tonic_user.user_name.as_ref().to_string(),
-			password: tonic_user.password_hash,
-			is_active: tonic_user.is_active,
-		};
-		// println!("{tonic_request:#?}");
+		// Generate radom user for testing
+		let random_test_user = create_random_user()?;
+		// println!("{test_thing:#?}");
 
 		//-- Execute Function (Act)
-		let new_user: UserModel = tonic_request.try_into()?;
-		// println!("{new_user:#?}");
+		// Insert user into database
+		let created_user = create_user(&random_test_user, &database).await?;
+		// println!("{record:#?}");
 
-		//-- Checks (Assertions)
-		assert_ne!(random_user.id, new_user.id); // id is dropped
-		assert_eq!(random_user.email, new_user.email);
-		assert_eq!(random_user.user_name, new_user.user_name);
-		assert_eq!(random_user.password_hash, new_user.password_hash);
-		assert_eq!(random_user.is_active, new_user.is_active);
-		assert_ne!(random_user.created_on, new_user.created_on); // created_on is dropped
+        //-- Checks (Assertions)
+		assert_eq!(created_user.id, random_test_user.id);
+		assert_eq!(created_user.email, random_test_user.email);
+		assert_eq!(created_user.user_name, random_test_user.user_name);
+		assert_eq!(created_user.password_hash, random_test_user.password_hash);
+		assert_eq!(created_user.is_active, random_test_user.is_active);
+		// Use timestamp because Postgres time precision is less than Rust
+		assert_eq!(
+			created_user.created_on.timestamp(),
+			random_test_user.created_on.timestamp()
+		);
 
+		// -- Return
 		Ok(())
 	}
 }

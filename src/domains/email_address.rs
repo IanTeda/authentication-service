@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Decode;
 use validator::ValidateEmail;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Decode, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Decode, PartialEq, derive_more::From)]
 pub struct EmailAddress(String);
 
 impl EmailAddress {

@@ -1438,6 +1438,7 @@ dependencies = [
  "chrono",
  "claims",
  "config",
+ "derive_more",
  "fake",
  "prost",
  "secrecy",

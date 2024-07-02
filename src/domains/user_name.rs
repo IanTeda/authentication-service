@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Decode;
 use unicode_segmentation::UnicodeSegmentation;
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Decode)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Decode, derive_more::From)]
 pub struct UserName(String);
 
 /// Implementation of the default Thing for creating a new thing.

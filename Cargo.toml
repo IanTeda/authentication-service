@@ -59,6 +59,7 @@ tracing-subscriber = { version = "0.3", features = [
 unicode-segmentation = "1.11.0"
 uuid = { version = "1", features = ["v4", "v7", "serde"] }
 validator = { version = "0.18", features = ["derive"] }
+derive_more = "0.99.18"
 
 [build-dependencies]
 tonic-build = { version="0.11", features = ["prost"] }
