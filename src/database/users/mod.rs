@@ -3,6 +3,7 @@
 //! Wrapper around users database tables
 
 mod model;
-mod create;
+mod insert;
 
-// pub use model::User;
+pub use model::UserModel;
+pub use insert::insert_user;

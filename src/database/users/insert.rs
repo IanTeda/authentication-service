@@ -10,7 +10,7 @@ use crate::{
 	prelude::*
 };
 
-pub async fn create_user(
+pub async fn insert_user(
 	user: &UserModel,
 	database: &sqlx::Pool<sqlx::Postgres>,
 ) -> Result<UserModel, BackendError> {
@@ -62,7 +62,7 @@ pub mod tests {
 
 		//-- Execute Function (Act)
 		// Insert user into database
-		let created_user = create_user(&random_test_user, &database).await?;
+		let created_user = insert_user(&random_test_user, &database).await?;
 		// println!("{record:#?}");
 
         //-- Checks (Assertions)
