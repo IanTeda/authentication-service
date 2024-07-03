@@ -8,7 +8,7 @@
 use crate::{
 	domains::{EmailAddress, UserName},
 	prelude::*,
-	rpc::ledger::CreateUserRequest,
+	rpc::ledger::{CreateUserRequest, UpdateUserRequest},
 };
 
 use chrono::prelude::*;
@@ -31,6 +31,28 @@ impl TryFrom<CreateUserRequest> for UserModel {
 
 	fn try_from(value: CreateUserRequest) -> Result<Self, Self::Error> {
 		let id = Uuid::now_v7();
+		let email = EmailAddress::parse(value.email)?;
+		let user_name = UserName::parse(value.user_name)?;
+		let password_hash = value.password;
+		let is_active = value.is_active;
+		let created_on = Utc::now();
+
+		Ok(Self {
+			id,
+			email,
+			user_name,
+			password_hash,
+			is_active,
+			created_on,
+		})
+	}
+}
+
+impl TryFrom<UpdateUserRequest> for UserModel {
+	type Error = BackendError;
+
+	fn try_from(value: UpdateUserRequest) -> Result<Self, Self::Error> {
+		let id = Uuid::parse_str(value.id.as_str())?;
 		let email = EmailAddress::parse(value.email)?;
 		let user_name = UserName::parse(value.user_name)?;
 		let password_hash = value.password;

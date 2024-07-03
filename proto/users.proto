@@ -9,9 +9,9 @@ import "common.proto";
 service Users {
   rpc CreateUser (CreateUserRequest) returns (UserResponse);
   rpc ReadUser (UserRequest) returns (UserResponse);
-  // rpc IndexUsers (UserIndexRequest) returns (UserIndexResponse);
-  // rpc UpdateUser (CreateUserRequest) returns (UserResponse);
-  // rpc DeleteUser (UserRequest) returns (DeleteUserResponse);
+  rpc IndexUsers (UserIndexRequest) returns (UserIndexResponse);
+  rpc UpdateUser (UpdateUserRequest) returns (UserResponse);
+  rpc DeleteUser (UserRequest) returns (DeleteUserResponse);
 }
 
 message CreateUserRequest {
@@ -19,6 +19,14 @@ message CreateUserRequest {
   string user_name = 2;
   string password = 3;
   bool is_active = 4;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  string email = 2;
+  string user_name = 3;
+  string password = 4;
+  bool is_active = 5;
 }
 
 message UserResponse {
@@ -43,5 +51,5 @@ message UserIndexResponse {
 }
 
 message DeleteUserResponse {
-  bool isDeleted = 1;
+  bool is_deleted = 1;
 }
