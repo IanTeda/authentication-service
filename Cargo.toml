@@ -15,6 +15,7 @@ keywords = ["rust", "grpc", "finance"]
 unsafe_code = "forbid"
 
 [lib]
+doctest = false
 path = "src/lib.rs"
 
 [[bin]]

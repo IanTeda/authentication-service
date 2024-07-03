@@ -2,12 +2,16 @@
 
 // #![allow(unused)] // For beginning only.
 
+// For intellisense
 mod configuration;
 mod database;
 mod domains;
 mod error;
 mod prelude;
+mod reflections;
 mod rpc;
+mod router;
+mod services;
 mod startup;
 mod telemetry;
 mod utilities;
@@ -30,7 +34,7 @@ async fn main() -> Result<(), BackendError> {
 
 	telemetry::init_tracing(tracing_subscriber)?;
 
-	let database = startup::get_database(&settings.database).await?;
+	let database = database::get_connection_pool(&settings.database).await?;
 
 	let tonic_server = startup::TonicServer::build(settings, database).await?;
 	let _ = tonic_server.run().await;

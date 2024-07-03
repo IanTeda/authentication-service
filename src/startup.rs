@@ -1,6 +1,6 @@
 // -- ./startup.rs
 
-#![allow(unused)] // For beginning only.
+// #![allow(unused)] // For beginning only.
 
 //! Helper functions for starting the Tonic server.
 //! 
@@ -11,33 +11,26 @@
 //! ---
 
 use crate::{
-    configuration::{DatabaseSettings, Settings},
-    prelude::*, rpc::{self, get_router, proto::utilities_server::UtilitiesServer}, 
+    configuration::Settings,
+    prelude::*, router
 };
 
-use crate::rpc::proto;
-use crate::rpc::utilities::UtilitiesService;
-
-use sqlx::{postgres::PgPoolOptions, PgPool, Pool, Postgres};
+use sqlx::{ Pool, Postgres};
 use tokio::net::TcpListener;
-use tonic::transport::{server::Router, Server};
+use tonic::transport::server::Router;
 
 /// Tonic Server instance enum;
 pub struct TonicServer {
-    pub database: PgPool,
     pub router: Router,
     pub listener: TcpListener,
 }
-
 
 impl TonicServer {
     /// Build the Tonic server instance.
     pub async fn build(settings: Settings, database: Pool<Postgres>)
     -> Result<Self, BackendError> {
 
-        let database = database;
-
-        let router = rpc::get_router(&database)?;
+        let router = router::get_router(database)?;
 
         let address = format!(
             "{}:{}",
@@ -49,7 +42,6 @@ impl TonicServer {
         let listener = TcpListener::bind(address).await?;
 
         Ok(Self {
-            database,
             router,
             listener,
         })
@@ -70,19 +62,4 @@ impl TonicServer {
 
         Ok(())
     }
-}
-
-pub async fn get_database(
-    database: &DatabaseSettings
-) -> Result<PgPool, BackendError> {
-    // Build connection pool
-	let database =
-		PgPoolOptions::new()
-            .connect_lazy_with(database.connection());
-
-    sqlx::migrate!("./migrations")
-		.run(&database)
-		.await?;
-
-    Ok(database)
 }

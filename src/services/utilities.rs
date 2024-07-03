@@ -6,15 +6,14 @@
 
 use tonic::{Request, Response, Status};
 
-use super::proto::utilities_server::Utilities;
-use super::proto::{Empty, PingResponse};
+use crate::rpc::ledger::utilities_server::Utilities;
+use crate::rpc::ledger::{Empty, PingResponse};
 
 #[derive(Debug, Default)]
 pub struct UtilitiesService {}
 
 #[tonic::async_trait]
 impl Utilities for UtilitiesService {
-
 	#[tracing::instrument(
 		name = "Ping endpoint",
 		skip(self),
@@ -22,16 +21,12 @@ impl Utilities for UtilitiesService {
 		// 	Request = %_request
 		// ),
 	)]
-	async fn ping(
-		&self,
-		request: Request<Empty>,
-	) -> Result<Response<PingResponse>, Status> {
-
+	async fn ping(&self, _request: Request<Empty>) -> Result<Response<PingResponse>, Status> {
 		let reply = PingResponse {
 			message: "Pong...".to_string(),
 		};
 
 		// Send back our ping response.
-		Ok(Response::new(reply)) 
+		Ok(Response::new(reply))
 	}
 }

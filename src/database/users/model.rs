@@ -8,7 +8,7 @@
 use crate::{
 	domains::{EmailAddress, UserName},
 	prelude::*,
-	rpc::proto::CreateUserRequest,
+	rpc::ledger::CreateUserRequest,
 };
 
 use chrono::prelude::*;

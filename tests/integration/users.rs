@@ -2,7 +2,7 @@
 
 use crate::helpers::*;
 
-use personal_ledger_backend::rpc::proto::{users_client::UsersClient, CreateUserRequest};
+use personal_ledger_backend::rpc::ledger::{users_client::UsersClient, CreateUserRequest};
 
 use chrono::prelude::*;
 use uuid::Uuid;

@@ -13,9 +13,11 @@
     ],
     "cSpell.words": [
         "analyzer",
+        "codegen",
         "customizations",
         "Decrusting",
         "devcontainers",
+        "encodings",
         "errorlens",
         "grpcui",
         "ianteda",

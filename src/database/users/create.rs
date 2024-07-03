@@ -5,10 +5,7 @@
 
 // #![allow(unused)] // For development only
 
-use crate::{
-	database::users::UserModel,
-	prelude::*
-};
+use crate::{database::users::UserModel, prelude::*};
 
 /// Insert a `Thing` into the database, returning the `Thing` created.
 ///
@@ -25,7 +22,6 @@ pub async fn insert_user(
 	user: &UserModel,
 	database: &sqlx::Pool<sqlx::Postgres>,
 ) -> Result<UserModel, BackendError> {
-
 	let created_user = sqlx::query_as!(
 		UserModel,
 		r#"
@@ -42,9 +38,9 @@ pub async fn insert_user(
 	)
 	.fetch_one(database)
 	.await?;
-	
+
 	tracing::debug!("Record inserted into database: {created_user:#?}");
-    
+
 	Ok(created_user)
 }
 
@@ -76,7 +72,7 @@ pub mod tests {
 		let created_user = insert_user(&random_test_user, &database).await?;
 		// println!("{record:#?}");
 
-        //-- Checks (Assertions)
+		//-- Checks (Assertions)
 		assert_eq!(created_user.id, random_test_user.id);
 		assert_eq!(created_user.email, random_test_user.email);
 		assert_eq!(created_user.user_name, random_test_user.user_name);
