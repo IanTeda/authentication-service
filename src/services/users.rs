@@ -8,7 +8,7 @@ use crate::database;
 
 use sqlx::{Pool, Postgres};
 use tonic::{Request, Response, Status};
-use uuid::{uuid, Uuid};
+use uuid::Uuid;
 
 use crate::database::users::UserModel;
 use crate::rpc::ledger::users_server::Users;

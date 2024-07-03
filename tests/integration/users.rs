@@ -2,6 +2,7 @@
 
 use crate::helpers::*;
 
+use personal_ledger_backend::rpc::ledger::UserRequest;
 use personal_ledger_backend::rpc::ledger::{users_client::UsersClient, CreateUserRequest};
 
 use chrono::prelude::*;
@@ -12,7 +13,7 @@ use fake::faker::{chrono::en::DateTime, chrono::en::DateTimeAfter};
 use fake::faker::internet::en::{Password, SafeEmail};
 use fake::faker::name::en::Name;
 use fake::Fake;
-use personal_ledger_backend::database::users::UserModel;
+use personal_ledger_backend::database::users::{insert_user, UserModel};
 use personal_ledger_backend::domains::{EmailAddress, UserName};
 
 pub fn generate_random_user() -> Result<UserModel> {
@@ -74,6 +75,34 @@ async fn create_user_returns_user(database: Pool<Postgres>) -> Result<()> {
     let mut client = UsersClient::connect(tonic_server.address).await?;
     let request = tonic::Request::new(create_user_request);
     let response = client.create_user(request)
+        .await?
+        .into_inner();
+    // println!("{response:#?}");
+
+    //-- Checks (Assertions)
+	assert_eq!(response.email, random_user.email.to_string());
+	assert_eq!(response.user_name, random_user.user_name.to_string());
+	assert_eq!(response.is_active, random_user.is_active);
+
+    Ok(())
+}
+
+#[sqlx::test]
+async fn read_user_returns_user(database: Pool<Postgres>) -> Result<()> {
+    //-- Setup and Fixtures (Arrange)
+    let random_user = generate_random_user()?;
+	insert_user(&random_user, &database).await?;
+    let tonic_server = spawn_test_server(database).await?;
+    // Give the test server a few ms to become available
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+    //-- Execute Test (Act)
+	let read_user_request = UserRequest { 
+		id: random_user.id.to_string()
+	};
+    let mut client = UsersClient::connect(tonic_server.address).await?;
+    let request = tonic::Request::new(read_user_request);
+    let response = client.read_user(request)
         .await?
         .into_inner();
     // println!("{response:#?}");
