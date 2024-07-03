@@ -20,6 +20,7 @@
         "encodings",
         "errorlens",
         "grpcui",
+        "Hasher",
         "ianteda",
         "jeremychone",
         "nanos",

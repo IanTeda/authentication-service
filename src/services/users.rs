@@ -1,6 +1,6 @@
 //-- ./src/rpc/users.rs
 
-//! Return a result containing a RPC Users server
+//! Return a result containing a RPC Users service
 
 // #![allow(unused)] // For development only
 
@@ -13,9 +13,11 @@ use uuid::Uuid;
 use crate::database::users::UserModel;
 use crate::rpc::ledger::users_server::Users;
 use crate::rpc::ledger::{
-	CreateUserRequest, DeleteUserResponse, UpdateUserRequest, UserIndexRequest, UserIndexResponse, UserRequest, UserResponse
+	CreateUserRequest, DeleteUserResponse, UpdateUserRequest, UserIndexRequest, UserIndexResponse,
+	UserRequest, UserResponse,
 };
 
+/// User service containing a database pool
 #[derive(Debug)]
 pub struct UsersService {
 	database: Pool<Postgres>,
@@ -53,7 +55,7 @@ impl Users for UsersService {
 		request: Request<CreateUserRequest>,
 	) -> Result<Response<UserResponse>, Status> {
 		let request = request.into_inner();
-		let create_user_request: UserModel = request.try_into().unwrap();
+		let create_user_request: UserModel = request.try_into()?;
 
 		let created_user = database::users::insert_user(&create_user_request, &self.database)
 			.await
@@ -71,9 +73,7 @@ impl Users for UsersService {
 		let user_request = request.into_inner();
 		let request_id: &str = user_request.id.as_str();
 		let id = Uuid::try_parse(request_id).unwrap();
-		let user = database::users::select_user_by_id(&id, &self.database)
-			.await
-			.unwrap();
+		let user = database::users::select_user_by_id(&id, &self.database).await?;
 
 		let response = UserResponse::from(user);
 
@@ -90,8 +90,7 @@ impl Users for UsersService {
 		// Get list of users using limit and offset
 		let users =
 			database::users::select_user_index(&request.limit, &request.offset, &self.database)
-				.await
-				.unwrap();
+				.await?;
 
 		// Initiate user response vector
 		// let mut users_response: Vec<UserResponse> = Vec::new();
@@ -117,11 +116,10 @@ impl Users for UsersService {
 		// Step into request type
 		let request = request.into_inner();
 
-		let update_user_request: UserModel = request.try_into().unwrap();
+		let update_user_request: UserModel = request.try_into()?;
 
-		let updated_user = database::users::update_user_by_id(&update_user_request, &self.database)
-			.await
-			.unwrap();
+		let updated_user =
+			database::users::update_user_by_id(&update_user_request, &self.database).await?;
 
 		let response = UserResponse::from(updated_user);
 
@@ -130,19 +128,15 @@ impl Users for UsersService {
 
 	async fn delete_user(
 		&self,
-		request: Request<UserRequest>
+		request: Request<UserRequest>,
 	) -> Result<Response<DeleteUserResponse>, Status> {
 		let user_request = request.into_inner();
 		let request_id: &str = user_request.id.as_str();
 		let id = Uuid::try_parse(request_id).unwrap();
-		let is_deleted = database::users::delete_user_by_id(&id, &self.database)
-			.await
-			.unwrap();
+		let is_deleted = database::users::delete_user_by_id(&id, &self.database).await?;
 
 		// Build tonic response from UserResponse vector
-		let response = DeleteUserResponse {
-			is_deleted
-		};
+		let response = DeleteUserResponse { is_deleted };
 
 		Ok(Response::new(response))
 	}

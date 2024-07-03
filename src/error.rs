@@ -35,6 +35,9 @@ pub enum BackendError {
 	#[error("Password does not meet minimum requirements")]
 	PasswordFormatInvalid,
 
+	#[error("Password parsing error")]
+	PasswordParseError,
+
 	//-- External errors
 	/// Derive IO errors
 	#[error(transparent)]
@@ -68,4 +71,34 @@ pub enum BackendError {
 	Sqlx(#[from] sqlx::Error),
 	#[error(transparent)]
 	Uuid(#[from] uuid::Error),
+	// #[error(transparent)]
+	// Argon2(#[from] argon2::password_hash::Error)
+}
+
+impl From<BackendError> for tonic::Status {
+    fn from(backend_error: BackendError) -> tonic::Status {
+        match backend_error {
+            BackendError::EmailFormatInvalid(_) => {
+                tonic::Status::invalid_argument(format!("{:?}", backend_error))
+            }
+			 BackendError::Uuid(_) => {
+				tonic::Status::internal("Internal server error")
+			 }
+			_ => {
+				tonic::Status::internal("Internal server error")
+			}
+            // BackendError::InvalidUsernameOrPassword => {
+            //     tonic::Status::unauthenticated(format!("{:?}", backend_error))
+            // }
+            // BackendError::UserAlreadyExists(_) => {
+            //     tonic::Status::invalid_argument(format!("{:?}", backend_error))
+            // }
+            // BackendError::DatabaseError(_) => tonic::Status::unavailable(format!("{:?}", backend_error)),
+            // BackendError::InvalidToken(_) => {
+            //     tonic::Status::unauthenticated(format!("{:?}", backend_error))
+            // }
+            // BackendError::HashingError => tonic::Status::unavailable(format!("{:?}", backend_error)),
+            // _ => tonic::Status::unknown(format!("{:?}", backend_error)),
+        }
+    }
 }
