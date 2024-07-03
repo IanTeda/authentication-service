@@ -8,8 +8,8 @@ import "common.proto";
 
 service Users {
   rpc CreateUser (CreateUserRequest) returns (UserResponse);
-  // rpc ReadUser (UserRequest) returns (UserResponse);
-  // rpc ReadAllUsers (Empty) returns (ReadAllUsersResponse);
+  rpc ReadUser (UserRequest) returns (UserResponse);
+  // rpc IndexUsers (UserIndexRequest) returns (UserIndexResponse);
   // rpc UpdateUser (CreateUserRequest) returns (UserResponse);
   // rpc DeleteUser (UserRequest) returns (DeleteUserResponse);
 }
@@ -29,11 +29,16 @@ message UserResponse {
   string created_on = 5;
 }
 
+message UserIndexRequest {
+  int64 limit = 1;
+  int64 offset = 2;
+}
+
 message UserRequest {
   string id = 1;
 }
 
-message ReadAllUsersResponse {
+message UserIndexResponse {
     repeated UserResponse users = 1;
 }
 

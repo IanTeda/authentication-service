@@ -8,10 +8,11 @@ use crate::database;
 
 use sqlx::{Pool, Postgres};
 use tonic::{Request, Response, Status};
+use uuid::{uuid, Uuid};
 
 use crate::database::users::UserModel;
 use crate::rpc::ledger::users_server::Users;
-use crate::rpc::ledger::{CreateUserRequest, UserResponse};
+use crate::rpc::ledger::{CreateUserRequest, UserRequest, UserResponse};
 
 #[derive(Debug)]
 pub struct UsersService {
@@ -59,4 +60,44 @@ impl Users for UsersService {
 		// Send back our ping response.
 		Ok(Response::new(response))
 	}
+
+	async fn read_user(
+		&self,
+		request: Request<UserRequest>
+	) -> Result<Response<UserResponse>, Status> {
+		let user_request = request.into_inner();
+		let request_id: &str = user_request.id.as_str();
+		let id = Uuid::try_parse(request_id).unwrap();
+		let user = database::users::select_user_by_id(&id, &self.database)
+			.await
+			.unwrap();
+
+		let response = UserResponse::from(user);
+
+		Ok(Response::new(response))
+	}
+
+	// #[tonic::async_trait]
+	// async fn index_users(
+	// 	&self,
+	// 	request: Request<UserIndexRequest>
+	// ) -> Result<Response<UserIndexResponse>, Status> {
+
+	// }
+
+	// #[tonic::async_trait]
+	// async fn update_user(
+	// 	&self,
+	// 	request: Request<CreateUserRequest>
+	// ) -> Result<Response<UserResponse>, Status> {
+
+	// }
+
+	// #[tonic::async_trait]
+	// async fn delete_user(
+	// 	&self,
+	// 	request: Request<UserRequest>
+	// ) -> Result<Response<DeleteUserResponse>, Status> {
+
+	// }
 }
