@@ -27,9 +27,9 @@ pub struct UserModel {
 }
 
 impl TryFrom<CreateUserRequest> for UserModel {
-    type Error = BackendError;
+	type Error = BackendError;
 
-    fn try_from(value: CreateUserRequest) -> Result<Self, Self::Error> {
+	fn try_from(value: CreateUserRequest) -> Result<Self, Self::Error> {
 		let id = Uuid::now_v7();
 		let email = EmailAddress::parse(value.email)?;
 		let user_name = UserName::parse(value.user_name)?;
@@ -37,8 +37,15 @@ impl TryFrom<CreateUserRequest> for UserModel {
 		let is_active = value.is_active;
 		let created_on = Utc::now();
 
-        Ok(Self { id, email, user_name, password_hash, is_active, created_on })
-    }
+		Ok(Self {
+			id,
+			email,
+			user_name,
+			password_hash,
+			is_active,
+			created_on,
+		})
+	}
 }
 
 //-- Unit Tests

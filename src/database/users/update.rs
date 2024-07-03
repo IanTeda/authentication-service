@@ -5,10 +5,7 @@
 
 // #![allow(unused)] // For development only
 
-use crate::{
-	database::users::UserModel,
-	prelude::*
-};
+use crate::{database::users::UserModel, prelude::*};
 
 /// Update a `User` into the database, returning result with a UserModel instance.
 ///
@@ -25,7 +22,6 @@ pub async fn update_user_by_id(
 	user: &UserModel,
 	database: &sqlx::Pool<sqlx::Postgres>,
 ) -> Result<UserModel, BackendError> {
-
 	let updated_user = sqlx::query_as!(
 		UserModel,
 		r#"
@@ -34,7 +30,7 @@ pub async fn update_user_by_id(
             WHERE id = $1 
             RETURNING *
         "#,
-        user.id,
+		user.id,
 		user.email.as_ref(),
 		user.user_name.as_ref(),
 		user.password_hash,
@@ -42,9 +38,9 @@ pub async fn update_user_by_id(
 	)
 	.fetch_one(database)
 	.await?;
-	
+
 	tracing::debug!("Record inserted into database: {updated_user:#?}");
-    
+
 	Ok(updated_user)
 }
 
@@ -69,26 +65,29 @@ pub mod tests {
 		//-- Setup and Fixtures (Arrange)
 		// Generate random user for testing
 		let original_random_test_user = generate_random_user()?;
-        insert_user(&original_random_test_user, &database).await?;
+		insert_user(&original_random_test_user, &database).await?;
 
-        // Generate new data for updating the database
+		// Generate new data for updating the database
 		let random_test_user = generate_random_user()?;
-        let mut updated_random_test_user = original_random_test_user.clone();
-        updated_random_test_user.email = random_test_user.email;
-        updated_random_test_user.user_name = random_test_user.user_name;
-        updated_random_test_user.password_hash = random_test_user.password_hash;
-        updated_random_test_user.is_active = random_test_user.is_active;
+		let mut updated_random_test_user = original_random_test_user.clone();
+		updated_random_test_user.email = random_test_user.email;
+		updated_random_test_user.user_name = random_test_user.user_name;
+		updated_random_test_user.password_hash = random_test_user.password_hash;
+		updated_random_test_user.is_active = random_test_user.is_active;
 
 		//-- Execute Function (Act)
 		// Insert user into database
 		let updated_user = update_user_by_id(&updated_random_test_user, &database).await?;
 		// println!("{updated_user:#?}");
 
-        //-- Checks (Assertions)
+		//-- Checks (Assertions)
 		assert_eq!(updated_user.id, original_random_test_user.id);
 		assert_eq!(updated_user.email, updated_random_test_user.email);
 		assert_eq!(updated_user.user_name, updated_random_test_user.user_name);
-		assert_eq!(updated_user.password_hash, updated_random_test_user.password_hash);
+		assert_eq!(
+			updated_user.password_hash,
+			updated_random_test_user.password_hash
+		);
 		assert_eq!(updated_user.is_active, updated_random_test_user.is_active);
 		// Use timestamp because Postgres time precision is less than Rust
 		assert_eq!(

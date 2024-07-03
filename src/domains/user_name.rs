@@ -24,22 +24,19 @@ impl Default for UserName {
 }
 
 impl AsRef<str> for UserName {
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
+	fn as_ref(&self) -> &str {
+		&self.0
+	}
 }
 
 impl std::fmt::Display for UserName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		self.0.fmt(f)
+	}
 }
 
 impl UserName {
-	pub fn parse(
-		name: impl Into<String>
-	) 
-	-> Result<UserName, BackendError> {
+	pub fn parse(name: impl Into<String>) -> Result<UserName, BackendError> {
 		let name: String = name.into();
 
 		// `.trim()` returns a view over the input `name` without trailing whitespace-like
@@ -58,8 +55,7 @@ impl UserName {
 		// Iterate over all characters in the input `name` to check if any of them matches
 		// one of the characters in the forbidden array.
 		let forbidden_characters = ['/', '(', ')', '"', '<', '>', '\\', '{', '}'];
-		let contains_forbidden_characters =
-			name.chars().any(|g| forbidden_characters.contains(&g));
+		let contains_forbidden_characters = name.chars().any(|g| forbidden_characters.contains(&g));
 
 		if is_empty_or_whitespace || is_too_long || contains_forbidden_characters {
 			Err(BackendError::UserNameFormatInvalid(name))

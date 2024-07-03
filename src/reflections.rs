@@ -15,10 +15,9 @@ mod rpc {
 }
 
 pub fn get_reflection() -> Result<ServerReflectionServer<impl ServerReflection>, BackendError> {
-    let reflections_server = 
-        tonic_reflection::server::Builder::configure()
-            .register_encoded_file_descriptor_set(rpc::DESCRIPTOR_SET)
-            .build()?;
-    
-    Ok(reflections_server)
+	let reflections_server = tonic_reflection::server::Builder::configure()
+		.register_encoded_file_descriptor_set(rpc::DESCRIPTOR_SET)
+		.build()?;
+
+	Ok(reflections_server)
 }

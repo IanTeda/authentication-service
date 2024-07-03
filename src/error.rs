@@ -4,7 +4,7 @@
 
 //! Main Crate Error
 //! # References
-//! 
+//!
 //! * [Rust Error Handling - Best Practices](https://www.youtube.com/watch?v=j-VQCYP7wyw)
 //! * [jeremychone-channel/rust-base](https://github.com/jeremychone-channel/rust-base)
 //! * [derive(Error)](https://github.com/dtolnay/thiserror)
@@ -41,31 +41,29 @@ pub enum BackendError {
 	IO(#[from] std::io::Error),
 	// Config errors
 	#[error(transparent)]
-    Config(#[from] config::ConfigError),
+	Config(#[from] config::ConfigError),
 	// Tonic Reflections errors
 	#[error(transparent)]
-    TonicReflection(#[from] tonic_reflection::server::Error),
+	TonicReflection(#[from] tonic_reflection::server::Error),
 	// Tonic transport errors
 	#[error(transparent)]
-    TonicTransport(#[from] tonic::transport::Error),
+	TonicTransport(#[from] tonic::transport::Error),
 	// Standard network address error
 	#[error(transparent)]
-    AddressParse(#[from] std::net::AddrParseError),
+	AddressParse(#[from] std::net::AddrParseError),
 
 	// Environmental parse error
 	// #[error(transparent)]
 	// EnvironmentParse(#[from] std::env::VarError),
+	#[error(transparent)]
+	LogError(#[from] tracing_log::log::SetLoggerError),
 
 	#[error(transparent)]
-    LogError(#[from] tracing_log::log::SetLoggerError),
+	TracingError(#[from] tracing::dispatcher::SetGlobalDefaultError),
 
 	#[error(transparent)]
-    TracingError(#[from] tracing::dispatcher::SetGlobalDefaultError),
-
-	#[error(transparent)]
-    SqlxMigration(#[from] sqlx::migrate::MigrateError),
+	SqlxMigration(#[from] sqlx::migrate::MigrateError),
 	// sqlx::migrate::MigrateError
-
 	#[error(transparent)]
-    Sqlx(#[from] sqlx::Error),
+	Sqlx(#[from] sqlx::Error),
 }

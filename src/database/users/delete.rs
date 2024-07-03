@@ -5,9 +5,7 @@
 
 // #![allow(unused)] // For development only
 
-use crate::{
-	database::users::UserModel, domains::EmailAddress, prelude::*
-};
+use crate::{database::users::UserModel, domains::EmailAddress, prelude::*};
 
 use uuid::Uuid;
 
@@ -26,7 +24,6 @@ pub async fn delete_user_by_id(
 	id: &Uuid,
 	database: &sqlx::Pool<sqlx::Postgres>,
 ) -> Result<bool, BackendError> {
-
 	let rows_affected = sqlx::query!(
 		r#"
 			Delete 
@@ -37,15 +34,14 @@ pub async fn delete_user_by_id(
 	)
 	.execute(database)
 	.await?
-    .rows_affected();
+	.rows_affected();
 
-    let confirm_deleted: bool = rows_affected != 0;
-	
-    tracing::debug!("User record retrieved form database: {rows_affected:#?}");
-    
+	let confirm_deleted: bool = rows_affected != 0;
+
+	tracing::debug!("User record retrieved form database: {rows_affected:#?}");
+
 	Ok(confirm_deleted)
 }
-
 
 //-- Unit Tests
 #[cfg(test)]
@@ -63,13 +59,13 @@ pub mod tests {
 	pub type Result<T> = core::result::Result<T, Error>;
 	pub type Error = Box<dyn std::error::Error>;
 
-    // Test getting user from database using unique UUID
+	// Test getting user from database using unique UUID
 	#[sqlx::test]
 	async fn delete_user_record_by_id(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
 		let random_test_user = generate_random_user()?;
-        insert_user(&random_test_user, &database).await?;
+		insert_user(&random_test_user, &database).await?;
 		// println!("{test_thing:#?}");
 
 		//-- Execute Function (Act)
@@ -77,21 +73,21 @@ pub mod tests {
 		let database_user = delete_user_by_id(&random_test_user.id, &database).await?;
 		// println!("{record:#?}");
 
-        //-- Checks (Assertions)
+		//-- Checks (Assertions)
 		assert!(database_user);
 
 		// -- Return
 		Ok(())
 	}
 
-        // Test getting user from database using unique UUID
+	// Test getting user from database using unique UUID
 	#[sqlx::test]
 	async fn delete_user_false(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
 		let random_test_user = generate_random_user()?;
-        insert_user(&random_test_user, &database).await?;
-        let random_user_id = generate_random_user()?.id;
+		insert_user(&random_test_user, &database).await?;
+		let random_user_id = generate_random_user()?.id;
 		// println!("{test_thing:#?}");
 
 		//-- Execute Function (Act)
@@ -99,7 +95,7 @@ pub mod tests {
 		let database_user = delete_user_by_id(&random_user_id, &database).await?;
 		// println!("{record:#?}");
 
-        //-- Checks (Assertions)
+		//-- Checks (Assertions)
 		assert!(!database_user);
 
 		// -- Return

@@ -7,11 +7,11 @@
 
 // #![allow(unused)] // For development only
 
+use crate::prelude::*;
 use crate::reflections;
 use crate::rpc::ledger::users_server::UsersServer;
 use crate::rpc::ledger::utilities_server::UtilitiesServer;
-use crate::services::{UtilitiesService, UsersService};
-use crate::prelude::*;
+use crate::services::{UsersService, UtilitiesService};
 
 use sqlx::{Pool, Postgres};
 use tonic::transport::{server::Router, Server};
