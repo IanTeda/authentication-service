@@ -38,6 +38,9 @@ pub enum BackendError {
 	#[error("Password parsing error")]
 	PasswordParseError,
 
+	#[error("Authentication error")]
+	AuthenticationError,
+
 	//-- External errors
 	/// Derive IO errors
 	#[error(transparent)]
@@ -72,7 +75,7 @@ pub enum BackendError {
 	#[error(transparent)]
 	Uuid(#[from] uuid::Error),
 	// #[error(transparent)]
-	// Argon2(#[from] argon2::password_hash::Error)
+	// Argon2(#[from] argon2::Error)
 }
 
 impl From<BackendError> for tonic::Status {
