@@ -6,6 +6,7 @@ use personal_ledger_backend::rpc::ledger::{UpdateUserRequest, UserIndexRequest, 
 use personal_ledger_backend::rpc::ledger::{users_client::UsersClient, CreateUserRequest};
 
 use chrono::prelude::*;
+use secrecy::Secret;
 use uuid::Uuid;
 use sqlx::{Pool, Postgres};
 use fake::faker::boolean::en::Boolean;
@@ -38,7 +39,7 @@ pub fn generate_random_user() -> Result<UserModel> {
 
 	// Generate random password string
 	let random_count = (5..30).fake::<i64>() as usize;
-	let password = "aB1%".repeat(random_count);
+	let password = Secret::new("aB1%".repeat(random_count));
 	let password_hash = Password::parse(password)?;
 
 	// Generate random boolean value

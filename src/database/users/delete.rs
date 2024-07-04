@@ -5,7 +5,7 @@
 
 // #![allow(unused)] // For development only
 
-use crate::{database::users::UserModel, domains::EmailAddress, prelude::*};
+use crate::prelude::*;
 
 use uuid::Uuid;
 
@@ -52,7 +52,6 @@ pub mod tests {
 
 	use crate::database::users::{insert_user, model::tests::generate_random_user};
 
-	use fake::Fake;
 	use sqlx::{Pool, Postgres};
 
 	// Override with more flexible error

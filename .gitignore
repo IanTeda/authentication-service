@@ -8,6 +8,9 @@
 # By default
 _*
 
+# Reference books and stuff
+reference/
+
 # --- Rust
 target/
 # '_' in src dir, ok.

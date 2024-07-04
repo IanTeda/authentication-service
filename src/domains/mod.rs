@@ -10,4 +10,4 @@ mod password;
 // Re-export domain structs
 pub use email_address::EmailAddress;
 pub use user_name::UserName;
-pub use password::Password;
+pub use password::{Password, verify_password_hash};

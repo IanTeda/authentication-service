@@ -3,9 +3,11 @@
 //! Update User in the database, returning a Result with a UserModel instance
 //! ---
 
-// #![allow(unused)] // For development only
+#![allow(unused)] // For development only
 
-use crate::{database::users::UserModel, prelude::*};
+use uuid::Uuid;
+
+use crate::{database::users::UserModel, domains::Password, prelude::*};
 
 /// Update a `User` into the database, returning result with a UserModel instance.
 ///
@@ -15,7 +17,7 @@ use crate::{database::users::UserModel, prelude::*};
 /// * `database` - An Sqlx database connection pool
 /// ---
 #[tracing::instrument(
-	name = "Update a new User into the database."
+	name = "Update a User in the database."
 	skip(user, database)
 )]
 pub async fn update_user_by_id(
@@ -42,6 +44,30 @@ pub async fn update_user_by_id(
 	tracing::debug!("Record inserted into database: {updated_user:#?}");
 
 	Ok(updated_user)
+}
+
+pub async fn update_password_by_id(
+	id: Uuid,
+	password: Password,
+	database: &sqlx::Pool<sqlx::Postgres>,
+) -> Result<bool, BackendError> {
+	let updated_user = sqlx::query_as!(
+		UserModel,
+		r#"
+            UPDATE users 
+            SET password_hash = $2 
+            WHERE id = $1 
+            RETURNING *
+        "#,
+		id,
+		password.as_ref(),
+	)
+	.fetch_one(database)
+	.await?;
+
+	tracing::debug!("Password updated for: {}", updated_user.user_name);
+
+	Ok(true)
 }
 
 //-- Unit Tests

@@ -18,7 +18,7 @@ use crate::prelude::*;
 // use crate::telemetry::spawn_blocking_with_tracing;
 use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHash, PasswordHasher, PasswordVerifier, Version};
-use secrecy::{ExposeSecret, Secret};
+use secrecy::{ExposeSecret, Secret };
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, derive_more::From)]
 pub struct Password(String);
@@ -30,9 +30,9 @@ impl Password {
 	///
 	/// * `password`: The password in a string
 	/// ---
-	pub fn parse(password: impl Into<String>) -> Result<Password, BackendError> {
+	pub fn parse(password: Secret<String>) -> Result<Password, BackendError> {
 		// Parse String into Secret struct
-		let password = Secret::new(password.into());
+		// let password = Secret::new(password.into());
 
 		// Password must be at least 12 characters
 		let is_to_short = password.expose_secret().len() < 12;
@@ -173,10 +173,12 @@ mod tests {
 	use argon2::{Argon2, PasswordHash, PasswordVerifier};
 	use claims::{assert_err, assert_ok};
 	use fake::Fake;
+use secrecy::{ExposeSecret, Secret};
 
 	#[test]
 	fn less_than_twelve_fails() -> Result<()> {
-		let password = "aB1%";
+		let password = "aB1%".to_string();
+		let password = Secret::new(password);
 		assert_err!(Password::parse(password));
 
 		Ok(())
@@ -186,6 +188,7 @@ mod tests {
 	fn more_than_twelve_fails() -> Result<()> {
 		let random_count = (256..300).fake::<i64>() as usize;
 		let password = "aB1%".repeat(random_count);
+		let password = Secret::new(password);
 		assert_err!(Password::parse(password));
 
 		Ok(())
@@ -195,6 +198,7 @@ mod tests {
 	fn no_uppercase_characters_fails() -> Result<()> {
 		let random_count = (5..30).fake::<i64>() as usize;
 		let password = "ab1%".repeat(random_count);
+		let password = Secret::new(password);
 		assert_err!(Password::parse(password));
 
 		Ok(())
@@ -204,6 +208,7 @@ mod tests {
 	fn no_number_characters_fails() -> Result<()> {
 		let random_count = (5..30).fake::<i64>() as usize;
 		let password = "aBc%".repeat(random_count);
+		let password = Secret::new(password);
 		assert_err!(Password::parse(password));
 
 		Ok(())
@@ -213,6 +218,7 @@ mod tests {
 	fn no_special_characters_fails() -> Result<()> {
 		let random_count = (5..30).fake::<i64>() as usize;
 		let password = "aB15".repeat(random_count);
+		let password = Secret::new(password);
 		assert_err!(Password::parse(password));
 
 		Ok(())
@@ -222,6 +228,7 @@ mod tests {
 	fn password_passes() -> Result<()> {
 		let random_count = (5..30).fake::<i64>() as usize;
 		let password = "aB1%".repeat(random_count);
+		let password = Secret::new(password);
 		assert_ok!(Password::parse(password));
 
 		Ok(())
@@ -231,12 +238,13 @@ mod tests {
 	fn parse_hash_correctly() -> Result<()> {
 		let random_count = (5..30).fake::<i64>() as usize;
 		let password_original = "aB1%".repeat(random_count);
+		let password_original = Secret::new(password_original);
 
 		let password_hash = Password::parse(password_original.clone())?;
 		let password_string = password_hash.as_ref();
 		let parsed_hash = PasswordHash::new(password_string).unwrap();
 		assert!(Argon2::default()
-			.verify_password(password_original.as_bytes(), &parsed_hash)
+			.verify_password(password_original.expose_secret().as_bytes(), &parsed_hash)
 			.is_ok());
 
 		Ok(())

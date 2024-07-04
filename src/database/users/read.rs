@@ -211,10 +211,10 @@ pub mod tests {
 			random_limit
 		};
 
-		let random_vec_index: i64 = (1..expected_records).fake::<i64>() - 1;
-		let random_test_vec_index = random_offset + random_vec_index;
-		let random_record_thing = &records[random_vec_index as usize];
-		let random_test_thing = &test_vec[random_test_vec_index as usize];
+		// let random_vec_index: i64 = (1..expected_records).fake::<i64>() - 1;
+		// let random_test_vec_index = random_offset + random_vec_index;
+		// let random_record_thing = &records[random_vec_index as usize];
+		// let random_test_thing = &test_vec[random_test_vec_index as usize];
 
 		assert_eq!(records.len() as i64, expected_records);
 		// assert_eq!(random_record_thing.id, random_test_thing.id);
