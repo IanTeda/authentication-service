@@ -317,9 +317,7 @@ pub struct UpdateUserRequest {
     pub email: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub user_name: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub password: ::prost::alloc::string::String,
-    #[prost(bool, tag = "5")]
+    #[prost(bool, tag = "4")]
     pub is_active: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]

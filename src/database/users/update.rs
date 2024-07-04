@@ -33,7 +33,7 @@ pub async fn update_user_by_id(
 		user.id,
 		user.email.as_ref(),
 		user.user_name.as_ref(),
-		user.password_hash,
+		user.password_hash.as_ref(),
 		user.is_active,
 	)
 	.fetch_one(database)

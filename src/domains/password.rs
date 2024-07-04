@@ -1,6 +1,6 @@
 //-- ./src/domains/passwords.rs
 
-#![allow(unused)] // For beginning only.
+// #![allow(unused)] // For beginning only.
 
 //! Password domain parsing
 //!
@@ -20,14 +20,14 @@ use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHash, PasswordHasher, PasswordVerifier, Version};
 use secrecy::{ExposeSecret, Secret};
 
-#[derive(Debug, Clone)]
-pub struct Password(Secret<String>);
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, derive_more::From)]
+pub struct Password(String);
 
 impl Password {
 	/// Parse `String` into a hashed password returning it in a Secret type.
-	/// 
+	///
 	/// # Parameters
-	/// 
+	///
 	/// * `password`: The password in a string
 	/// ---
 	pub fn parse(password: impl Into<String>) -> Result<Password, BackendError> {
@@ -71,7 +71,7 @@ impl Password {
 		});
 
 		// If any of the validations fail return an error else hash the password
-		// and return within a Password Struct. 
+		// and return within a Password Struct.
 		if is_to_short || is_to_long || no_uppercase || no_lowercase || no_number || no_special {
 			Err(BackendError::PasswordFormatInvalid)
 		} else {
@@ -80,27 +80,39 @@ impl Password {
 		}
 	}
 
-	/// Function to get the `Secret` within the Password struct.
-	pub fn inner(self) -> Secret<String> {
-		// The caller gets the inner string, but they do not have a SubscriberName anymore!
-		// That's because `inner` takes `self` by value, consuming it according to move semantics
-		self.0
+	// Function to get the `Secret` within the Password struct.
+	// pub fn inner(self) -> String {
+	// 	// The caller gets the inner string, but they do not have a SubscriberName anymore!
+	// 	// That's because `inner` takes `self` by value, consuming it according to move semantics
+	// 	self.0
+	// }
+}
+
+impl AsRef<str> for Password {
+	fn as_ref(&self) -> &str {
+		&self.0
+	}
+}
+
+impl std::fmt::Display for Password {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		self.0.fmt(f)
 	}
 }
 
 /// Compute the password hash, checking it as we go, returning the password hash within
 /// a Secret type.
-/// 
+///
 /// # Parameters
-/// 
+///
 /// * `password`: The password String within a Secret type
 /// ---
-pub fn compute_password_hash_and_verify(password: Secret<String>) -> Result<Secret<String>, BackendError> {
+pub fn compute_password_hash_and_verify(password: Secret<String>) -> Result<String, BackendError> {
 	// Generate encryption salt hash
 	let salt = SaltString::generate(&mut rand::thread_rng());
 
 	// Initiate new Argon2 instance
-	let argon2 = 	Argon2::new(
+	let argon2 = Argon2::new(
 		Algorithm::Argon2id,
 		Version::V0x13,
 		Params::new(15000, 2, 1, None).unwrap(),
@@ -111,41 +123,41 @@ pub fn compute_password_hash_and_verify(password: Secret<String>) -> Result<Secr
 		.hash_password(password.expose_secret().as_bytes(), &salt)
 		.unwrap()
 		.to_string();
-	let password_hash = Secret::new(password_hash);
 
+	// unimplemented!()
 	// Verify password hash
-	if verify_password_hash(password, password_hash.clone())? {
+	if verify_password_hash(&password, &password_hash)? {
 		Ok(password_hash)
 	} else {
 		Err(BackendError::PasswordParseError)
 	}
-
-	// unimplemented!()
 }
 
 /// Verify password hash (i.e. verify password)
-/// 
+///
 /// # Parameters
-/// 
+///
 /// * `password`: Password in a String to check against the hash
 /// * `password_hash`: Password hash to check against
 /// ---
-pub fn verify_password_hash(password: Secret<String>, password_hash: Secret<String>) -> Result<bool, BackendError> {
+pub fn verify_password_hash(
+	password: &Secret<String>,
+	password_hash: &str,
+) -> Result<bool, BackendError> {
 	// Initiate new Argon2 instance
-	let argon2 = 	Argon2::new(
+	let argon2 = Argon2::new(
 		Algorithm::Argon2id,
 		Version::V0x13,
 		Params::new(15000, 2, 1, None).unwrap(),
 	);
 
 	// Verify password hash
-	let parsed_hash = PasswordHash::new(password_hash.expose_secret()).unwrap();
+	let parsed_hash = PasswordHash::new(password_hash).unwrap();
 
 	// Argon2::default().verify_password(password, &parsed_hash)
-	let verified = argon2.verify_password(password.expose_secret().as_bytes(), &parsed_hash).is_ok();
-	//     Ok(_) => true,
-    //     Err(_) => false
-    // };
+	let verified = argon2
+		.verify_password(password.expose_secret().as_bytes(), &parsed_hash)
+		.is_ok();
 
 	// unimplemented!()
 	Ok(verified)
@@ -158,10 +170,9 @@ mod tests {
 	pub type Error = Box<dyn std::error::Error>;
 
 	use super::Password;
-	use argon2::{Argon2, PasswordHash, PasswordVerifier };
+	use argon2::{Argon2, PasswordHash, PasswordVerifier};
 	use claims::{assert_err, assert_ok};
 	use fake::Fake;
-	use secrecy::ExposeSecret;
 
 	#[test]
 	fn less_than_twelve_fails() -> Result<()> {
@@ -222,8 +233,8 @@ mod tests {
 		let password_original = "aB1%".repeat(random_count);
 
 		let password_hash = Password::parse(password_original.clone())?;
-		let secret = password_hash.inner();
-		let parsed_hash = PasswordHash::new(secret.expose_secret()).unwrap();
+		let password_string = password_hash.as_ref();
+		let parsed_hash = PasswordHash::new(password_string).unwrap();
 		assert!(Argon2::default()
 			.verify_password(password_original.as_bytes(), &parsed_hash)
 			.is_ok());

@@ -10,11 +10,11 @@ use uuid::Uuid;
 use sqlx::{Pool, Postgres};
 use fake::faker::boolean::en::Boolean;
 use fake::faker::{chrono::en::DateTime, chrono::en::DateTimeAfter};
-use fake::faker::internet::en::{Password, SafeEmail};
+use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::Fake;
 use personal_ledger_backend::database::users::{insert_user, UserModel};
-use personal_ledger_backend::domains::{EmailAddress, UserName};
+use personal_ledger_backend::domains::{EmailAddress, Password, UserName};
 
 pub fn generate_random_user() -> Result<UserModel> {
 	// Generate random DateTime after UNIX time epoch (00:00:00 UTC on 1 January 1970)
@@ -37,7 +37,9 @@ pub fn generate_random_user() -> Result<UserModel> {
 	let user_name = UserName::parse(random_name)?;
 
 	// Generate random password string
-	let password_hash: String = Password(14..255).fake();
+	let random_count = (5..30).fake::<i64>() as usize;
+	let password = "aB1%".repeat(random_count);
+	let password_hash = Password::parse(password)?;
 
 	// Generate random boolean value
 	let is_active: bool = Boolean(4).fake();
@@ -187,7 +189,6 @@ async fn updated_user_returns_user(database: Pool<Postgres>) -> Result<()> {
 		id: random_user.id.to_string(),
         email: updated_user.email.to_string(), 
         user_name: updated_user.user_name.to_string(), 
-        password: updated_user.password_hash.to_string(), 
         is_active: updated_user.is_active, 
     };
     let mut client = UsersClient::connect(tonic_server.address).await?;

@@ -3,10 +3,10 @@
 //! The Users model
 //! ---
 
-#![allow(unused)] // For development only
+// #![allow(unused)] // For development only
 
 use crate::{
-	domains::{EmailAddress, UserName},
+	domains::{EmailAddress, Password, UserName},
 	prelude::*,
 	rpc::ledger::{CreateUserRequest, UpdateUserRequest},
 };
@@ -16,12 +16,12 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone, FromRow, Debug, PartialEq)]
+#[derive(Deserialize, Clone, FromRow, Debug)]
 pub struct UserModel {
 	pub id: Uuid,
 	pub email: EmailAddress,
 	pub user_name: UserName,
-	pub password_hash: String, // TODO: start with string
+	pub password_hash: Password,
 	pub is_active: bool,
 	pub created_on: DateTime<Utc>,
 }
@@ -33,7 +33,7 @@ impl TryFrom<CreateUserRequest> for UserModel {
 		let id = Uuid::now_v7();
 		let email = EmailAddress::parse(value.email)?;
 		let user_name = UserName::parse(value.user_name)?;
-		let password_hash = value.password;
+		let password_hash = Password::parse(value.password)?;
 		let is_active = value.is_active;
 		let created_on = Utc::now();
 
@@ -55,7 +55,7 @@ impl TryFrom<UpdateUserRequest> for UserModel {
 		let id = Uuid::parse_str(value.id.as_str())?;
 		let email = EmailAddress::parse(value.email)?;
 		let user_name = UserName::parse(value.user_name)?;
-		let password_hash = value.password;
+		let password_hash = Password::parse("Place holder as password is not updated here")?;
 		let is_active = value.is_active;
 		let created_on = Utc::now();
 
@@ -108,7 +108,9 @@ pub mod tests {
 		let user_name = UserName::parse(random_name)?;
 
 		// Generate random password string
-		let password_hash: String = Password(14..255).fake();
+		let random_count = (5..30).fake::<i64>() as usize;
+		let password = "aB1%".repeat(random_count);
+		let password_hash = Password::parse(password)?;
 
 		// Generate random boolean value
 		let is_active: bool = Boolean(4).fake();
@@ -136,10 +138,11 @@ pub mod tests {
 		// Request will consume random_user so lets clone for asserts
 		let tonic_user = random_user.clone();
 		// Build Tonic request
+		let password: String = Password(14..255).fake();
 		let tonic_request: CreateUserRequest = CreateUserRequest {
 			email: tonic_user.email.as_ref().to_string(),
 			user_name: tonic_user.user_name.as_ref().to_string(),
-			password: tonic_user.password_hash,
+			password,
 			is_active: tonic_user.is_active,
 		};
 		// println!("{tonic_request:#?}");
@@ -153,7 +156,6 @@ pub mod tests {
 		assert_ne!(random_user.id, new_user.id); // id is dropped so it is not equal
 		assert_eq!(random_user.email, new_user.email);
 		assert_eq!(random_user.user_name, new_user.user_name);
-		assert_eq!(random_user.password_hash, new_user.password_hash);
 		assert_eq!(random_user.is_active, new_user.is_active);
 		assert_ne!(random_user.created_on, new_user.created_on); // created_on is dropped so it is not equal
 
