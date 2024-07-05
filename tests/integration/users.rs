@@ -2,20 +2,23 @@
 
 use crate::helpers::*;
 
-use personal_ledger_backend::rpc::ledger::{UpdateUserRequest, UserIndexRequest, UserRequest};
-use personal_ledger_backend::rpc::ledger::{users_client::UsersClient, CreateUserRequest};
-
-use chrono::prelude::*;
-use secrecy::Secret;
-use uuid::Uuid;
-use sqlx::{Pool, Postgres};
-use fake::faker::boolean::en::Boolean;
-use fake::faker::{chrono::en::DateTime, chrono::en::DateTimeAfter};
-use fake::faker::internet::en::SafeEmail;
-use fake::faker::name::en::Name;
-use fake::Fake;
 use personal_ledger_backend::database::users::{insert_user, UserModel};
 use personal_ledger_backend::domains::{EmailAddress, Password, UserName};
+use personal_ledger_backend::rpc::ledger::{users_client::UsersClient, CreateUserRequest};
+use personal_ledger_backend::rpc::ledger::{UpdateUserRequest, UserIndexRequest, UserRequest};
+
+use chrono::prelude::*;
+use fake::faker::boolean::en::Boolean;
+use fake::faker::internet::en::SafeEmail;
+use fake::faker::name::en::Name;
+use fake::faker::{chrono::en::DateTime, chrono::en::DateTimeAfter};
+use fake::Fake;
+use secrecy::Secret;
+use sqlx::{Pool, Postgres};
+use uuid::Uuid;
+
+pub type Error = Box<dyn std::error::Error>;
+pub type Result<T> = core::result::Result<T, Error>;
 
 pub fn generate_random_user() -> Result<UserModel> {
 	// Generate random DateTime after UNIX time epoch (00:00:00 UTC on 1 January 1970)
@@ -62,66 +65,65 @@ pub fn generate_random_user() -> Result<UserModel> {
 
 #[sqlx::test]
 async fn create_user_returns_user(database: Pool<Postgres>) -> Result<()> {
-    //-- Setup and Fixtures (Arrange)
-    let random_user = generate_random_user()?;
-    let create_user_request = CreateUserRequest { 
-        email: random_user.email.to_string(), 
-        user_name: random_user.user_name.to_string(), 
-        password: random_user.password_hash.to_string(), 
-        is_active: random_user.is_active, 
-    };
-    let tonic_server = spawn_test_server(database).await?;
-    // Give the test server a few ms to become available
-    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+	//-- Setup and Fixtures (Arrange)
+	let random_user = generate_random_user()?;
+	let create_user_request = CreateUserRequest {
+		email: random_user.email.to_string(),
+		user_name: random_user.user_name.to_string(),
+		password: random_user.password_hash.to_string(),
+		is_active: random_user.is_active,
+	};
+	let tonic_server = spawn_test_server(database).await?;	
 
-    //-- Execute Test (Act)
-    let mut client = UsersClient::connect(tonic_server.address).await?;
-    let request = tonic::Request::new(create_user_request);
-    let response = client.create_user(request)
-        .await?
-        .into_inner();
-    // println!("{response:#?}");
+	//-- Execute Test (Act)
+	// Build tonic channel
+	let channel = get_client_channel(tonic_server.address).await?;
+	// Build tonic client
+	let mut client = UsersClient::with_interceptor(channel, authentication_intercept);
+	// Build tonic client request
+	let request = tonic::Request::new(create_user_request);
+	// Send tonic client request to server
+	let response = client.create_user(request).await?.into_inner();
+	// println!("{response:#?}");
 
-    //-- Checks (Assertions)
+	//-- Checks (Assertions)
 	assert_eq!(response.email, random_user.email.to_string());
 	assert_eq!(response.user_name, random_user.user_name.to_string());
 	assert_eq!(response.is_active, random_user.is_active);
 
-    Ok(())
+	Ok(())
 }
 
 #[sqlx::test]
 async fn read_user_returns_user(database: Pool<Postgres>) -> Result<()> {
-    //-- Setup and Fixtures (Arrange)
-    let random_user = generate_random_user()?;
+	//-- Setup and Fixtures (Arrange)
+	let random_user = generate_random_user()?;
 	insert_user(&random_user, &database).await?;
-    let tonic_server = spawn_test_server(database).await?;
-    // Give the test server a few ms to become available
-    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+	let tonic_server = spawn_test_server(database).await?;
+	// Give the test server a few ms to become available
+	tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
-    //-- Execute Test (Act)
-	let read_user_request = UserRequest { 
-		id: random_user.id.to_string()
+	//-- Execute Test (Act)
+	let read_user_request = UserRequest {
+		id: random_user.id.to_string(),
 	};
-    let mut client = UsersClient::connect(tonic_server.address).await?;
-    let request = tonic::Request::new(read_user_request);
-    let response = client.read_user(request)
-        .await?
-        .into_inner();
-    // println!("{response:#?}");
+	let mut client = UsersClient::connect(tonic_server.address).await?;
+	let request = tonic::Request::new(read_user_request);
+	let response = client.read_user(request).await?.into_inner();
+	// println!("{response:#?}");
 
-    //-- Checks (Assertions)
+	//-- Checks (Assertions)
 	assert_eq!(response.email, random_user.email.to_string());
 	assert_eq!(response.user_name, random_user.user_name.to_string());
 	assert_eq!(response.is_active, random_user.is_active);
 
-    Ok(())
+	Ok(())
 }
 
 #[sqlx::test]
 async fn read_index_returns_users(database: Pool<Postgres>) -> Result<()> {
-    //-- Setup and Fixtures (Arrange)
-    let random_user = generate_random_user()?;
+	//-- Setup and Fixtures (Arrange)
+	let random_user = generate_random_user()?;
 	insert_user(&random_user, &database).await?;
 
 	// Get a random number between 10 and 30
@@ -132,35 +134,31 @@ async fn read_index_returns_users(database: Pool<Postgres>) -> Result<()> {
 	for _count in 0..random_count {
 		let random = generate_random_user()?;
 		// Insert into database and push return to the vector
-		test_vec.push(
-			insert_user(&random, &database).await?
-		);
+		test_vec.push(insert_user(&random, &database).await?);
 	}
 	// Spawn a Tonic test server
-    let tonic_server = spawn_test_server(database).await?;
-    // Give the test server a few ms to become available
-    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+	let tonic_server = spawn_test_server(database).await?;
+	// Give the test server a few ms to become available
+	tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
-    //-- Execute Test (Act)
+	//-- Execute Test (Act)
 	// Generate a random limit and offset based on number of user entries
 	let random_limit = (1..random_count).fake::<i64>();
 	let random_offset = (1..random_count).fake::<i64>();
 	let user_index_request = UserIndexRequest {
 		limit: random_limit,
-		offset: random_offset
+		offset: random_offset,
 	};
 	// Connect to users server
-    let mut client = UsersClient::connect(tonic_server.address).await?;
-    // Build Tonic client request
+	let mut client = UsersClient::connect(tonic_server.address).await?;
+	// Build Tonic client request
 	let request = tonic::Request::new(user_index_request);
 	// Make a Tonic client request
-    let response = client.index_users(request)
-        .await?
-        .into_inner();
-    // println!("{response:#?}");
+	let response = client.index_users(request).await?.into_inner();
+	// println!("{response:#?}");
 	let index = response.users;
 
-    //-- Checks (Assertions)
+	//-- Checks (Assertions)
 	let count_less_offset: i64 = random_count - random_offset;
 
 	let expected_records = if count_less_offset < random_limit {
@@ -171,66 +169,64 @@ async fn read_index_returns_users(database: Pool<Postgres>) -> Result<()> {
 
 	assert_eq!(index.len() as i64, expected_records);
 
-    Ok(())
+	Ok(())
 }
 
 #[sqlx::test]
 async fn updated_user_returns_user(database: Pool<Postgres>) -> Result<()> {
-    //-- Setup and Fixtures (Arrange)
-    let random_user = generate_random_user()?;
+	//-- Setup and Fixtures (Arrange)
+	let random_user = generate_random_user()?;
 	insert_user(&random_user, &database).await?;
 	let updated_user = generate_random_user()?;
 
-    let tonic_server = spawn_test_server(database).await?;
-    // Give the test server a few ms to become available
-    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+	let tonic_server = spawn_test_server(database).await?;
+	// Give the test server a few ms to become available
+	tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
-    //-- Execute Test (Act)
+	//-- Execute Test (Act)
 	let update_user_request = UpdateUserRequest {
 		id: random_user.id.to_string(),
-        email: updated_user.email.to_string(), 
-        user_name: updated_user.user_name.to_string(), 
-        is_active: updated_user.is_active, 
-    };
-    let mut client = UsersClient::connect(tonic_server.address).await?;
-    let request = tonic::Request::new(update_user_request.clone());
-    let response = client.update_user(request)
-        .await?
-        .into_inner();
-    // println!("{response:#?}");
+		email: updated_user.email.to_string(),
+		user_name: updated_user.user_name.to_string(),
+		is_active: updated_user.is_active,
+	};
+	let mut client = UsersClient::connect(tonic_server.address).await?;
+	let request = tonic::Request::new(update_user_request.clone());
+	let response = client.update_user(request).await?.into_inner();
+	// println!("{response:#?}");
 
-    //-- Checks (Assertions)
+	//-- Checks (Assertions)
 	assert_eq!(response.id, random_user.id.to_string());
 	assert_eq!(response.email, update_user_request.email.to_string());
-	assert_eq!(response.user_name, update_user_request.user_name.to_string());
+	assert_eq!(
+		response.user_name,
+		update_user_request.user_name.to_string()
+	);
 	assert_eq!(response.is_active, update_user_request.is_active);
 
-    Ok(())
+	Ok(())
 }
-
 
 #[sqlx::test]
 async fn delete_user_returns_boolean(database: Pool<Postgres>) -> Result<()> {
-    //-- Setup and Fixtures (Arrange)
-    let random_user = generate_random_user()?;
+	//-- Setup and Fixtures (Arrange)
+	let random_user = generate_random_user()?;
 	insert_user(&random_user, &database).await?;
-    let tonic_server = spawn_test_server(database).await?;
-    // Give the test server a few ms to become available
-    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+	let tonic_server = spawn_test_server(database).await?;
+	// Give the test server a few ms to become available
+	tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
-    //-- Execute Test (Act)
-	let read_user_request = UserRequest { 
-		id: random_user.id.to_string()
+	//-- Execute Test (Act)
+	let read_user_request = UserRequest {
+		id: random_user.id.to_string(),
 	};
-    let mut client = UsersClient::connect(tonic_server.address).await?;
-    let request = tonic::Request::new(read_user_request);
-    let response = client.delete_user(request)
-        .await?
-        .into_inner();
-    // println!("{response:#?}");
+	let mut client = UsersClient::connect(tonic_server.address).await?;
+	let request = tonic::Request::new(read_user_request);
+	let response = client.delete_user(request).await?.into_inner();
+	// println!("{response:#?}");
 
-    //-- Checks (Assertions)
+	//-- Checks (Assertions)
 	assert!(response.is_deleted);
 
-    Ok(())
+	Ok(())
 }

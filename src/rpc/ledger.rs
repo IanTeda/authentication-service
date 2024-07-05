@@ -46,15 +46,15 @@ pub struct LogoutRequest {
     pub id: ::prost::alloc::string::String,
 }
 /// Generated client implementations.
-pub mod auth_client {
+pub mod authentication_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
     #[derive(Debug, Clone)]
-    pub struct AuthClient<T> {
+    pub struct AuthenticationClient<T> {
         inner: tonic::client::Grpc<T>,
     }
-    impl AuthClient<tonic::transport::Channel> {
+    impl AuthenticationClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
@@ -65,7 +65,7 @@ pub mod auth_client {
             Ok(Self::new(conn))
         }
     }
-    impl<T> AuthClient<T>
+    impl<T> AuthenticationClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::Error: Into<StdError>,
@@ -83,7 +83,7 @@ pub mod auth_client {
         pub fn with_interceptor<F>(
             inner: T,
             interceptor: F,
-        ) -> AuthClient<InterceptedService<T, F>>
+        ) -> AuthenticationClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
@@ -97,7 +97,7 @@ pub mod auth_client {
                 http::Request<tonic::body::BoxBody>,
             >>::Error: Into<StdError> + Send + Sync,
         {
-            AuthClient::new(InterceptedService::new(inner, interceptor))
+            AuthenticationClient::new(InterceptedService::new(inner, interceptor))
         }
         /// Compress requests with the given encoding.
         ///
@@ -147,9 +147,12 @@ pub mod auth_client {
                     )
                 })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/ledger.Auth/Authenticate");
+            let path = http::uri::PathAndQuery::from_static(
+                "/ledger.Authentication/Authenticate",
+            );
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("ledger.Auth", "Authenticate"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ledger.Authentication", "Authenticate"));
             self.inner.unary(req, path, codec).await
         }
         pub async fn update_password(
@@ -170,11 +173,11 @@ pub mod auth_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/ledger.Auth/UpdatePassword",
+                "/ledger.Authentication/UpdatePassword",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("ledger.Auth", "UpdatePassword"));
+                .insert(GrpcMethod::new("ledger.Authentication", "UpdatePassword"));
             self.inner.unary(req, path, codec).await
         }
         pub async fn reset_password(
@@ -195,10 +198,11 @@ pub mod auth_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/ledger.Auth/ResetPassword",
+                "/ledger.Authentication/ResetPassword",
             );
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("ledger.Auth", "ResetPassword"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ledger.Authentication", "ResetPassword"));
             self.inner.unary(req, path, codec).await
         }
         pub async fn logout(
@@ -215,20 +219,23 @@ pub mod auth_client {
                     )
                 })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/ledger.Auth/Logout");
+            let path = http::uri::PathAndQuery::from_static(
+                "/ledger.Authentication/Logout",
+            );
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("ledger.Auth", "Logout"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ledger.Authentication", "Logout"));
             self.inner.unary(req, path, codec).await
         }
     }
 }
 /// Generated server implementations.
-pub mod auth_server {
+pub mod authentication_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    /// Generated trait containing gRPC methods that should be implemented for use with AuthServer.
+    /// Generated trait containing gRPC methods that should be implemented for use with AuthenticationServer.
     #[async_trait]
-    pub trait Auth: Send + Sync + 'static {
+    pub trait Authentication: Send + Sync + 'static {
         async fn authenticate(
             &self,
             request: tonic::Request<super::AuthenticateRequest>,
@@ -256,7 +263,7 @@ pub mod auth_server {
         ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
     }
     #[derive(Debug)]
-    pub struct AuthServer<T: Auth> {
+    pub struct AuthenticationServer<T: Authentication> {
         inner: _Inner<T>,
         accept_compression_encodings: EnabledCompressionEncodings,
         send_compression_encodings: EnabledCompressionEncodings,
@@ -264,7 +271,7 @@ pub mod auth_server {
         max_encoding_message_size: Option<usize>,
     }
     struct _Inner<T>(Arc<T>);
-    impl<T: Auth> AuthServer<T> {
+    impl<T: Authentication> AuthenticationServer<T> {
         pub fn new(inner: T) -> Self {
             Self::from_arc(Arc::new(inner))
         }
@@ -316,9 +323,9 @@ pub mod auth_server {
             self
         }
     }
-    impl<T, B> tonic::codegen::Service<http::Request<B>> for AuthServer<T>
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for AuthenticationServer<T>
     where
-        T: Auth,
+        T: Authentication,
         B: Body + Send + 'static,
         B::Error: Into<StdError> + Send + 'static,
     {
@@ -334,10 +341,12 @@ pub mod auth_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/ledger.Auth/Authenticate" => {
+                "/ledger.Authentication/Authenticate" => {
                     #[allow(non_camel_case_types)]
-                    struct AuthenticateSvc<T: Auth>(pub Arc<T>);
-                    impl<T: Auth> tonic::server::UnaryService<super::AuthenticateRequest>
+                    struct AuthenticateSvc<T: Authentication>(pub Arc<T>);
+                    impl<
+                        T: Authentication,
+                    > tonic::server::UnaryService<super::AuthenticateRequest>
                     for AuthenticateSvc<T> {
                         type Response = super::AuthenticateResponse;
                         type Future = BoxFuture<
@@ -350,7 +359,7 @@ pub mod auth_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Auth>::authenticate(&inner, request).await
+                                <T as Authentication>::authenticate(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -378,11 +387,11 @@ pub mod auth_server {
                     };
                     Box::pin(fut)
                 }
-                "/ledger.Auth/UpdatePassword" => {
+                "/ledger.Authentication/UpdatePassword" => {
                     #[allow(non_camel_case_types)]
-                    struct UpdatePasswordSvc<T: Auth>(pub Arc<T>);
+                    struct UpdatePasswordSvc<T: Authentication>(pub Arc<T>);
                     impl<
-                        T: Auth,
+                        T: Authentication,
                     > tonic::server::UnaryService<super::UpdatePasswordRequest>
                     for UpdatePasswordSvc<T> {
                         type Response = super::AuthenticateResponse;
@@ -396,7 +405,8 @@ pub mod auth_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Auth>::update_password(&inner, request).await
+                                <T as Authentication>::update_password(&inner, request)
+                                    .await
                             };
                             Box::pin(fut)
                         }
@@ -424,11 +434,11 @@ pub mod auth_server {
                     };
                     Box::pin(fut)
                 }
-                "/ledger.Auth/ResetPassword" => {
+                "/ledger.Authentication/ResetPassword" => {
                     #[allow(non_camel_case_types)]
-                    struct ResetPasswordSvc<T: Auth>(pub Arc<T>);
+                    struct ResetPasswordSvc<T: Authentication>(pub Arc<T>);
                     impl<
-                        T: Auth,
+                        T: Authentication,
                     > tonic::server::UnaryService<super::ResetPasswordRequest>
                     for ResetPasswordSvc<T> {
                         type Response = super::ResetPasswordResponse;
@@ -442,7 +452,7 @@ pub mod auth_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Auth>::reset_password(&inner, request).await
+                                <T as Authentication>::reset_password(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -470,10 +480,12 @@ pub mod auth_server {
                     };
                     Box::pin(fut)
                 }
-                "/ledger.Auth/Logout" => {
+                "/ledger.Authentication/Logout" => {
                     #[allow(non_camel_case_types)]
-                    struct LogoutSvc<T: Auth>(pub Arc<T>);
-                    impl<T: Auth> tonic::server::UnaryService<super::LogoutRequest>
+                    struct LogoutSvc<T: Authentication>(pub Arc<T>);
+                    impl<
+                        T: Authentication,
+                    > tonic::server::UnaryService<super::LogoutRequest>
                     for LogoutSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
@@ -486,7 +498,7 @@ pub mod auth_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Auth>::logout(&inner, request).await
+                                <T as Authentication>::logout(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -529,7 +541,7 @@ pub mod auth_server {
             }
         }
     }
-    impl<T: Auth> Clone for AuthServer<T> {
+    impl<T: Authentication> Clone for AuthenticationServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self {
@@ -541,7 +553,7 @@ pub mod auth_server {
             }
         }
     }
-    impl<T: Auth> Clone for _Inner<T> {
+    impl<T: Authentication> Clone for _Inner<T> {
         fn clone(&self) -> Self {
             Self(Arc::clone(&self.0))
         }
@@ -551,8 +563,8 @@ pub mod auth_server {
             write!(f, "{:?}", self.0)
         }
     }
-    impl<T: Auth> tonic::server::NamedService for AuthServer<T> {
-        const NAME: &'static str = "ledger.Auth";
+    impl<T: Authentication> tonic::server::NamedService for AuthenticationServer<T> {
+        const NAME: &'static str = "ledger.Authentication";
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]

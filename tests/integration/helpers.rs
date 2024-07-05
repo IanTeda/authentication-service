@@ -5,10 +5,11 @@
 use personal_ledger_backend::{configuration::Settings, startup};
 
 use sqlx::{Pool, Postgres};
+use tonic::{metadata::MetadataValue, transport::{Channel, Uri}, Request, Status};
 
 // Override test modules with more flexible error
 pub type Error = Box<dyn std::error::Error>;
-pub type Result<T> = core::result::Result<T, Error>;
+// pub type Result<T> = core::result::Result<T, Error>;
 
 /// Remember the Test Server address so we can use it spawn the Test Client
 pub struct TestServer {
@@ -16,7 +17,7 @@ pub struct TestServer {
 }
 
 /// Spawn a Tonic test server through the crates startup module
-pub async fn spawn_test_server(database: Pool<Postgres>) -> Result<TestServer> {
+pub async fn spawn_test_server(database: Pool<Postgres>) -> Result<TestServer, Error> {
 	// Parse configuration files
 	let settings = {
 		let mut s = Settings::parse()?;
@@ -42,6 +43,26 @@ pub async fn spawn_test_server(database: Pool<Postgres>) -> Result<TestServer> {
 		let _ = tonic_server.run().await;
 	});
 
+	// Give the test server a few ms to become available
+	tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
 	Ok(TestServer { address })
+}
+
+pub async fn get_client_channel(address: impl Into<String>) -> Result<Channel, Error> {
+	let uri: Uri = address.into().parse()?;
+	let endpoint = Channel::builder(uri);
+	let channel = endpoint.connect().await?;
+
+	Ok(channel)
+}
+
+/// This function will get called on each outbound request. Returning a
+/// `Status` here will cancel the request and have that status returned to
+/// the caller.
+pub fn authentication_intercept(mut req: Request<()>) -> Result<Request<()>, Status> {
+	let token: MetadataValue<_> = "Bearer some-auth-token".parse().unwrap();
+	req.metadata_mut().insert("authorization", token.clone());
+	Ok(req)
 }
 

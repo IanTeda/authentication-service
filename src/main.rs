@@ -8,6 +8,7 @@ mod database;
 mod domains;
 mod error;
 mod prelude;
+mod middleware;
 mod reflections;
 mod router;
 mod rpc;

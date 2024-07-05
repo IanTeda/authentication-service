@@ -6,7 +6,7 @@ package ledger;
 
 import "common.proto";
 
-service Auth {
+service Authentication {
     rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse);
     rpc UpdatePassword (UpdatePasswordRequest) returns (AuthenticateResponse);
     rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse);

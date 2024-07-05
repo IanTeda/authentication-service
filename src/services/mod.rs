@@ -1,9 +1,9 @@
 //-- ./src/services/mods.rs
 
-mod auth;
+mod authentication;
 mod users;
 mod utilities;
 
-pub use auth::AuthService;
+pub use authentication::AuthenticationService;
 pub use users::UsersService;
 pub use utilities::UtilitiesService;

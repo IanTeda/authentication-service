@@ -50,7 +50,7 @@ pub async fn update_password_by_id(
 	id: Uuid,
 	password: Password,
 	database: &sqlx::Pool<sqlx::Postgres>,
-) -> Result<bool, BackendError> {
+) -> Result<UserModel, BackendError> {
 	let updated_user = sqlx::query_as!(
 		UserModel,
 		r#"
@@ -67,7 +67,7 @@ pub async fn update_password_by_id(
 
 	tracing::debug!("Password updated for: {}", updated_user.user_name);
 
-	Ok(true)
+	Ok(updated_user)
 }
 
 //-- Unit Tests

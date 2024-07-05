@@ -11,9 +11,8 @@ use crate::domains::{verify_password_hash, EmailAddress, Password};
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
 use tonic::{Request, Response, Status};
-use uuid::Uuid;
 
-use crate::rpc::ledger::auth_server::Auth;
+use crate::rpc::ledger::authentication_server::Authentication;
 use crate::rpc::ledger::{
 	AuthenticateRequest, AuthenticateResponse, Empty, LogoutRequest, ResetPasswordRequest,
 	ResetPasswordResponse, UpdatePasswordRequest,
@@ -21,18 +20,18 @@ use crate::rpc::ledger::{
 
 // /// User service containing a database pool
 #[derive(Debug)]
-pub struct AuthService {
+pub struct AuthenticationService {
 	database: Pool<Postgres>,
 }
 
-impl AuthService {
+impl AuthenticationService {
 	pub fn new(database: Pool<Postgres>) -> Self {
 		Self { database }
 	}
 }
 
 #[tonic::async_trait]
-impl Auth for AuthService {
+impl Authentication for AuthenticationService {
 	async fn authenticate(
 		&self,
 		request: Request<AuthenticateRequest>,
@@ -46,7 +45,7 @@ impl Auth for AuthService {
 		match verify_password_hash(&password, user.password_hash.as_ref())? {
 			true => {
 				let response = AuthenticateResponse {
-					token: "Super-Secret-Token".to_string(),
+					token: "Bearer some-auth-token".to_string(),
 				};
 				Ok(Response::new(response))
 			}
@@ -69,11 +68,10 @@ impl Auth for AuthService {
 		match verify_password_hash(&original_password, user.password_hash.as_ref())? {
 			true => {
 				let new_password_hash = Password::parse(new_password)?;
-				let is_updated =
-					update_password_by_id(user.id, new_password_hash, &self.database).await?;
+				let _ = update_password_by_id(user.id, new_password_hash, &self.database).await?;
 
 				let response = AuthenticateResponse {
-					token: "Super-Secret-Token".to_string(),
+					token: "Bearer some-auth-token".to_string(),
 				};
 
 				Ok(Response::new(response))

@@ -7,6 +7,7 @@ pub mod database;
 pub mod domains;
 pub mod error;
 pub mod prelude;
+pub mod middleware;
 pub mod reflections;
 pub mod router;
 pub mod rpc;

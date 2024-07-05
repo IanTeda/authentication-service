@@ -4,6 +4,6 @@ syntax = "proto3";
 
 package ledger;
 
-import "auth.proto";
+import "authentication.proto";
 import "users.proto";
 import "utilities.proto";
