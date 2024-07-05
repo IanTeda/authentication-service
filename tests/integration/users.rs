@@ -1,6 +1,18 @@
+//-- ./tests/integration/users.rs
+
+//! Module for testing the users endpoints
+//! 
+//! Endpoints include
+//! 
+//! * `create_user`: Create a user in the database
+//! * `read_user`: Read a user by id in the database
+//! * `index_users`: Index of users
+//! * `update_user`: Update a user in the database
+//! * `delete_user`: Delete a user in the database
+
 // #![allow(unused)] // For beginning only.
 
-use crate::helpers::*;
+use crate::helpers;
 
 use personal_ledger_backend::database::users::{insert_user, UserModel};
 use personal_ledger_backend::domains::{EmailAddress, Password, UserName};
@@ -20,6 +32,7 @@ use uuid::Uuid;
 pub type Error = Box<dyn std::error::Error>;
 pub type Result<T> = core::result::Result<T, Error>;
 
+/// Generate a user with random data, returning the UserModel
 pub fn generate_random_user() -> Result<UserModel> {
 	// Generate random DateTime after UNIX time epoch (00:00:00 UTC on 1 January 1970)
 	let random_datetime: DateTime<Utc> = DateTimeAfter(chrono::DateTime::UNIX_EPOCH).fake();
@@ -63,98 +76,132 @@ pub fn generate_random_user() -> Result<UserModel> {
 	Ok(random_user)
 }
 
+/// Create a user in the database and assert the returned user data
 #[sqlx::test]
 async fn create_user_returns_user(database: Pool<Postgres>) -> Result<()> {
 	//-- Setup and Fixtures (Arrange)
+	// Generate a random user
 	let random_user = generate_random_user()?;
-	let create_user_request = CreateUserRequest {
-		email: random_user.email.to_string(),
-		user_name: random_user.user_name.to_string(),
-		password: random_user.password_hash.to_string(),
-		is_active: random_user.is_active,
-	};
-	let tonic_server = spawn_test_server(database).await?;	
+
+	// Spawn Tonic test server
+	let tonic_server = helpers::TonicServer::spawn_server(database).await?;
+
+	// Build Tonic user client, with authentication intercept
+	let mut tonic_user_client = UsersClient::with_interceptor(
+		tonic_server.client_channel().await?, 
+		helpers::authentication_intercept
+	);
 
 	//-- Execute Test (Act)
-	// Build tonic channel
-	let channel = get_client_channel(tonic_server.address).await?;
-	// Build tonic client
-	let mut client = UsersClient::with_interceptor(channel, authentication_intercept);
-	// Build tonic client request
-	let request = tonic::Request::new(create_user_request);
+	// Build tonic request
+	let request = tonic::Request::new(
+		CreateUserRequest {
+			email: random_user.email.to_string(),
+			user_name: random_user.user_name.to_string(),
+			password: random_user.password_hash.to_string(),
+			is_active: random_user.is_active,
+		}
+	);
 	// Send tonic client request to server
-	let response = client.create_user(request).await?.into_inner();
+	let response = tonic_user_client.create_user(request).await?.into_inner();
 	// println!("{response:#?}");
 
 	//-- Checks (Assertions)
+	// Check response email equals the generated email
 	assert_eq!(response.email, random_user.email.to_string());
+
+	// Check the response user_name equals the generated user_name
 	assert_eq!(response.user_name, random_user.user_name.to_string());
+
+	// Check the response is_active equals the generated is_active
 	assert_eq!(response.is_active, random_user.is_active);
 
 	Ok(())
 }
 
+/// Read a user in the database and assert the returned user data
 #[sqlx::test]
 async fn read_user_returns_user(database: Pool<Postgres>) -> Result<()> {
 	//-- Setup and Fixtures (Arrange)
+	// Generate a random user
 	let random_user = generate_random_user()?;
+
+	// Insert random user into database for the server to query
 	insert_user(&random_user, &database).await?;
-	let tonic_server = spawn_test_server(database).await?;
-	// Give the test server a few ms to become available
-	tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+	// Spawn Tonic test server
+	let tonic_server = helpers::TonicServer::spawn_server(database).await?;
+
+	// Build Tonic user client, with authentication intercept
+	let mut tonic_user_client = UsersClient::with_interceptor(
+		tonic_server.client_channel().await?, 
+		helpers::authentication_intercept
+	);
 
 	//-- Execute Test (Act)
-	let read_user_request = UserRequest {
-		id: random_user.id.to_string(),
-	};
-	let mut client = UsersClient::connect(tonic_server.address).await?;
-	let request = tonic::Request::new(read_user_request);
-	let response = client.read_user(request).await?.into_inner();
+	// Build user request
+	let user_request = tonic::Request::new(
+		UserRequest {
+			id: random_user.id.to_string(),
+		}
+	);
+
+	// Send read user request
+	let response = tonic_user_client.read_user(user_request).await?.into_inner();
 	// println!("{response:#?}");
 
 	//-- Checks (Assertions)
+	// Check the response email equals the generated email
 	assert_eq!(response.email, random_user.email.to_string());
+
+	// Check the response user_name equals the generated user_name
 	assert_eq!(response.user_name, random_user.user_name.to_string());
+
+	// Check the response is_active equals the generated is_active
 	assert_eq!(response.is_active, random_user.is_active);
 
 	Ok(())
 }
 
+/// Check the read user index returns a collection of users
 #[sqlx::test]
 async fn read_index_returns_users(database: Pool<Postgres>) -> Result<()> {
 	//-- Setup and Fixtures (Arrange)
-	let random_user = generate_random_user()?;
-	insert_user(&random_user, &database).await?;
-
 	// Get a random number between 10 and 30
 	let random_count: i64 = (10..30).fake::<i64>();
+
 	// Initiate vector to store users for assertion
 	let mut test_vec: Vec<UserModel> = Vec::new();
-	// Iterate for the random count generating a user and adding to vector
+
+	// Iterate over the random count generating a user and adding, inserting it
+	// into the database and pushing the response to the vector
 	for _count in 0..random_count {
 		let random = generate_random_user()?;
 		// Insert into database and push return to the vector
 		test_vec.push(insert_user(&random, &database).await?);
 	}
 	// Spawn a Tonic test server
-	let tonic_server = spawn_test_server(database).await?;
-	// Give the test server a few ms to become available
-	tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+	let tonic_server = helpers::TonicServer::spawn_server(database).await?;
+
+	// Build Tonic user client, with authentication intercept
+	let mut tonic_user_client = UsersClient::with_interceptor(
+		tonic_server.client_channel().await?, 
+		helpers::authentication_intercept
+	);
 
 	//-- Execute Test (Act)
 	// Generate a random limit and offset based on number of user entries
 	let random_limit = (1..random_count).fake::<i64>();
 	let random_offset = (1..random_count).fake::<i64>();
-	let user_index_request = UserIndexRequest {
-		limit: random_limit,
-		offset: random_offset,
-	};
-	// Connect to users server
-	let mut client = UsersClient::connect(tonic_server.address).await?;
 	// Build Tonic client request
-	let request = tonic::Request::new(user_index_request);
+	let request = tonic::Request::new(
+		UserIndexRequest {
+			limit: random_limit,
+			offset: random_offset,
+		}
+	);
 	// Make a Tonic client request
-	let response = client.index_users(request).await?.into_inner();
+	let response = tonic_user_client.index_users(request).await?.into_inner();
 	// println!("{response:#?}");
 	let index = response.users;
 
@@ -162,70 +209,103 @@ async fn read_index_returns_users(database: Pool<Postgres>) -> Result<()> {
 	let count_less_offset: i64 = random_count - random_offset;
 
 	let expected_records = if count_less_offset < random_limit {
-		count_less_offset + 1
+		count_less_offset
 	} else {
 		random_limit
 	};
 
-	assert_eq!(index.len() as i64, expected_records);
+	// Check the number of returned users equals the limit and offset parameters
+	assert_eq!(expected_records, index.len() as i64);
 
 	Ok(())
 }
 
+// Test the updated user returns the correct updated data
 #[sqlx::test]
 async fn updated_user_returns_user(database: Pool<Postgres>) -> Result<()> {
 	//-- Setup and Fixtures (Arrange)
-	let random_user = generate_random_user()?;
-	insert_user(&random_user, &database).await?;
+	// Generate random user for testing
+	let original_user = generate_random_user()?;
+	
+	// Insert random user into the database for testing
+	insert_user(&original_user, &database).await?;
+	
+	// Generate a new random user data to use in update
 	let updated_user = generate_random_user()?;
 
-	let tonic_server = spawn_test_server(database).await?;
-	// Give the test server a few ms to become available
-	tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+	// Spawn Tonic test server
+	let tonic_server = helpers::TonicServer::spawn_server(database).await?;
+
+	// Build Tonic user client, with authentication intercept
+	let mut tonic_user_client = UsersClient::with_interceptor(
+		tonic_server.client_channel().await?, 
+		helpers::authentication_intercept
+	);
 
 	//-- Execute Test (Act)
-	let update_user_request = UpdateUserRequest {
-		id: random_user.id.to_string(),
-		email: updated_user.email.to_string(),
-		user_name: updated_user.user_name.to_string(),
-		is_active: updated_user.is_active,
-	};
-	let mut client = UsersClient::connect(tonic_server.address).await?;
-	let request = tonic::Request::new(update_user_request.clone());
-	let response = client.update_user(request).await?.into_inner();
+	// Build tonic request
+	let request = tonic::Request::new(
+		UpdateUserRequest {
+			id: original_user.id.to_string(),
+			email: updated_user.email.to_string(),
+			user_name: updated_user.user_name.to_string(),
+			is_active: updated_user.is_active,
+		}
+	);
+	let response = tonic_user_client.update_user(request).await?.into_inner();
 	// println!("{response:#?}");
 
 	//-- Checks (Assertions)
-	assert_eq!(response.id, random_user.id.to_string());
-	assert_eq!(response.email, update_user_request.email.to_string());
+	// Check id is unchanged from original, as update shouldn't make this change
+	assert_eq!(response.id, original_user.id.to_string());
+
+	// Check email is updated
+	assert_eq!(response.email, updated_user.email.to_string());
+	
+	// Check user name is updated
 	assert_eq!(
 		response.user_name,
-		update_user_request.user_name.to_string()
+		updated_user.user_name.to_string()
 	);
-	assert_eq!(response.is_active, update_user_request.is_active);
+	
+	// Check is_active is updated
+	assert_eq!(response.is_active, updated_user.is_active);
 
 	Ok(())
 }
 
+/// Check the delete_user returns a boolean when deleting
 #[sqlx::test]
 async fn delete_user_returns_boolean(database: Pool<Postgres>) -> Result<()> {
 	//-- Setup and Fixtures (Arrange)
+	// Generate random user
 	let random_user = generate_random_user()?;
+
+	// Insert random user into the database for testing
 	insert_user(&random_user, &database).await?;
-	let tonic_server = spawn_test_server(database).await?;
-	// Give the test server a few ms to become available
-	tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+	// Spawn Tonic test server
+	let tonic_server = helpers::TonicServer::spawn_server(database).await?;
+
+	// Build Tonic user client, with authentication intercept
+	let mut tonic_user_client = UsersClient::with_interceptor(
+		tonic_server.client_channel().await?, 
+		helpers::authentication_intercept
+	);
 
 	//-- Execute Test (Act)
-	let read_user_request = UserRequest {
-		id: random_user.id.to_string(),
-	};
-	let mut client = UsersClient::connect(tonic_server.address).await?;
-	let request = tonic::Request::new(read_user_request);
-	let response = client.delete_user(request).await?.into_inner();
+	// Build tonic user request
+	let request = tonic::Request::new(
+		UserRequest {
+			id: random_user.id.to_string(),
+		}
+	);
+	// Make request
+	let response = tonic_user_client.delete_user(request).await?.into_inner();
 	// println!("{response:#?}");
 
 	//-- Checks (Assertions)
+	// Check response is true
 	assert!(response.is_deleted);
 
 	Ok(())

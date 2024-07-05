@@ -1,3 +1,7 @@
+//-- ./tests/integration/main.rs
+
+// Add modules to include in integration binary
+
 mod helpers;
-mod ping;
+mod utilities;
 mod users;
