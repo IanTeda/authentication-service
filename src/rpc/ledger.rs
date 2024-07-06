@@ -19,6 +19,12 @@ pub struct AuthenticateResponse {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RefreshAuthenticationRequest {
+    #[prost(string, tag = "1")]
+    pub token: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdatePasswordRequest {
     #[prost(string, tag = "1")]
     pub email: ::prost::alloc::string::String,
@@ -155,6 +161,33 @@ pub mod authentication_client {
                 .insert(GrpcMethod::new("ledger.Authentication", "Authenticate"));
             self.inner.unary(req, path, codec).await
         }
+        pub async fn refresh_authentication(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RefreshAuthenticationRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::AuthenticateResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ledger.Authentication/RefreshAuthentication",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("ledger.Authentication", "RefreshAuthentication"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
         pub async fn update_password(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdatePasswordRequest>,
@@ -239,6 +272,13 @@ pub mod authentication_server {
         async fn authenticate(
             &self,
             request: tonic::Request<super::AuthenticateRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::AuthenticateResponse>,
+            tonic::Status,
+        >;
+        async fn refresh_authentication(
+            &self,
+            request: tonic::Request<super::RefreshAuthenticationRequest>,
         ) -> std::result::Result<
             tonic::Response<super::AuthenticateResponse>,
             tonic::Status,
@@ -372,6 +412,56 @@ pub mod authentication_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = AuthenticateSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ledger.Authentication/RefreshAuthentication" => {
+                    #[allow(non_camel_case_types)]
+                    struct RefreshAuthenticationSvc<T: Authentication>(pub Arc<T>);
+                    impl<
+                        T: Authentication,
+                    > tonic::server::UnaryService<super::RefreshAuthenticationRequest>
+                    for RefreshAuthenticationSvc<T> {
+                        type Response = super::AuthenticateResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RefreshAuthenticationRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as Authentication>::refresh_authentication(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = RefreshAuthenticationSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

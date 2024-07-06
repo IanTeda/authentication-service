@@ -8,6 +8,7 @@ import "common.proto";
 
 service Authentication {
     rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse);
+    rpc RefreshAuthentication (RefreshAuthenticationRequest) returns (AuthenticateResponse);
     rpc UpdatePassword (UpdatePasswordRequest) returns (AuthenticateResponse);
     rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse);
     rpc Logout (LogoutRequest) returns (Empty);
@@ -19,6 +20,10 @@ message AuthenticateRequest {
 }
 
 message AuthenticateResponse {
+    string token = 1;
+}
+
+message RefreshAuthenticationRequest {
     string token = 1;
 }
 

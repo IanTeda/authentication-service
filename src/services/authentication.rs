@@ -4,6 +4,8 @@
 
 #![allow(unused)] // For development only
 
+use std::sync::Arc;
+
 use crate::database;
 use crate::database::users::update_password_by_id;
 use crate::domains::{verify_password_hash, EmailAddress, Password};
@@ -14,18 +16,17 @@ use tonic::{Request, Response, Status};
 
 use crate::rpc::ledger::authentication_server::Authentication;
 use crate::rpc::ledger::{
-	AuthenticateRequest, AuthenticateResponse, Empty, LogoutRequest, ResetPasswordRequest,
-	ResetPasswordResponse, UpdatePasswordRequest,
+	AuthenticateRequest, AuthenticateResponse, Empty, LogoutRequest, RefreshAuthenticationRequest, ResetPasswordRequest, ResetPasswordResponse, UpdatePasswordRequest
 };
 
-// /// User service containing a database pool
+/// Authentication service containing a database pool
 #[derive(Debug)]
 pub struct AuthenticationService {
-	database: Pool<Postgres>,
+	database: Arc<Pool<Postgres>>,
 }
 
 impl AuthenticationService {
-	pub fn new(database: Pool<Postgres>) -> Self {
+	pub fn new(database: Arc<Pool<Postgres>>) -> Self {
 		Self { database }
 	}
 }
@@ -52,6 +53,14 @@ impl Authentication for AuthenticationService {
 			false => Err(Status::unauthenticated("Authentication failed!")),
 		}
 		// unimplemented!()
+	}
+
+	async fn refresh_authentication(
+		&self,
+		request: Request<RefreshAuthenticationRequest>,
+	) -> Result<Response<AuthenticateResponse>, Status> {
+	
+		unimplemented!()
 	}
 
 	async fn update_password(
