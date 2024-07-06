@@ -10,7 +10,7 @@
 //! test suit.
 //! ---
 
-use crate::{configuration::Settings, prelude::*, router};
+use crate::{configuration::Configuration, prelude::*, router};
 
 use sqlx::{Pool, Postgres};
 use tokio::net::TcpListener;
@@ -24,12 +24,12 @@ pub struct TonicServer {
 
 impl TonicServer {
 	/// Build the Tonic server instance.
-	pub async fn build(settings: Settings, database: Pool<Postgres>) -> Result<Self, BackendError> {
-		let router = router::get_router(database)?;
+	pub async fn build(configuration: Configuration, database: Pool<Postgres>) -> Result<Self, BackendError> {
+		let router = router::get_router(database, configuration.application.jwt_secret)?;
 
 		let address = format!(
 			"{}:{}",
-			settings.application.ip_address, settings.application.port
+			configuration.application.ip_address, configuration.application.port
 		);
 		// We are using listener as it will bind a random port when port setting
 		// is '0'. This is important for integration test server spawn.

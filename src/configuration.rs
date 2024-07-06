@@ -13,7 +13,7 @@
 //! * [config.rs Repository](https://github.com/mehcode/config-rs)
 //! * [Configuration management in Rust web services](https://blog.logrocket.com/configuration-management-in-rust-web-services/)
 
-#![allow(unused)] // For development only
+// #![allow(unused)] // For development only
 
 use crate::prelude::*;
 
@@ -36,9 +36,9 @@ const DEFAULT_QUERY_LIMIT: i64 = 10;
 
 /// Configuration for the API
 #[derive(serde::Deserialize, Clone, Debug)]
-pub struct Settings {
-	pub database: DatabaseSettings,
-	pub application: ApplicationSettings,
+pub struct Configuration {
+	pub database: DatabaseConfiguration,
+	pub application: ApplicationConfiguration,
 }
 
 /// Define log levels the system will recognise
@@ -53,7 +53,7 @@ pub enum LogLevels {
 
 /// Configuration for running the API application
 #[derive(serde::Deserialize, Clone, Debug)]
-pub struct ApplicationSettings {
+pub struct ApplicationConfiguration {
 	// The host address the api should bind to
 	pub ip_address: String,
 	/// The port that the api should bind to
@@ -63,7 +63,10 @@ pub struct ApplicationSettings {
 	pub log_level: LogLevels,
 	/// Application runtime environment is set to default in the builder
 	pub runtime_environment: Environment,
+	// Secret used to generate JWT keys
+	pub jwt_secret: String,
 	/// Default application settings
+	#[allow(dead_code)]
 	pub default: DefaultApplicationSettings,
 }
 
@@ -71,14 +74,16 @@ pub struct ApplicationSettings {
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct DefaultApplicationSettings {
 	// Default sql query offset
+	#[allow(dead_code)]
 	pub query_offset: i64,
 	// Default sql query limit
+	#[allow(dead_code)]
 	pub query_limit: i64,
 }
 
 /// Configuration for connecting to the database server
 #[derive(serde::Deserialize, Clone, Debug)]
-pub struct DatabaseSettings {
+pub struct DatabaseConfiguration {
 	/// Database host address
 	pub host: String,
 	/// Database host port
@@ -94,7 +99,7 @@ pub struct DatabaseSettings {
 	pub require_ssl: bool,
 }
 
-impl DatabaseSettings {
+impl DatabaseConfiguration {
 	/// Build database connection
 	pub fn connection(&self) -> PgConnectOptions {
 		let ssl_mode = if self.require_ssl {
@@ -159,10 +164,10 @@ pub fn get_runtime_environment() -> Result<Environment, BackendError> {
 	Ok(environment)
 }
 
-impl Settings {
+impl Configuration {
 	/// Parse the application configuration from yaml files, returning a
 	/// `Configuration` result.
-	pub fn parse() -> Result<Settings, BackendError> {
+	pub fn parse() -> Result<Configuration, BackendError> {
 		// Define the configuration directory within the base application directory
 		let base_dir_path: PathBuf = std::env::current_dir()?.join(CONFIGURATION_DIRECTORY_PREFIX);
 
@@ -192,7 +197,7 @@ impl Settings {
 			)
 			.build()?;
 
-		let configuration = settings_builder.try_deserialize::<Settings>()?;
+		let configuration = settings_builder.try_deserialize::<Configuration>()?;
 
 		// println!(
 		//     "\n----------- CONFIGURATION ----------- \n{:?} \n-------------------------------------",

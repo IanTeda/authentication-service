@@ -4,7 +4,7 @@
 
 use sqlx::{Pool, Postgres};
 
-use personal_ledger_backend::{configuration::Settings, startup};
+use personal_ledger_backend::{configuration::Configuration, startup};
 use tonic::{metadata::MetadataValue, transport::{Channel, Uri}, Request, Status};
 
 pub type Error = Box<dyn std::error::Error>;
@@ -17,7 +17,7 @@ impl TonicServer {
     pub async fn spawn_server(database: Pool<Postgres>) -> Result<Self, Error> {
         // Parse configuration files
         let settings = {
-            let mut s = Settings::parse()?;
+            let mut s = Configuration::parse()?;
             // Change port to `0` to avoid conflicts as the OS will assign an unused port
             s.application.port = 0;
             s

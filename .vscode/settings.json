@@ -23,6 +23,8 @@
         "Hasher",
         "ianteda",
         "jeremychone",
+        "jsonwebtoken",
+        "milli",
         "nanos",
         "neovim",
         "ossp",

@@ -2,11 +2,12 @@
 
 //! Return a result containing a RPC Users service
 
-// #![allow(unused)] // For development only
+#![allow(unused)] // For development only
 
 use std::sync::Arc;
 
 use crate::database;
+use crate::utilities::jwt::JwtKeys;
 
 use sqlx::{Pool, Postgres};
 use tonic::{Request, Response, Status};
@@ -20,15 +21,16 @@ use crate::rpc::ledger::{
 };
 
 /// User service containing a database pool
-#[derive(Debug)]
+// #[derive(Debug)]
 pub struct UsersService {
 	database: Arc<Pool<Postgres>>,
+	jwt_keys: Arc<JwtKeys>
 }
 
 impl UsersService {
 	/// Create a new UserService passing in the Arc for the Sqlx database pool
-	pub fn new(database: Arc<Pool<Postgres>>) -> Self {
-		Self { database }
+	pub fn new(database: Arc<Pool<Postgres>>, jwt_keys: Arc<JwtKeys>) -> Self {
+		Self { database, jwt_keys }
 	}
 
 	/// Shorthand for reference to database pool
@@ -36,6 +38,10 @@ impl UsersService {
 	fn database_ref(&self) -> &Pool<Postgres> {
         &self.database
     }
+
+	fn keys_ref(&self) -> &JwtKeys {
+		&self.jwt_keys
+	}
 }
 
 impl From<UserModel> for UserResponse {
@@ -69,6 +75,10 @@ impl Users for UsersService {
 		let created_user = database::users::insert_user(&create_user_request, self.database_ref())
 			.await
 			.unwrap();
+
+		// let secret = self.keys_ref();
+		// println!("{response:#?}");
+
 
 		let response = UserResponse::from(created_user);
 

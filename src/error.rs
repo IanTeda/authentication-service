@@ -76,6 +76,10 @@ pub enum BackendError {
 	Uuid(#[from] uuid::Error),
 	// #[error(transparent)]
 	// Argon2(#[from] argon2::Error)
+	#[error("json: {0}")]
+	Json(#[from] serde_json::Error),
+	#[error("json web token: {0}")]
+	JsonWebToken(#[from] jsonwebtoken::errors::Error),
 }
 
 impl From<BackendError> for tonic::Status {

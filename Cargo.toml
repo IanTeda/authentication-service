@@ -64,6 +64,9 @@ derive_more = "0.99.18"
 argon2 = "0.5.3"
 telemetry = "0.1.3"
 rand = "0.8.5"
+jsonwebtoken = "9.3.0"
+once_cell = "1.19.0"
+time = "0.3.36"
 
 [build-dependencies]
 tonic-build = { version = "0.11", features = ["prost"] }

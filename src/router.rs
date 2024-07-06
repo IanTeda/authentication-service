@@ -17,24 +17,31 @@ use crate::rpc::ledger::users_server::UsersServer;
 use crate::rpc::ledger::utilities_server::UtilitiesServer;
 use crate::services::AuthenticationService;
 use crate::services::{UsersService, UtilitiesService};
+use crate::utilities::jwt;
 
 use sqlx::{Pool, Postgres};
 use tonic::transport::{server::Router, Server};
 
-pub fn get_router(database: Pool<Postgres>) -> Result<Router, BackendError> {
+pub fn get_router(database: Pool<Postgres>, jwt_secret: String) -> Result<Router, BackendError> {
 
 	// Wraps our database pool an Atomic Reference Counted pointer (Arc). Each instance of
 	// the backend will get a pointer to the pool instead of getting a raw copy. 
 	let database = Arc::new(database);
 
+	let jwt_session = jwt_secret.as_bytes();
+
+	let jwt_keys = Arc::new(jwt::JwtKeys::new(jwt_session));
+
+	// static TRACING: Lazy<()> = Lazy::new(|| {
+	// 	jwt::Keys::new(jwt_secret)
+	// }
+
 	// Build Utilities server
 	let utilities_server = UtilitiesServer::new(UtilitiesService::default());
 
 	// Build Users server
-	// TODO: Should we be cloning
-	// TODO: Should instance wrap the DB in an Arc
 	let users_server = UsersServer::with_interceptor(
-		UsersService::new(Arc::clone(&database)),
+		UsersService::new(Arc::clone(&database), jwt_keys),
 		middleware::authentication::check_authentication
 	);
 

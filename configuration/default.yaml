@@ -1,8 +1,9 @@
 # Server configuration
 application:
-  port: 8091
   ip_address: "127.0.0.1"
+  port: 8091
   log_level: "info"
+  jwt_secret: "Super_Secret4_Key"
 
 # Postgres database config
 database:
