@@ -2,6 +2,7 @@
 
 // Add modules to include in integration binary
 
+mod authentication;
 mod helpers;
-mod utilities;
 mod users;
+mod utilities;

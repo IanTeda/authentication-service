@@ -1,9 +1,9 @@
 //-- ./tests/integration/users.rs
 
 //! Module for testing the users endpoints
-//! 
+//!
 //! Endpoints include
-//! 
+//!
 //! * `create_user`: Create a user in the database
 //! * `read_user`: Read a user by id in the database
 //! * `index_users`: Index of users
@@ -31,6 +31,11 @@ use uuid::Uuid;
 
 pub type Error = Box<dyn std::error::Error>;
 pub type Result<T> = core::result::Result<T, Error>;
+
+pub fn generate_random_password() -> String {
+	let random_count = (5..30).fake::<i64>() as usize;
+	"aB1%".repeat(random_count)
+}
 
 /// Generate a user with random data, returning the UserModel
 pub fn generate_random_user() -> Result<UserModel> {
@@ -88,20 +93,18 @@ async fn create_user_returns_user(database: Pool<Postgres>) -> Result<()> {
 
 	// Build Tonic user client, with authentication intercept
 	let mut tonic_user_client = UsersClient::with_interceptor(
-		tonic_server.client_channel().await?, 
-		helpers::authentication_intercept
+		tonic_server.client_channel().await?,
+		helpers::authentication_intercept,
 	);
 
 	//-- Execute Test (Act)
 	// Build tonic request
-	let request = tonic::Request::new(
-		CreateUserRequest {
-			email: random_user.email.to_string(),
-			user_name: random_user.user_name.to_string(),
-			password: random_user.password_hash.to_string(),
-			is_active: random_user.is_active,
-		}
-	);
+	let request = tonic::Request::new(CreateUserRequest {
+		email: random_user.email.to_string(),
+		user_name: random_user.user_name.to_string(),
+		password: random_user.password_hash.to_string(),
+		is_active: random_user.is_active,
+	});
 	// Send tonic client request to server
 	let response = tonic_user_client.create_user(request).await?.into_inner();
 	// println!("{response:#?}");
@@ -134,20 +137,21 @@ async fn read_user_returns_user(database: Pool<Postgres>) -> Result<()> {
 
 	// Build Tonic user client, with authentication intercept
 	let mut tonic_user_client = UsersClient::with_interceptor(
-		tonic_server.client_channel().await?, 
-		helpers::authentication_intercept
+		tonic_server.client_channel().await?,
+		helpers::authentication_intercept,
 	);
 
 	//-- Execute Test (Act)
 	// Build user request
-	let user_request = tonic::Request::new(
-		UserRequest {
-			id: random_user.id.to_string(),
-		}
-	);
+	let user_request = tonic::Request::new(UserRequest {
+		id: random_user.id.to_string(),
+	});
 
 	// Send read user request
-	let response = tonic_user_client.read_user(user_request).await?.into_inner();
+	let response = tonic_user_client
+		.read_user(user_request)
+		.await?
+		.into_inner();
 	// println!("{response:#?}");
 
 	//-- Checks (Assertions)
@@ -185,8 +189,8 @@ async fn read_index_returns_users(database: Pool<Postgres>) -> Result<()> {
 
 	// Build Tonic user client, with authentication intercept
 	let mut tonic_user_client = UsersClient::with_interceptor(
-		tonic_server.client_channel().await?, 
-		helpers::authentication_intercept
+		tonic_server.client_channel().await?,
+		helpers::authentication_intercept,
 	);
 
 	//-- Execute Test (Act)
@@ -194,12 +198,10 @@ async fn read_index_returns_users(database: Pool<Postgres>) -> Result<()> {
 	let random_limit = (1..random_count).fake::<i64>();
 	let random_offset = (1..random_count).fake::<i64>();
 	// Build Tonic client request
-	let request = tonic::Request::new(
-		UserIndexRequest {
-			limit: random_limit,
-			offset: random_offset,
-		}
-	);
+	let request = tonic::Request::new(UserIndexRequest {
+		limit: random_limit,
+		offset: random_offset,
+	});
 	// Make a Tonic client request
 	let response = tonic_user_client.index_users(request).await?.into_inner();
 	// println!("{response:#?}");
@@ -226,10 +228,10 @@ async fn updated_user_returns_user(database: Pool<Postgres>) -> Result<()> {
 	//-- Setup and Fixtures (Arrange)
 	// Generate random user for testing
 	let original_user = generate_random_user()?;
-	
+
 	// Insert random user into the database for testing
 	insert_user(&original_user, &database).await?;
-	
+
 	// Generate a new random user data to use in update
 	let updated_user = generate_random_user()?;
 
@@ -238,20 +240,18 @@ async fn updated_user_returns_user(database: Pool<Postgres>) -> Result<()> {
 
 	// Build Tonic user client, with authentication intercept
 	let mut tonic_user_client = UsersClient::with_interceptor(
-		tonic_server.client_channel().await?, 
-		helpers::authentication_intercept
+		tonic_server.client_channel().await?,
+		helpers::authentication_intercept,
 	);
 
 	//-- Execute Test (Act)
 	// Build tonic request
-	let request = tonic::Request::new(
-		UpdateUserRequest {
-			id: original_user.id.to_string(),
-			email: updated_user.email.to_string(),
-			user_name: updated_user.user_name.to_string(),
-			is_active: updated_user.is_active,
-		}
-	);
+	let request = tonic::Request::new(UpdateUserRequest {
+		id: original_user.id.to_string(),
+		email: updated_user.email.to_string(),
+		user_name: updated_user.user_name.to_string(),
+		is_active: updated_user.is_active,
+	});
 	let response = tonic_user_client.update_user(request).await?.into_inner();
 	// println!("{response:#?}");
 
@@ -261,13 +261,10 @@ async fn updated_user_returns_user(database: Pool<Postgres>) -> Result<()> {
 
 	// Check email is updated
 	assert_eq!(response.email, updated_user.email.to_string());
-	
+
 	// Check user name is updated
-	assert_eq!(
-		response.user_name,
-		updated_user.user_name.to_string()
-	);
-	
+	assert_eq!(response.user_name, updated_user.user_name.to_string());
+
 	// Check is_active is updated
 	assert_eq!(response.is_active, updated_user.is_active);
 
@@ -289,17 +286,15 @@ async fn delete_user_returns_boolean(database: Pool<Postgres>) -> Result<()> {
 
 	// Build Tonic user client, with authentication intercept
 	let mut tonic_user_client = UsersClient::with_interceptor(
-		tonic_server.client_channel().await?, 
-		helpers::authentication_intercept
+		tonic_server.client_channel().await?,
+		helpers::authentication_intercept,
 	);
 
 	//-- Execute Test (Act)
 	// Build tonic user request
-	let request = tonic::Request::new(
-		UserRequest {
-			id: random_user.id.to_string(),
-		}
-	);
+	let request = tonic::Request::new(UserRequest {
+		id: random_user.id.to_string(),
+	});
 	// Make request
 	let response = tonic_user_client.delete_user(request).await?.into_inner();
 	// println!("{response:#?}");

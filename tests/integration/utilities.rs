@@ -1,9 +1,9 @@
 //-- ./tests/integration/utilities.rs
 
 //! Module for testing the utilities endpoints
-//! 
+//!
 //! Endpoints include
-//! 
+//!
 //! * `ping`: For checking the backend server is up and running
 
 // #![allow(unused)] // For beginning only.
@@ -25,13 +25,16 @@ async fn ping_returns_pong(database: Pool<Postgres>) -> Result<()> {
 
 	// Build Tonic user client, with authentication intercept
 	let mut tonic_utilities_client = UtilitiesClient::with_interceptor(
-		tonic_server.client_channel().await?, 
-		helpers::authentication_intercept
+		tonic_server.client_channel().await?,
+		helpers::authentication_intercept,
 	);
 
 	//-- Execute Test (Act)
 	let request_empty = tonic::Request::new(Empty {});
-	let response = tonic_utilities_client.ping(request_empty).await?.into_inner();
+	let response = tonic_utilities_client
+		.ping(request_empty)
+		.await?
+		.into_inner();
 	// println!("{response:#?}");
 
 	//-- Checks (Assertions)

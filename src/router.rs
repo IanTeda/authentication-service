@@ -22,31 +22,27 @@ use crate::utilities::jwt;
 use sqlx::{Pool, Postgres};
 use tonic::transport::{server::Router, Server};
 
-pub fn get_router(database: Pool<Postgres>, jwt_secret: String) -> Result<Router, BackendError> {
-
+pub fn get_router(database: Pool<Postgres>, jwt_secret: &[u8]) -> Result<Router, BackendError> {
 	// Wraps our database pool an Atomic Reference Counted pointer (Arc). Each instance of
-	// the backend will get a pointer to the pool instead of getting a raw copy. 
+	// the backend will get a pointer to the pool instead of getting a raw copy.
 	let database = Arc::new(database);
 
-	let jwt_session = jwt_secret.as_bytes();
-
-	let jwt_keys = Arc::new(jwt::JwtKeys::new(jwt_session));
-
-	// static TRACING: Lazy<()> = Lazy::new(|| {
-	// 	jwt::Keys::new(jwt_secret)
-	// }
+	let jwt_keys = Arc::new(jwt::JwtKeys::new(jwt_secret));
 
 	// Build Utilities server
-	let utilities_server = UtilitiesServer::new(UtilitiesService::default());
+	let utilities_server = UtilitiesServer::new(UtilitiesService::new(Arc::clone(&jwt_keys)));
 
 	// Build Users server
 	let users_server = UsersServer::with_interceptor(
-		UsersService::new(Arc::clone(&database), jwt_keys),
-		middleware::authentication::check_authentication
+		UsersService::new(Arc::clone(&database), Arc::clone(&jwt_keys)),
+		middleware::authentication::check_authentication,
 	);
 
 	// Build Authentication server
-	let auth_server = AuthenticationServer::new(AuthenticationService::new(Arc::clone(&database)));
+	let auth_server = AuthenticationServer::new(AuthenticationService::new(
+		Arc::clone(&database),
+		Arc::clone(&jwt_keys),
+	));
 
 	// Build reflections server
 	let reflections_server = reflections::get_reflection()?;

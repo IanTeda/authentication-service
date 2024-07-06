@@ -24,8 +24,11 @@ pub struct TonicServer {
 
 impl TonicServer {
 	/// Build the Tonic server instance.
-	pub async fn build(configuration: Configuration, database: Pool<Postgres>) -> Result<Self, BackendError> {
-		let router = router::get_router(database, configuration.application.jwt_secret)?;
+	pub async fn build(
+		configuration: Configuration,
+		database: Pool<Postgres>,
+	) -> Result<Self, BackendError> {
+		let router = router::get_router(database, configuration.application.jwt_secret.as_bytes())?;
 
 		let address = format!(
 			"{}:{}",

@@ -9,6 +9,7 @@ use std::sync::Arc;
 use crate::database;
 use crate::database::users::update_password_by_id;
 use crate::domains::{verify_password_hash, EmailAddress, Password};
+use crate::utilities::jwt::{Claims, JwtKeys, JWT_DURATION, JWT_ISSUER};
 
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
@@ -16,18 +17,19 @@ use tonic::{Request, Response, Status};
 
 use crate::rpc::ledger::authentication_server::Authentication;
 use crate::rpc::ledger::{
-	AuthenticateRequest, AuthenticateResponse, Empty, LogoutRequest, RefreshAuthenticationRequest, ResetPasswordRequest, ResetPasswordResponse, UpdatePasswordRequest
+	AuthenticateRequest, AuthenticateResponse, Empty, LogoutRequest, RefreshAuthenticationRequest,
+	ResetPasswordRequest, ResetPasswordResponse, UpdatePasswordRequest,
 };
 
 /// Authentication service containing a database pool
-#[derive(Debug)]
 pub struct AuthenticationService {
 	database: Arc<Pool<Postgres>>,
+	jwt_keys: Arc<JwtKeys>,
 }
 
 impl AuthenticationService {
-	pub fn new(database: Arc<Pool<Postgres>>) -> Self {
-		Self { database }
+	pub fn new(database: Arc<Pool<Postgres>>, jwt_keys: Arc<JwtKeys>) -> Self {
+		Self { database, jwt_keys }
 	}
 }
 
@@ -45,9 +47,10 @@ impl Authentication for AuthenticationService {
 
 		match verify_password_hash(&password, user.password_hash.as_ref())? {
 			true => {
-				let response = AuthenticateResponse {
-					token: "Bearer some-auth-token".to_string(),
-				};
+				let claim = Claims::new(JWT_ISSUER.to_owned(), user.id.to_string(), JWT_DURATION);
+				let token = claim.to_jwt(&self.jwt_keys)?;
+
+				let response = AuthenticateResponse { token };
 				Ok(Response::new(response))
 			}
 			false => Err(Status::unauthenticated("Authentication failed!")),
@@ -59,7 +62,6 @@ impl Authentication for AuthenticationService {
 		&self,
 		request: Request<RefreshAuthenticationRequest>,
 	) -> Result<Response<AuthenticateResponse>, Status> {
-	
 		unimplemented!()
 	}
 
