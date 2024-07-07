@@ -5,6 +5,8 @@
 //! Password domain parsing
 //!
 //! Parse string into a Password, checking for validation and hash as we go.
+//! 
+//! //TODO: This can be written / structured better
 //!
 //! # References
 //!
@@ -15,7 +17,6 @@
 
 use crate::prelude::*;
 
-// use crate::telemetry::spawn_blocking_with_tracing;
 use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHash, PasswordHasher, PasswordVerifier, Version};
 use secrecy::{ExposeSecret, Secret };

@@ -15,7 +15,7 @@
 use std::time::SystemTime;
 
 use jsonwebtoken::{
-	decode, encode, errors::Error as JWTError, Algorithm, DecodingKey, EncodingKey, Header,
+	decode, encode, DecodingKey, EncodingKey, Header,
 	Validation,
 };
 use std::time::Duration;
@@ -25,6 +25,7 @@ use crate::prelude::BackendError;
 pub static JWT_ISSUER: &str = "Personal Ledger Backend";
 #[allow(clippy::identity_op)]
 pub static JWT_DURATION: u64 = 1 * 60 * 60; // 1 hour as seconds
+pub static JWT_REFRESH_DURATION: u64 = 2 * 60 * 60; // 2 hour as seconds
 
 pub struct JwtKeys {
 	encoding: EncodingKey,
