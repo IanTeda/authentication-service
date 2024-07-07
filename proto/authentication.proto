@@ -20,11 +20,12 @@ message AuthenticateRequest {
 }
 
 message AuthenticateResponse {
-    string token = 1;
+    string access_token = 1;
+    string refresh_token = 2;
 }
 
 message RefreshAuthenticationRequest {
-    string token = 1;
+    string refresh_token = 1;
 }
 
 message UpdatePasswordRequest {

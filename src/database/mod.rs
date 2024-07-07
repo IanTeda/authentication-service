@@ -7,6 +7,7 @@ use sqlx::{postgres::PgPoolOptions, PgPool};
 use crate::{configuration::DatabaseConfiguration, prelude::*};
 
 pub mod users;
+pub mod refresh_token;
 
 pub async fn init_pool(database_configuration: &DatabaseConfiguration) -> Result<PgPool, BackendError> {
 	// Build connection pool

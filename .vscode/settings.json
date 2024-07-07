@@ -16,6 +16,7 @@
         "codegen",
         "customizations",
         "Decrusting",
+        "defguard",
         "devcontainers",
         "encodings",
         "errorlens",

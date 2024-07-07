@@ -10,7 +10,7 @@ use crate::database;
 use crate::database::users::update_password_by_id;
 use crate::domains::{verify_password_hash, EmailAddress, Password};
 use crate::prelude::BackendError;
-use crate::utilities::jwt::{Claims, JwtKeys, JWT_DURATION, JWT_ISSUER};
+use crate::utilities::jwt::{Claims, JwtKeys, JwtTypes, JWT_DURATION, JWT_ISSUER, JWT_REFRESH_DURATION};
 
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
@@ -44,32 +44,42 @@ impl Authentication for AuthenticationService {
 		let request = request.into_inner();
 
 		// Parse the request string into an EmailAddress
-		let email = 
-			EmailAddress::parse(&request.email)
-			.map_err(|e| BackendError::AuthenticationError)?;
+		let email =
+			EmailAddress::parse(&request.email).map_err(|e| BackendError::AuthenticationError)?;
 
 		// Wrap the request password into a Secret to help avoid leaking the string
 		let password = Secret::new(request.password);
 
 		// Get the user from the database to confirm hash
-		let user = 
-			database::users::select_user_by_email(&email, &self.database)
+		let user = database::users::select_user_by_email(&email, &self.database)
 			.await
 			.map_err(|e| BackendError::AuthenticationError)?;
 
 		// Check password against stored hash
 		match verify_password_hash(&password, user.password_hash.as_ref())? {
 			true => {
-				// Build Json Web Token claim
-				let claim = Claims::new(JWT_ISSUER.to_owned(), user.id.to_string(), JWT_DURATION);
+				// Build JWT access token claim
+				let access_claim =
+					Claims::new(JWT_ISSUER.to_owned(), user.id.to_string(), JWT_DURATION, JwtTypes::Access);
+
+				// Build JWT refresh token claim
+				let refresh_claim =
+					Claims::new(JWT_ISSUER.to_owned(), user.id.to_string(), JWT_REFRESH_DURATION, JwtTypes::Refresh);
 
 				// Build Json Web Token
-				let token = 
-					claim.to_jwt(&self.jwt_keys)
+				let access_token = access_claim
+					.to_jwt(&self.jwt_keys)
+					.map_err(|e| BackendError::AuthenticationError)?;
+
+				let refresh_token = access_claim
+					.to_jwt(&self.jwt_keys)
 					.map_err(|e| BackendError::AuthenticationError)?;
 
 				// Build Authenticate Response with the token
-				let response = AuthenticateResponse { token };
+				let response = AuthenticateResponse {
+					access_token,
+					refresh_token,
+				};
 
 				// Send Response
 				Ok(Response::new(response))
@@ -104,7 +114,8 @@ impl Authentication for AuthenticationService {
 				let _ = update_password_by_id(user.id, new_password_hash, &self.database).await?;
 
 				let response = AuthenticateResponse {
-					token: "Bearer some-auth-token".to_string(),
+					access_token: "Bearer some-auth-token".to_string(),
+					refresh_token: "Bearer some-auth-token".to_string()
 				};
 
 				Ok(Response::new(response))

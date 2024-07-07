@@ -77,7 +77,7 @@ async fn authenticate_returns_token_with_uuid(database: Pool<Postgres>) -> Resul
 	let mut validation = Validation::default();
 	// Decode in to Claim
 	let claim = jsonwebtoken::decode::<jwt::Claims>(
-		&response.token,
+		&response.access_token,
 		&jsonwebtoken::DecodingKey::from_secret(config.application.jwt_secret.as_bytes()),
 		&validation,
 	)

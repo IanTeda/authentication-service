@@ -6,7 +6,7 @@
 
 mod create;
 mod delete;
-mod model;
+pub(crate) mod model;
 mod read;
 mod update;
 

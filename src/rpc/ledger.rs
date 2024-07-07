@@ -15,13 +15,15 @@ pub struct AuthenticateRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AuthenticateResponse {
     #[prost(string, tag = "1")]
-    pub token: ::prost::alloc::string::String,
+    pub access_token: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub refresh_token: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RefreshAuthenticationRequest {
     #[prost(string, tag = "1")]
-    pub token: ::prost::alloc::string::String,
+    pub refresh_token: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
