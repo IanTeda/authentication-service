@@ -15,7 +15,7 @@
 
 use std::time::SystemTime;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use secrecy::Secret;
+use secrecy::{ExposeSecret, Secret};
 use std::time::Duration;
 use strum::Display;
 use uuid::Uuid;
@@ -142,5 +142,37 @@ impl TokenClaim {
 			jti: token_id,
 			jty: token_type,
 		}
+	}
+
+	/// Decode a Token into to Token Claim
+    /// 
+    /// ## Parameters
+    /// 
+    /// * `token` [String]: The Token string to be decoded into a Token Claim.
+    /// * `secret`: Secret<String> containing the token encryption secret
+    /// ---
+	pub async fn from_token(token: &str, secret: &Secret<String>) -> Result<Self, BackendError> {
+		// By default, automatically validate the expiration (exp) claim
+        let mut validation = Validation::default();
+        
+        // Issuer (iss) of token to validate against
+		validation.set_issuer(&[TOKEN_ISSUER]);
+
+		// Validate Not before (nbf) claim
+        validation.validate_nbf = true;
+        
+        // What is going to be validated against
+		validation.set_required_spec_claims(&["iss", "exp", "nbf"]);
+
+        // Decode Access Token into a Token Claim
+		let token_claim =
+			decode::<TokenClaim>(
+                &token, 
+                &DecodingKey::from_secret(secret.expose_secret().as_bytes()),
+                &validation
+            )
+            .map(|data| data.claims)?;
+
+        Ok(token_claim)
 	}
 }

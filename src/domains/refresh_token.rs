@@ -64,38 +64,6 @@ impl RefreshToken {
 
         Ok(Self(token))
     }
-
-    /// Decode the Access Token into to Token Claim
-    /// 
-    /// ## Parameters
-    /// 
-    /// * `self`: The Access Token to be decoded.
-    /// * `secret`: Secret<String> containing the token encryption secret
-    /// ---
-    pub async fn decode(&self, secret: &Secret<String>) -> Result<TokenClaim, BackendError> {
-        // By default, automatically validate the expiration (exp) claims.
-        let mut validation = Validation::default();
-        
-        // Issuer (iss) of token to validate against
-		validation.set_issuer(&[TOKEN_ISSUER]);
-
-        // Validate Not before (nbf) claim
-        validation.validate_nbf = true;
-        
-        // What is going to be validated against
-		validation.set_required_spec_claims(&["iss", "exp", "nbf"]);
-
-        // Decode Access Token into a Token Claim
-		let token_claim =
-			decode::<TokenClaim>(
-                self.as_ref(), 
-                &DecodingKey::from_secret(secret.expose_secret().as_bytes()),
-                &validation
-            )
-            .map(|data| data.claims)?;
-
-        Ok(token_claim)
-    }
 }
 
 #[cfg(test)]
@@ -123,9 +91,9 @@ mod tests {
         let random_user = generate_random_user()?;
         let user_id = random_user.id;
 
-        let access_token = RefreshToken::new(&secret, &user_id).await?;
+        let refresh_token = RefreshToken::new(&secret, &user_id).await?;
 
-        let token_claim = access_token.decode(&secret).await?;
+        let token_claim = TokenClaim::from_token(refresh_token.as_ref(), &secret).await?;
         // println!("{token_claim:#?}");
 
         let user_id = user_id.to_string();
