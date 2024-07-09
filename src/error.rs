@@ -40,8 +40,8 @@ pub enum BackendError {
 	#[error("Password parsing error")]
 	PasswordParseError,
 
-	#[error("Authentication error")]
-	AuthenticationError,
+	#[error("Authentication error: {0}")]
+	AuthenticationError(String),
 
 	//-- External errors
 	/// Derive IO errors
@@ -87,8 +87,8 @@ pub enum BackendError {
 impl From<BackendError> for tonic::Status {
     fn from(backend_error: BackendError) -> tonic::Status {
         match backend_error {
-			BackendError::AuthenticationError => {
-				Status::unauthenticated("Authentication failed!")
+			BackendError::AuthenticationError(m) => {
+				Status::unauthenticated(m)
 			}
             // BackendError::EmailFormatInvalid(_) => {
             //     Status::invalid_argument(format!("{:?}", backend_error))

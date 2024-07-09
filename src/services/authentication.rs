@@ -6,11 +6,14 @@
 
 use std::sync::Arc;
 
+use crate::configuration::Configuration;
 use crate::database;
+use crate::database::refresh_token::RefreshTokenModel;
 use crate::database::users::update_password_by_id;
-use crate::domains::{verify_password_hash, EmailAddress, Password};
+use crate::domains::{
+	verify_password_hash, AccessToken, EmailAddress, Password, RefreshToken,
+};
 use crate::prelude::BackendError;
-use crate::utilities::jwt::{Claims, JwtKeys, JwtTypes, JWT_DURATION, JWT_ISSUER, JWT_REFRESH_DURATION};
 
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
@@ -18,19 +21,29 @@ use tonic::{Request, Response, Status};
 
 use crate::rpc::ledger::authentication_server::Authentication;
 use crate::rpc::ledger::{
-	AuthenticateRequest, AuthenticateResponse, Empty, LogoutRequest, RefreshAuthenticationRequest,
-	ResetPasswordRequest, ResetPasswordResponse, UpdatePasswordRequest,
+	AuthenticateRequest, AuthenticateResponse, Empty, LogoutRequest,
+	RefreshAuthenticationRequest, ResetPasswordRequest, ResetPasswordResponse,
+	UpdatePasswordRequest,
 };
 
 /// Authentication service containing a database pool
 pub struct AuthenticationService {
 	database: Arc<Pool<Postgres>>,
-	jwt_keys: Arc<JwtKeys>,
+	config: Arc<Configuration>,
 }
 
 impl AuthenticationService {
-	pub fn new(database: Arc<Pool<Postgres>>, jwt_keys: Arc<JwtKeys>) -> Self {
-		Self { database, jwt_keys }
+	pub fn new(database: Arc<Pool<Postgres>>, config: Arc<Configuration>) -> Self {
+		Self { database, config }
+	}
+
+	/// Shorthand for reference to database pool
+	fn database_ref(&self) -> &Pool<Postgres> {
+		&self.database
+	}
+
+	fn config_ref(&self) -> &Configuration {
+		&self.config
 	}
 }
 
@@ -44,41 +57,45 @@ impl Authentication for AuthenticationService {
 		let request = request.into_inner();
 
 		// Parse the request string into an EmailAddress
-		let email =
-			EmailAddress::parse(&request.email).map_err(|e| BackendError::AuthenticationError)?;
+		let email = EmailAddress::parse(&request.email).map_err(|_| {
+			BackendError::AuthenticationError("Authentication failed!".to_string())
+		})?;
 
 		// Wrap the request password into a Secret to help avoid leaking the string
-		let password = Secret::new(request.password);
+		let password_secret = Secret::new(request.password);
+
+		let token_secret = &self.config.application.token_secret;
+		let token_secret = Secret::new(token_secret.to_owned());
 
 		// Get the user from the database to confirm hash
 		let user = database::users::select_user_by_email(&email, &self.database)
 			.await
-			.map_err(|e| BackendError::AuthenticationError)?;
+			.map_err(|_| {
+				BackendError::AuthenticationError(
+					"Authentication failed!".to_string(),
+				)
+			})?;
 
 		// Check password against stored hash
-		match verify_password_hash(&password, user.password_hash.as_ref())? {
+		match verify_password_hash(&password_secret, user.password_hash.as_ref())? {
 			true => {
 				// Build JWT access token claim
-				let access_claim =
-					Claims::new(JWT_ISSUER.to_owned(), user.id.to_string(), JWT_DURATION, JwtTypes::Access);
+				let access_token = 
+					AccessToken::new(&token_secret, &user.id).await?;
+				// .map_err(|_| BackendError::AuthenticationError("Token authentication failed!".to_string()))?;
 
 				// Build JWT refresh token claim
-				let refresh_claim =
-					Claims::new(JWT_ISSUER.to_owned(), user.id.to_string(), JWT_REFRESH_DURATION, JwtTypes::Refresh);
+				let refresh_token =
+					RefreshToken::new(&token_secret, &user.id).await?;
+				// .map_err(|_| BackendError::AuthenticationError("Token authentication failed!".to_string()))?;
 
-				// Build Json Web Token
-				let access_token = access_claim
-					.to_jwt(&self.jwt_keys)
-					.map_err(|e| BackendError::AuthenticationError)?;
-
-				let refresh_token = access_claim
-					.to_jwt(&self.jwt_keys)
-					.map_err(|e| BackendError::AuthenticationError)?;
+				//-- Add refresh token to database
+				// let refresh_token_model = RefreshTokenModel::new(&user.id, &refresh_token);
 
 				// Build Authenticate Response with the token
 				let response = AuthenticateResponse {
-					access_token,
-					refresh_token,
+					access_token: access_token.to_string(),
+					refresh_token: refresh_token.to_string(),
 				};
 
 				// Send Response
@@ -106,16 +123,23 @@ impl Authentication for AuthenticationService {
 		let original_password = Secret::new(request.original_password);
 		let new_password = Secret::new(request.new_password);
 
-		let user = database::users::select_user_by_email(&email, &self.database).await?;
+		let user =
+			database::users::select_user_by_email(&email, &self.database).await?;
 
-		match verify_password_hash(&original_password, user.password_hash.as_ref())? {
+		match verify_password_hash(&original_password, user.password_hash.as_ref())?
+		{
 			true => {
 				let new_password_hash = Password::parse(new_password)?;
-				let _ = update_password_by_id(user.id, new_password_hash, &self.database).await?;
+				let _ = update_password_by_id(
+					user.id,
+					new_password_hash,
+					&self.database,
+				)
+				.await?;
 
 				let response = AuthenticateResponse {
 					access_token: "Bearer some-auth-token".to_string(),
-					refresh_token: "Bearer some-auth-token".to_string()
+					refresh_token: "Bearer some-auth-token".to_string(),
 				};
 
 				Ok(Response::new(response))
@@ -133,7 +157,10 @@ impl Authentication for AuthenticationService {
 		unimplemented!()
 	}
 
-	async fn logout(&self, request: Request<LogoutRequest>) -> Result<Response<Empty>, Status> {
+	async fn logout(
+		&self,
+		request: Request<LogoutRequest>,
+	) -> Result<Response<Empty>, Status> {
 		unimplemented!()
 	}
 }

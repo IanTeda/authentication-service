@@ -25,15 +25,18 @@ pub struct TonicServer {
 impl TonicServer {
 	/// Build the Tonic server instance.
 	pub async fn build(
-		configuration: Configuration,
+		config: Configuration,
 		database: Pool<Postgres>,
 	) -> Result<Self, BackendError> {
-		let router = router::get_router(database, configuration.application.jwt_secret.as_bytes())?;
 
+		// TODO: Refactor into config file
 		let address = format!(
 			"{}:{}",
-			configuration.application.ip_address, configuration.application.port
+			&config.application.ip_address, &config.application.port
 		);
+
+		let router = router::get_router(database, config)?;
+
 		// We are using listener as it will bind a random port when port setting
 		// is '0'. This is important for integration test server spawn.
 		let listener = TcpListener::bind(address).await?;

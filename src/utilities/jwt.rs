@@ -51,7 +51,7 @@ impl JwtKeys {
 // 	alg: String,
 // }
 
-#[derive(Display)]
+#[derive(Display, PartialEq)]
 pub enum JwtTypes {
 	Access,
 	Refresh,
@@ -76,15 +76,15 @@ impl rand::distributions::Distribution<JwtTypes> for rand::distributions::Standa
 // }
 
 #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct Claims {
-	iss: String,     // Optional.  Issuer of the JWT.
-	pub sub: String, // Optional. Subject (whom token refers to)
-	// aud: String,         // Optional. The JWT intended recipient or audience.
-	exp: u64, // Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
-	nbf: u64, // Optional. Not Before (as UTC timestamp). Identifies the time before which JWT can not be accepted into processing.
-	iat: u64, // Optional. Identifies the time at which the JWT was issued. This can be used to establish the age of the JWT or the exact time the token was generated.
-	jti: String, // (JWT ID): Unique identifier; this can be used to prevent the JWT from being used more than once.
-	jty: String, // Custom. Identify the token as access or refresh
+pub struct Claims { //
+	pub iss: String,     // Optional.  Issuer of the JWT.
+	pub sub: String,     // Optional. Subject (whom token refers to)
+	// aud: String,      // Optional. The JWT intended recipient or audience.
+	pub exp: u64,        // Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
+	pub nbf: u64,        // Optional. Not Before (as UTC timestamp). Identifies the time before which JWT can not be accepted into processing.
+	pub iat: u64,        // Optional. Identifies the time at which the JWT was issued. This can be used to establish the age of the JWT or the exact time the token was generated.
+	pub jti: String,     // (JWT ID): Unique identifier; this can be used to prevent the JWT from being used more than once.
+	pub jty: String,     // Custom. Identify the token as access or refresh
 }
 
 ///
@@ -93,11 +93,19 @@ pub struct Claims {
 ///
 /// * [IANA JWT](https://www.iana.org/assignments/jwt/jwt.xhtml)
 impl Claims {
-	pub fn new(issuer: String, subject: String, duration: u64, jwt_type: JwtTypes) -> Self {
+	pub fn new(subject: String, jwt_type: JwtTypes) -> Self {
+		
+		// Set JWT issuer
+		let issuer = JWT_ISSUER.to_owned();
+
 		// System Time now
 		let now = SystemTime::now();
 
-		// let aud = configuration.application.ip_address;
+		// Match duration against token type
+		let duration = match jwt_type {
+			JwtTypes::Access => JWT_DURATION,
+			JwtTypes::Refresh => JWT_REFRESH_DURATION,
+		};
 
 		// Token claim will expire at what System Time
 		let expiration_timestamp = now
@@ -201,9 +209,7 @@ mod tests {
 
 		// Initiate new claim
 		let claim = Claims::new(
-			JWT_ISSUER.to_owned(),
 			uuid_subject,
-			random_duration,
 			jwt_type,
 		);
 		// println!("{claim:#?}");

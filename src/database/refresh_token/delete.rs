@@ -1,47 +1,91 @@
 //-- ./src/database/refresh_token/delete.rs
 
-//! Delete RefreshToken in the database, returning a Result with a boolean
+//! Delete RefreshToken in the database, returning a Result with a u64 of the number
+//! of rows affected.
+//! 
+//! This module adds two impl methods to RefreshTokenModel:
+//! 
+//! 1. `delete`: Delete Refresh Token instance in the database, returning the number of rows affected.
+//! 2. `delete_all_user_id`: Delete all Refresh Token instances for a given user_id, returning the number of rows affected
 //! ---
 
 // #![allow(unused)] // For development only
 
-use crate::prelude::*;
-
+use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
-/// Delete a RefreshToken from the database by querying the RefreshToken uuid, returning a Result
-/// with a boolean or an sqlx error.
-///
-/// # Parameters
-///
-/// * `id` - The uuid of the refresh token to be deleted.
-/// * `database` - An sqlx database pool that the thing will be searched in.
-/// ---
-#[tracing::instrument(
-	name = "Delete a Refresh from the database using its id (uuid)."
-	skip(id, database)
-)]
-pub async fn delete_refresh_token_by_id(
-	id: &Uuid,
-	database: &sqlx::Pool<sqlx::Postgres>,
-) -> Result<bool, BackendError> {
-	let rows_affected = sqlx::query!(
-		r#"
-			Delete 
-			FROM refresh_tokens 
-			WHERE id = $1
-		"#,
-		id
-	)
-	.execute(database)
-	.await?
-	.rows_affected();
+impl super::RefreshTokenModel {
+	/// Delete a Refresh Token from the database by querying the Refresh Token uuid, returning a Result
+	/// with the number of rows deleted or an sqlx error.
+	///
+	/// # Parameters
+	///
+	/// * `self` - The Refresh Token instance to be deleted.
+	/// * `database` - An sqlx database pool that the thing will be searched in.
+	/// ---
+	#[tracing::instrument(
+		name = "Delete a Refresh Token from the database using its id (uuid)."
+		skip(self, database)
+		fields(
+        	db_id = %self.id,
+			user_id = %self.user_id,
+			refresh_token = %self.refresh_token.as_ref(),
+			is_active = %self.is_active,
+			created_on = %self.created_on,
+    	)
+	)]
+	pub async fn delete(
+		&self,
+		database: &Pool<Postgres>,
+	) -> Result<u64, sqlx::Error> {
+		let rows_affected = sqlx::query!(
+			r#"
+				Delete 
+				FROM refresh_tokens 
+				WHERE id = $1
+			"#,
+			self.id
+		)
+		.execute(database)
+		.await?
+		.rows_affected();
 
-	let confirm_deleted: bool = rows_affected != 0;
+		Ok(rows_affected)
+	}
 
-	tracing::debug!("RefreshToken record retrieved form database: {rows_affected:#?}");
+	/// Delete all Refresh Tokens from the database by querying the Refresh Token user_id, returning a Result
+	/// with the u64 number of rows deleted or an sqlx error.
+	///
+	/// # Parameters
+	///
+	/// * `user_id` - The user_id for the Refresh Tokens to be deleted
+	/// * `database` - An sqlx database pool that the thing will be searched in.
+	/// ---
+	#[tracing::instrument(
+		name = "Delete a Refresh Token from the database using a user_id (uuid)."
+		skip(user_id, database)
+		fields(
+			user_id = %user_id,
+    	)
+	)]
+	pub async fn delete_all_user_id(
+		user_id: &Uuid,
+		database: &Pool<Postgres>,
+	) -> Result<u64, sqlx::Error> {
+		let rows_affected = sqlx::query!(
+			r#"
+				Delete 
+				FROM refresh_tokens 
+				WHERE user_id = $1
+			"#,
+			user_id
+		)
+		.execute(database)
+		.await?
+		.rows_affected();
 
-	Ok(confirm_deleted)
+		Ok(rows_affected)
+	}
 }
 
 //-- Unit Tests
@@ -49,14 +93,15 @@ pub async fn delete_refresh_token_by_id(
 pub mod tests {
 
 	// Bring module functions into test scope
-	use super::*;
+	// use super::*;
+
+	use fake::Fake;
+	use sqlx::{Pool, Postgres};
 
 	use crate::database::{
-		refresh_token::{insert_refresh_token, model::tests::generate_random_refresh_token}, 
-		users::{insert_user, model::tests::generate_random_user}
+		refresh_token::RefreshTokenModel,
+		users::{insert_user, model::tests::generate_random_user},
 	};
-
-	use sqlx::{Pool, Postgres};
 
 	// Override with more flexible error
 	pub type Result<T> = core::result::Result<T, Error>;
@@ -64,7 +109,7 @@ pub mod tests {
 
 	// Test getting user from database using unique UUID
 	#[sqlx::test]
-	async fn delete_user_record_by_id(database: Pool<Postgres>) -> Result<()> {
+	async fn delete_refresh_token_record(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate random user
 		let random_user = generate_random_user()?;
@@ -73,25 +118,29 @@ pub mod tests {
 		insert_user(&random_user, &database).await?;
 
 		// Generate refresh token
-		let refresh_token = generate_random_refresh_token(random_user.id)?;
+		let refresh_token =
+			RefreshTokenModel::create_random(&random_user.id).await?;
+
 		// Insert refresh token in the database for deleting
-		insert_refresh_token(&refresh_token, &database).await?;
+		refresh_token.insert(&database).await?;
 
 		//-- Execute Function (Act)
 		// Insert user into database
-		let database_record = delete_refresh_token_by_id(&refresh_token.id, &database).await?;
+		let rows_affected = refresh_token.delete(&database).await?;
 		// println!("{record:#?}");
 
 		//-- Checks (Assertions)
-		assert!(database_record);
+		assert!(rows_affected == 1);
 
 		// -- Return
 		Ok(())
 	}
 
-	// Test deleting refresh token from the database using unique UUID
+	// Test getting user from database using unique UUID
 	#[sqlx::test]
-	async fn delete_user_false(database: Pool<Postgres>) -> Result<()> {
+	async fn delete_all_refresh_tokens_with_user_id(
+		database: Pool<Postgres>,
+	) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate random user
 		let random_user = generate_random_user()?;
@@ -99,20 +148,23 @@ pub mod tests {
 		// Insert random user into the database
 		insert_user(&random_user, &database).await?;
 
-		// Generate refresh token
-		let refresh_token = generate_random_refresh_token(random_user.id)?;
-		// Insert refresh token in the database for deleting
-		insert_refresh_token(&refresh_token, &database).await?;
+		let random_count: i64 = (10..30).fake::<i64>();
+		for _count in 0..random_count {
+			// Generate refresh token
+			let refresh_token =
+				RefreshTokenModel::create_random(&random_user.id).await?;
+
+			// Insert refresh token in the database for deleting
+			refresh_token.insert(&database).await?;
+		}
 
 		//-- Execute Function (Act)
-		// Generate a new uuid
-		let random_uuid = Uuid::now_v7();
-		// Delete refresh token into database
-		let database_record = delete_refresh_token_by_id(&random_uuid, &database).await?;
-		// println!("{record:#?}");
+		// Insert user into database
+		let rows_affected = RefreshTokenModel::delete_all_user_id(&random_user.id, &database).await?;
+		// println!("{rows_affected:#?}");
 
 		//-- Checks (Assertions)
-		assert!(!database_record);
+		assert!(rows_affected == random_count as u64);
 
 		// -- Return
 		Ok(())

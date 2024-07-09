@@ -1,0 +1,24 @@
+//-- ./proto/refresh_tokens.proto
+
+syntax = "proto3";
+
+package ledger;
+
+import "common.proto";
+
+service RefreshTokens {
+  rpc RevokeRefreshToken (RefreshTokenRequest) returns (RevokeTokensResponse);
+  rpc DeleteRefreshToken(RefreshTokenRequest) returns (DeleteRefreshTokensResponse);
+}
+
+message RefreshTokenRequest {
+  string id = 1;
+}
+
+message RevokeTokensResponse {
+  bool is_revoked = 1;
+}
+
+message DeleteRefreshTokensResponse {
+  bool is_deleted = 1;
+}

@@ -7,41 +7,46 @@
 
 // #![allow(unused)] // For development only
 
+use sqlx::Pool;
+use sqlx::Postgres;
 use std::sync::Arc;
 
+use crate::configuration::Configuration;
 use crate::middleware;
 use crate::prelude::*;
 use crate::reflections;
 use crate::rpc::ledger::authentication_server::AuthenticationServer;
 use crate::rpc::ledger::users_server::UsersServer;
 use crate::rpc::ledger::utilities_server::UtilitiesServer;
-use crate::services::AuthenticationService;
-use crate::services::{UsersService, UtilitiesService};
-use crate::utilities::jwt;
+use crate::services::{AuthenticationService, UsersService, UtilitiesService};
 
-use sqlx::{Pool, Postgres};
 use tonic::transport::{server::Router, Server};
 
-pub fn get_router(database: Pool<Postgres>, jwt_secret: &[u8]) -> Result<Router, BackendError> {
+pub fn get_router(
+	database: Pool<Postgres>,
+	config: Configuration,
+) -> Result<Router, BackendError> {
 	// Wraps our database pool an Atomic Reference Counted pointer (Arc). Each instance of
 	// the backend will get a pointer to the pool instead of getting a raw copy.
 	let database = Arc::new(database);
 
-	let jwt_keys = Arc::new(jwt::JwtKeys::new(jwt_secret));
+	// Wrap config in an Atomic Reference Counted (ARC) pointer.
+	let config = Arc::new(config);
 
 	// Build Utilities server
-	let utilities_server = UtilitiesServer::new(UtilitiesService::new(Arc::clone(&jwt_keys)));
+	let utilities_server =
+		UtilitiesServer::new(UtilitiesService::new(Arc::clone(&config)));
 
 	// Build Users server
 	let users_server = UsersServer::with_interceptor(
-		UsersService::new(Arc::clone(&database), Arc::clone(&jwt_keys)),
+		UsersService::new(Arc::clone(&database), Arc::clone(&config)),
 		middleware::authentication::check_authentication,
 	);
 
 	// Build Authentication server
 	let auth_server = AuthenticationServer::new(AuthenticationService::new(
 		Arc::clone(&database),
-		Arc::clone(&jwt_keys),
+		Arc::clone(&config),
 	));
 
 	// Build reflections server

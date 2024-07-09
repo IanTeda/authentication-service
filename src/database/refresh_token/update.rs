@@ -1,62 +1,139 @@
 //-- ./src/database/refresh_token/update.rs
 
-//! Update Refresh Token in the database, returning a Result with a RefreshTokenModel instance
+//! Update Refresh Token in the database
+//! 
+//! This module has three impl functions for RefreshTokenModel:
+//! 
+//!  1. `update`: Update the RefreshTokenModel instance in the database
+//!  2. `revoke`: Revoke the RefreshTokenModel instance in the database
+//!  3. `revoke_user_id`: Revoke all the RefreshTokenModel rows in the database with the user_id
+//! 
 //! ---
 
 // #![allow(unused)] // For development only
 
 use super::model::RefreshTokenModel;
-use crate::prelude::*;
 
+use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
-/// Update a `Refresh Token` into the database, returning result with a RefreshTokenModel instance.
-///
-/// # Parameters
-///
-/// * `user` - A RefreshTokenModel instance
-/// * `database` - An Sqlx database connection pool
-/// ---
-#[tracing::instrument(
-	name = "Update a refresh Token in the database."
-	skip(refresh_token, database)
-)]
-pub async fn update_refresh_token_by_id(
-	refresh_token: &RefreshTokenModel,
-	database: &sqlx::Pool<sqlx::Postgres>,
-) -> Result<RefreshTokenModel, BackendError> {
-	let updated_refresh_token = sqlx::query_as!(
-		RefreshTokenModel,
-		r#"
-            UPDATE refresh_tokens 
-            SET user_id = $2, refresh_token = $3, is_active = $4
-            WHERE id = $1 
-            RETURNING *
-        "#,
-		refresh_token.id,
-		refresh_token.user_id,
-		refresh_token.refresh_token,
-		refresh_token.is_active,
-	)
-	.fetch_one(database)
-	.await?;
 
-	tracing::debug!("Refresh Token updated in the database: {updated_refresh_token:#?}");
+impl super::RefreshTokenModel {
+	/// Update a `Refresh Token` in the database, returning a result with a RefreshTokenModel instance
+	/// or Sqlx error.
+	///
+	/// # Parameters
+	///
+	/// * `self` - A RefreshTokenModel instance.
+	/// * `database` - An Sqlx database connection pool.
+	/// ---
+	#[tracing::instrument(
+		name = "Update a Refresh Token in the database."
+		skip(self, database)
+		fields(
+        	db_id = %self.id,
+			user_id = %self.user_id,
+			refresh_token = %self.refresh_token.as_ref(),
+			is_active = %self.is_active,
+			created_on = %self.created_on,
+    	)
+	)]
+	pub async fn update(
+		&self,
+		database: &Pool<Postgres>,
+	) -> Result<RefreshTokenModel, sqlx::Error> {
+		sqlx::query_as!(
+			RefreshTokenModel,
+			r#"
+				UPDATE refresh_tokens 
+				SET user_id = $2, refresh_token = $3, is_active = $4
+				WHERE id = $1 
+				RETURNING *
+			"#,
+			self.id,
+			self.user_id,
+			self.refresh_token.as_ref(),
+			self.is_active,
+		)
+		.fetch_one(database)
+		.await
+	}
 
-	Ok(updated_refresh_token)
+	/// Revoke (make non-active) a Refresh Token in the database, returning a result
+	/// with a RefreshTokenModel instance or and SQLx error
+	///
+	/// # Parameters
+	///
+	/// * `self` - A RefreshTokenModel instance.
+	/// * `database` - An Sqlx database connection pool.
+	/// ---
+	#[tracing::instrument(
+		name = "Revoke a Refresh Token in the database."
+		skip(self, database)
+		fields(
+        	db_id = %self.id,
+			user_id = %self.user_id,
+			refresh_token = %self.refresh_token.as_ref(),
+			is_active = %self.is_active,
+			created_on = %self.created_on,
+    	)
+	)]
+	pub async fn revoke(
+		&self, 
+		database: &Pool<Postgres>
+	) -> Result<Self, sqlx::Error> {
+		sqlx::query_as!(
+			RefreshTokenModel,
+			r#"
+				UPDATE refresh_tokens 
+				SET is_active = false
+				WHERE id = $1 
+				RETURNING *
+			"#,
+			self.id
+		)
+		.fetch_one(database)
+		.await
+	}
+
+	/// Revoke (make non-active) all Refresh Token in the database for a give user_id,
+	/// returning a result with the number RefreshTokenModels revoked or an SQLx error
+	///
+	/// # Parameters
+	///
+	/// * `user_id` - The user_id for the Refresh Tokens to be revoked.
+	/// * `database` - An Sqlx database connection pool.
+	/// ---
+	#[tracing::instrument(
+		name = "Revoke all Refresh Tokens for a given user_id in the database."
+		skip(database)
+	)]
+	pub async fn revoke_user_id(
+		user_id: &Uuid, 
+		database: &Pool<Postgres>
+	) -> Result<u64, sqlx::Error> {
+		let rows_affected = sqlx::query_as!(
+			RefreshTokenModel,
+			r#"
+				UPDATE refresh_tokens 
+				SET is_active = false
+				WHERE user_id = $1 
+			"#,
+			user_id
+		)
+		.execute(database)
+		.await?
+		.rows_affected();
+
+		Ok(rows_affected)
+	}
 }
 
 //-- Unit Tests
 #[cfg(test)]
 pub mod tests {
 
-	// Bring module functions into test scope
-	use super::*;
-
-	use crate::database::{
-		refresh_token::{insert_refresh_token, model::tests::generate_random_refresh_token},
-		users::{insert_user, model::tests::generate_random_user},
-	};
+	use crate::database::{refresh_token::RefreshTokenModel, users::{insert_user, model::tests::generate_random_user}};
 
 	use fake::Fake;
 	use sqlx::{Pool, Postgres};
@@ -65,9 +142,8 @@ pub mod tests {
 	pub type Result<T> = core::result::Result<T, Error>;
 	pub type Error = Box<dyn std::error::Error>;
 
-	// Test inserting into database
 	#[sqlx::test]
-	async fn update_database_record(database: Pool<Postgres>) -> Result<()> {
+	async fn update_refresh_token(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate random user
 		let random_user = generate_random_user()?;
@@ -76,33 +152,125 @@ pub mod tests {
 		insert_user(&random_user, &database).await?;
 
 		// Generate refresh token
-		let mut original_refresh_token = generate_random_refresh_token(random_user.id)?;
+		let mut refresh_token =
+			RefreshTokenModel::create_random(&random_user.id).await?;
+
+		let original_refresh_token_id = refresh_token.id;
+		let original_refresh_token_created_on = refresh_token.created_on;
 
 		// Insert refresh token in the database for deleting
-		insert_refresh_token(&original_refresh_token, &database).await?;
+		refresh_token.insert(&database).await?;
+
+		// Generate a new user and refresh token for updating
+		let random_user_update = generate_random_user()?;
+
+		// Insert random user into the database
+		insert_user(&random_user_update, &database).await?;
+
+		// Generate refresh token
+		let refresh_token_update =
+			RefreshTokenModel::create_random(&random_user_update.id).await?;
+		
+		// refresh_token.id = refresh_token_update.id;
+		refresh_token.user_id = random_user_update.id;
+		refresh_token.refresh_token = refresh_token_update.clone().refresh_token;
+		refresh_token.is_active = refresh_token_update.clone().is_active;
+		refresh_token.created_on = refresh_token_update.clone().created_on;
 
 
 		//-- Execute Function (Act)
 		// Generate an updated Refresh Token
-		let mut updated_refresh_token = generate_random_refresh_token(random_user.id)?;
-		updated_refresh_token.id = original_refresh_token.id;
-
-		// Get the Refresh Tokens
-		let database_record = update_refresh_token_by_id(&updated_refresh_token, &database).await?;
-		// println!("{record:#?}");
-
+		let database_record = refresh_token.clone().update(&database).await?;
 
 		//-- Checks (Assertions)
-		assert_eq!(database_record.id, original_refresh_token.id);
-		assert_eq!(database_record.user_id, random_user.id);
-		assert_eq!(database_record.refresh_token, updated_refresh_token.refresh_token);
-		assert_eq!(database_record.is_active, updated_refresh_token.is_active);
+		assert_eq!(database_record.id, original_refresh_token_id);
+		assert_eq!(database_record.user_id, random_user_update.id);
+		assert_eq!(database_record.refresh_token, refresh_token_update.refresh_token);
+		assert_eq!(database_record.is_active, refresh_token_update.is_active);
 		assert_eq!(
 			database_record.created_on.timestamp(),
-			original_refresh_token.created_on.timestamp()
+			original_refresh_token_created_on.timestamp()
 		);
 
 		// -- Return
+		Ok(())
+	}
+
+	#[sqlx::test]
+	async fn revoke_refresh_token(database: Pool<Postgres>) -> Result<()> {
+		//-- Setup and Fixtures (Arrange)
+		// Generate random user
+		let random_user = generate_random_user()?;
+
+		// Insert random user into the database
+		insert_user(&random_user, &database).await?;
+
+		// Generate refresh token
+		let mut refresh_token =
+			RefreshTokenModel::create_random(&random_user.id).await?;
+			
+		// Set Refresh Token active to true
+		refresh_token.is_active = true;
+
+		// Insert Refresh Token into database
+		refresh_token.insert(&database).await?;
+
+		// Insert refresh token in the database for deleting
+		refresh_token.revoke(&database).await?;
+
+		//-- Execute Function (Act)
+		// Generate an updated Refresh Token
+		let database_record = RefreshTokenModel::from_id(&refresh_token.id, &database).await?;
+
+		//-- Checks (Assertions)
+		assert_eq!(database_record.is_active, false);
+
+		// -- Return
+		Ok(())
+	}
+
+	#[sqlx::test]
+	async fn revoke_all_user_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
+				//-- Setup and Fixtures (Arrange)
+		// Generate random user
+		let random_user = generate_random_user()?;
+
+		// Insert random user into the database
+		insert_user(&random_user, &database).await?;
+
+		let mut test_vec: Vec<RefreshTokenModel> = Vec::new();
+		let random_count: i64 = (10..30).fake::<i64>();
+		for _count in 0..random_count {
+			// Generate refresh token
+			let mut refresh_token =
+				RefreshTokenModel::create_random(&random_user.id).await?;
+			
+			// Set Refresh Token active to true
+			refresh_token.is_active = true;
+
+			// Insert refresh token in the database for deleting
+			refresh_token.insert(&database).await?;
+
+			// Add Refresh Token to a Vec
+			test_vec.push(refresh_token);
+		}
+
+		//-- Execute Function (Act)
+		// Generate an updated Refresh Token
+		let rows_affected = RefreshTokenModel::revoke_user_id(&random_user.id, &database).await?;
+
+		//-- Checks (Assertions)
+		assert!(rows_affected == random_count as u64);
+
+		// Pick a random Refresh Token to asset is_active as false
+		let random_index_number = (1..random_count).fake::<i64>() as usize;
+
+		// Get the database record
+		let database_record = RefreshTokenModel::from_id(&test_vec[random_index_number].id, &database).await?;
+
+		// Check the is_active status is false
+		assert_eq!(database_record.is_active, false);
+
 		Ok(())
 	}
 }

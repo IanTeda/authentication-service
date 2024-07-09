@@ -19,7 +19,7 @@ use personal_ledger_backend::{
 	database::users::insert_user,
 	domains::Password,
 	rpc::ledger::{authentication_client::AuthenticationClient, AuthenticateRequest},
-	utilities::jwt::{self, JWT_ISSUER},
+	utilities::jwt::{self, JwtTypes, JWT_ISSUER},
 };
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
@@ -62,6 +62,7 @@ async fn authenticate_returns_token_with_uuid(database: Pool<Postgres>) -> Resul
 		email: random_user.email.to_string(),
 		password: random_password,
 	});
+
 	// Send tonic client request to server
 	let response = authentication_client
 		.authenticate(request)
@@ -75,16 +76,30 @@ async fn authenticate_returns_token_with_uuid(database: Pool<Postgres>) -> Resul
 
 	// Build the token validation for decoding, which is non for testing
 	let mut validation = Validation::default();
+
 	// Decode in to Claim
-	let claim = jsonwebtoken::decode::<jwt::Claims>(
+	let access_claim = jsonwebtoken::decode::<jwt::Claims>(
 		&response.access_token,
 		&jsonwebtoken::DecodingKey::from_secret(config.application.jwt_secret.as_bytes()),
 		&validation,
 	)
 	.map(|data| data.claims)?;
+	let refresh_claim = jsonwebtoken::decode::<jwt::Claims>(
+		&response.refresh_token,
+		&jsonwebtoken::DecodingKey::from_secret(config.application.jwt_secret.as_bytes()),
+		&validation,
+	)
+	.map(|data| data.claims)?;
+
+	// println!("{access_claim:#?}");
 
 	// Confirm uuids are the same
-	assert_eq!(Uuid::parse_str(&claim.sub)?, random_user.id);
+	assert_eq!(Uuid::parse_str(&access_claim.sub)?, random_user.id);
+	assert_eq!(Uuid::parse_str(&refresh_claim.sub)?, random_user.id);
+	// Confirm Access token
+	assert_eq!(&access_claim.jty, "Access");
+	assert_eq!(&refresh_claim.jty, "Refresh");
+	// assert!(matches!(&access_claim.jty, JwtTypes::Access));
 
 	Ok(())
 }

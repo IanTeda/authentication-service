@@ -20,6 +20,7 @@ use super::{TokenClaim, TOKEN_ISSUER};
 pub static REFRESH_TOKEN_DURATION: u64 = 2 * 60 * 60; // 2 hour as seconds
 
 /// Refresh Token for authorising a new Access Token
+#[derive(serde::Deserialize, Debug, Clone, PartialEq)]
 pub struct RefreshToken (String);
 
 /// Get string reference of the Refresh Token
@@ -33,6 +34,13 @@ impl AsRef<str> for RefreshToken {
 impl std::fmt::Display for RefreshToken {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		self.0.fmt(f)
+	}
+}
+
+
+impl From<String> for RefreshToken {
+	fn from(value: String) -> Self {
+		Self(value)
 	}
 }
 
@@ -74,9 +82,11 @@ mod tests {
 
     use crate::{database::users::model::tests::generate_random_user, domains::token_claim::TokenType};
 
+    use claims::assert_err;
     use rand::distributions::{Alphanumeric, DistString};
+    use crate::error::BackendError::JsonWebToken;
 
-	// Override with more flexible error
+    // Override with more flexible error
 	pub type Result<T> = core::result::Result<T, Error>;
 	pub type Error = Box<dyn std::error::Error>;
 
@@ -105,5 +115,39 @@ mod tests {
 
         Ok(())
     }
+    //
+    // #[tokio::test]
+	// async fn bad_token() -> Result<()> {
+    //
+    //     // Generate random secret string
+	// 	let secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
+    //     let secret = Secret::new(secret);
+    //
+    //     // Get a random user_id for subject
+    //
+    //     let bad_token = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
+    //
+    //     let token_claim = TokenClaim::from_token(bad_token.as_str(), &secret).await?;
+    //     // println!("{token_claim:#?}");
+    //
+    //     // let user_id = user_id.to_string();
+    //     // let token_type = TokenType::Refresh.to_string();
+    //
+    //     // assert_eq!(token_claim.iss, TOKEN_ISSUER);
+    //     // assert_eq!(token_claim.sub, user_id);
+    //     // assert_eq!(token_claim.jty, token_type);
+    //     // assert_err!(TokenClaim::from_token(bad_token.as_str(), &secret).await?);
+	// 	// assert!(matches!(
+	// 	// 	UserName::parse(name),
+	// 	// 	Err(BackendError::UserNameFormatInvalid { .. })
+	// 	// ));
+    //     // assert!(matches!(
+    //     // 	TokenClaim::from_token(bad_token.as_str(), &secret).await?,
+    //     // 	Err(JsonWebToken::InvalidToken { .. })
+    //     // ));
+    //
+    //     assert_err!(TokenClaim::from_token(bad_token.as_str(), &secret).await?);
+    //     Ok(())
+    // }
 
 }

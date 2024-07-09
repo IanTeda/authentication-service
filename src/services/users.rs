@@ -7,11 +7,11 @@
 use std::sync::Arc;
 
 use crate::database;
-use crate::utilities::jwt::JwtKeys;
 
 use sqlx::{Pool, Postgres};
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
+use crate::configuration::Configuration;
 
 use crate::database::users::UserModel;
 use crate::rpc::ledger::users_server::Users;
@@ -24,13 +24,13 @@ use crate::rpc::ledger::{
 // #[derive(Debug)]
 pub struct UsersService {
 	database: Arc<Pool<Postgres>>,
-	jwt_keys: Arc<JwtKeys>
+	config: Arc<Configuration>,
 }
 
 impl UsersService {
 	/// Create a new UserService passing in the Arc for the Sqlx database pool
-	pub fn new(database: Arc<Pool<Postgres>>, jwt_keys: Arc<JwtKeys>) -> Self {
-		Self { database, jwt_keys }
+	pub fn new(database: Arc<Pool<Postgres>>, config: Arc<Configuration>) -> Self {
+		Self { database, config }
 	}
 
 	/// Shorthand for reference to database pool
@@ -39,8 +39,8 @@ impl UsersService {
         &self.database
     }
 
-	fn keys_ref(&self) -> &JwtKeys {
-		&self.jwt_keys
+	fn config_ref(&self) -> &Configuration {
+		&self.config
 	}
 }
 

@@ -64,7 +64,7 @@ pub struct ApplicationConfiguration {
 	/// Application runtime environment is set to default in the builder
 	pub runtime_environment: Environment,
 	// Secret used to generate JWT keys
-	pub jwt_secret: String,
+	pub token_secret: String,
 	/// Default application settings
 	#[allow(dead_code)]
 	pub default: DefaultApplicationSettings,
