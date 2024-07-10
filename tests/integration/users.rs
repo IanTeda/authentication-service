@@ -14,8 +14,7 @@
 
 use crate::helpers;
 
-use personal_ledger_backend::database::users::{insert_user, UserModel};
-use personal_ledger_backend::domains::{EmailAddress, Password, UserName};
+use personal_ledger_backend::{database, domains};
 use personal_ledger_backend::rpc::ledger::{users_client::UsersClient, CreateUserRequest};
 use personal_ledger_backend::rpc::ledger::{UpdateUserRequest, UserIndexRequest, UserRequest};
 
@@ -38,7 +37,7 @@ pub fn generate_random_password() -> String {
 }
 
 /// Generate a user with random data, returning the UserModel
-pub fn generate_random_user() -> Result<UserModel> {
+pub fn generate_random_user() -> Result<database::UserModel> {
 	// Generate random DateTime after UNIX time epoch (00:00:00 UTC on 1 January 1970)
 	let random_datetime: DateTime<Utc> = DateTimeAfter(chrono::DateTime::UNIX_EPOCH).fake();
 	// Convert datetime to a UUID timestamp
@@ -52,16 +51,16 @@ pub fn generate_random_user() -> Result<UserModel> {
 
 	// Generate random safe email address
 	let random_email: String = SafeEmail().fake();
-	let email = EmailAddress::parse(random_email)?;
+	let email = domains::EmailAddress::parse(random_email)?;
 
 	// Generate random name
 	let random_name: String = Name().fake();
-	let user_name = UserName::parse(random_name)?;
+	let user_name = domains::UserName::parse(random_name)?;
 
 	// Generate random password string
 	let random_count = (5..30).fake::<i64>() as usize;
 	let password = Secret::new("aB1%".repeat(random_count));
-	let password_hash = Password::parse(password)?;
+	let password_hash = domains::PasswordHash::parse(password)?;
 
 	// Generate random boolean value
 	let is_active: bool = Boolean(4).fake();
@@ -69,7 +68,7 @@ pub fn generate_random_user() -> Result<UserModel> {
 	// Generate random DateTime
 	let created_on: DateTime<Utc> = DateTime().fake();
 
-	let random_user = UserModel {
+	let random_user = database::UserModel {
 		id,
 		email,
 		user_name,
@@ -130,7 +129,7 @@ async fn read_user_returns_user(database: Pool<Postgres>) -> Result<()> {
 	let random_user = generate_random_user()?;
 
 	// Insert random user into database for the server to query
-	insert_user(&random_user, &database).await?;
+	random_user.insert(&database).await?;
 
 	// Spawn Tonic test server
 	let tonic_server = helpers::TonicServer::spawn_server(database).await?;
@@ -175,14 +174,14 @@ async fn read_index_returns_users(database: Pool<Postgres>) -> Result<()> {
 	let random_count: i64 = (10..30).fake::<i64>();
 
 	// Initiate vector to store users for assertion
-	let mut test_vec: Vec<UserModel> = Vec::new();
+	let mut test_vec: Vec<database::UserModel> = Vec::new();
 
 	// Iterate over the random count generating a user and adding, inserting it
 	// into the database and pushing the response to the vector
 	for _count in 0..random_count {
-		let random = generate_random_user()?;
+		let random_user = generate_random_user()?;
 		// Insert into database and push return to the vector
-		test_vec.push(insert_user(&random, &database).await?);
+		test_vec.push(random_user.insert(&database).await?);
 	}
 	// Spawn a Tonic test server
 	let tonic_server = helpers::TonicServer::spawn_server(database).await?;
@@ -230,7 +229,7 @@ async fn updated_user_returns_user(database: Pool<Postgres>) -> Result<()> {
 	let original_user = generate_random_user()?;
 
 	// Insert random user into the database for testing
-	insert_user(&original_user, &database).await?;
+	original_user.insert(&database).await?;
 
 	// Generate a new random user data to use in update
 	let updated_user = generate_random_user()?;
@@ -279,7 +278,7 @@ async fn delete_user_returns_boolean(database: Pool<Postgres>) -> Result<()> {
 	let random_user = generate_random_user()?;
 
 	// Insert random user into the database for testing
-	insert_user(&random_user, &database).await?;
+	random_user.insert(&database).await?;
 
 	// Spawn Tonic test server
 	let tonic_server = helpers::TonicServer::spawn_server(database).await?;

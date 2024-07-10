@@ -2,6 +2,8 @@
 
 //! Wrapper around database tables
 
+#![allow(unused)] // For development only
+
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
 use crate::{configuration::DatabaseConfiguration, prelude::*};

@@ -49,32 +49,29 @@ impl Authentication for AuthenticationService {
 		&self,
 		request: Request<AuthenticateRequest>,
 	) -> Result<Response<AuthenticateResponse>, Status> {
-		// Get the AuthenticateRequest
+		// Get the AuthenticateRequest from inside the Tonic Request
 		let request = request.into_inner();
 
-		// Parse the request string into an EmailAddress
-		let email = EmailAddress::parse(&request.email).map_err(|_| {
+		// Parse the request email string into an EmailAddress
+		let request_email = EmailAddress::parse(&request.email).map_err(|_| {
 			BackendError::AuthenticationError("Authentication failed!".to_string())
 		})?;
 
-		// Wrap the request password into a Secret to help avoid leaking the string
-		let token_secret = &self.config.application.token_secret;
-		let token_secret = Secret::new(token_secret.to_owned());
-
-		let user = database::UserModel::from_user_email(&email, &self.database)
+		// Get the user from the database using the request email, so we can verify password hash
+		let user = database::UserModel::from_user_email(&request_email, &self.database_ref())
 			.await
 			.map_err(|_| {
-				BackendError::AuthenticationError(
-					"Authentication failed!".to_string(),
-				)
+				BackendError::AuthenticationError("Authentication Failed!".to_string())
 			})?;
 
-		let password_hash = domains::PasswordHash::from(user.password_hash);
+		// Wrap the Token Secret string in a Secret
+		let token_secret = Secret::new(self.config.application.token_secret.clone());
 
+		// Wrap request password in a Secret
 		let password_secret = Secret::new(request.password);
 
 		// Check password against stored hash
-		match password_hash.verify_password(&password_secret)? {
+		match user.password_hash.verify_password(&password_secret)? {
 			true => {
 				// Build JWT access token claim
 				let access_token =
@@ -93,9 +90,8 @@ impl Authentication for AuthenticationService {
 				// Send Response
 				Ok(Response::new(response))
 			}
-			false => Err(Status::unauthenticated("Authentication failed!")),
+			false => Err(Status::unauthenticated("Authentication Failed!")),
 		}
-		// unimplemented!()
 	}
 
 	async fn refresh_authentication(

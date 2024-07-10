@@ -69,7 +69,7 @@ pub mod tests {
 	#[sqlx::test]
 	async fn create_database_record(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
-		// Generate radom user for testing
+		// Generate random user for testing
 		let random_test_user = UserModel::generate_random().await?;
 
 		//-- Execute Function (Act)

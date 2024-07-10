@@ -1,24 +1,56 @@
 // #![allow(unused)] // For beginning only.
 
+use std::sync::Arc;
+use once_cell::sync::Lazy;
 use sqlx::{Pool, Postgres};
 
-use personal_ledger_backend::{configuration::Configuration, startup};
+use personal_ledger_backend::{configuration::Configuration, startup, telemetry};
 use tonic::{
 	metadata::MetadataValue,
 	transport::{Channel, Uri},
 	Request, Status,
 };
+use personal_ledger_backend::configuration::{Environment, LogLevels};
 
 pub type Error = Box<dyn std::error::Error>;
 
+
+// Ensure that the `tracing` stack is only initialised once using `once_cell`
+static TRACING: Lazy<()> = Lazy::new(|| {
+	let default_filter_level = LogLevels::Info;
+	let subscriber_name = "test".to_string();
+	if std::env::var("TEST_LOG").is_ok() {
+		let tracing_subscriber = telemetry::get_tracing_subscriber(
+			subscriber_name,
+			std::io::stdout,
+			Environment::Development,
+			default_filter_level,
+		);
+		let _ = telemetry::init_tracing(tracing_subscriber);
+	} else {
+		let subscriber = telemetry::get_tracing_subscriber(
+			subscriber_name,
+			std::io::sink,
+			Environment::Development,
+			default_filter_level,
+		);
+		let _ = telemetry::init_tracing(subscriber);
+	};
+});
+
+#[derive(Clone)]
 pub struct TonicServer {
 	pub address: String,
+	pub config: Arc<Configuration>,
 }
 
 impl TonicServer {
 	pub async fn spawn_server(database: Pool<Postgres>) -> Result<Self, Error> {
+		// Initiate tracing in integration testing
+		Lazy::force(&TRACING);
+
 		// Parse configuration files
-		let settings = {
+		let config = {
 			let mut s = Configuration::parse()?;
 			// Change port to `0` to avoid conflicts as the OS will assign an unused port
 			s.application.port = 0;
@@ -26,7 +58,7 @@ impl TonicServer {
 		};
 
 		// Build Tonic server using startup
-		let tonic_server = startup::TonicServer::build(settings, database).await?;
+		let tonic_server = startup::TonicServer::build(config.clone(), database).await?;
 
 		// Set tonic server address as the port is randomly selected by the TCP Listener (in startup)
 		// when config sets the port to 0
@@ -44,8 +76,10 @@ impl TonicServer {
 		// Give the test server a few ms to become available
 		tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
+		let config = Arc::new(config);
+
 		// unimplemented!()
-		Ok(Self { address })
+		Ok(Self { address, config })
 	}
 
 	pub async fn client_channel(self) -> Result<Channel, Error> {
