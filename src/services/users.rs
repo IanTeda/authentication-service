@@ -8,16 +8,16 @@ use std::sync::Arc;
 
 use crate::database;
 
+use crate::configuration::Configuration;
 use sqlx::{Pool, Postgres};
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
-use crate::configuration::Configuration;
 
 use crate::database::users::UserModel;
 use crate::rpc::ledger::users_server::Users;
 use crate::rpc::ledger::{
-	CreateUserRequest, DeleteUserResponse, UpdateUserRequest, UserIndexRequest, UserIndexResponse,
-	UserRequest, UserResponse,
+	CreateUserRequest, DeleteUserResponse, UpdateUserRequest, UserIndexRequest,
+	UserIndexResponse, UserRequest, UserResponse,
 };
 
 /// User service containing a database pool
@@ -36,8 +36,8 @@ impl UsersService {
 	/// Shorthand for reference to database pool
 	// https://github.com/radhas-kitchen/radhas-kitchen/blob/fe0cc02ddd9275d9b6aa97300701a53618980c9f/src-grpc/src/services/auth.rs#L10
 	fn database_ref(&self) -> &Pool<Postgres> {
-        &self.database
-    }
+		&self.database
+	}
 
 	fn config_ref(&self) -> &Configuration {
 		&self.config
@@ -69,18 +69,18 @@ impl Users for UsersService {
 		&self,
 		request: Request<CreateUserRequest>,
 	) -> Result<Response<UserResponse>, Status> {
+		// Get the create user request
 		let request = request.into_inner();
-		let create_user_request: UserModel = request.try_into()?;
 
-		let created_user = database::users::insert_user(&create_user_request, self.database_ref())
-			.await
-			.unwrap();
+		// Convert to User Model type
+		let create_user_request: database::UserModel = request.try_into()?;
 
-		// let secret = self.keys_ref();
-		// println!("{response:#?}");
+		// Insert into database
+		let database_record =
+			create_user_request.insert(&self.database_ref()).await?;
 
-
-		let response = UserResponse::from(created_user);
+		// Build Tonic User Response
+		let response = UserResponse::from(database_record);
 
 		Ok(Response::new(response))
 	}
@@ -89,12 +89,16 @@ impl Users for UsersService {
 		&self,
 		request: Request<UserRequest>,
 	) -> Result<Response<UserResponse>, Status> {
+		// Get the create user request
 		let user_request = request.into_inner();
+
 		let request_id: &str = user_request.id.as_str();
 		let id = Uuid::try_parse(request_id).unwrap();
-		let user = database::users::select_user_by_id(&id, self.database_ref()).await?;
 
-		let response = UserResponse::from(user);
+		let database_record =
+			database::UserModel::from_user_id(&id, self.database_ref()).await?;
+
+		let response = UserResponse::from(database_record);
 
 		Ok(Response::new(response))
 	}
@@ -107,18 +111,16 @@ impl Users for UsersService {
 		let request = request.into_inner();
 
 		// Get list of users using limit and offset
-		let users =
-			database::users::select_user_index(&request.limit, &request.offset, self.database_ref())
-				.await?;
+		let database_records = database::UserModel::index(
+			&request.limit,
+			&request.offset,
+			self.database_ref(),
+		)
+		.await?;
 
-		// Initiate user response vector
-		// let mut users_response: Vec<UserResponse> = Vec::new();
-		// for user in users {
-		// 	// Convert UserModel to UserResponse and push to response vector
-		// 	users_response.push(UserResponse::from(user));
-		// }
 		// Iterate over vector and transform UserModel into UserResponse
-		let users_response: Vec<UserResponse> = users.into_iter().map(|x| x.into()).collect();
+		let users_response: Vec<UserResponse> =
+			database_records.into_iter().map(|x| x.into()).collect();
 
 		// Build tonic response from UserResponse vector
 		let response = UserIndexResponse {
@@ -137,8 +139,7 @@ impl Users for UsersService {
 
 		let update_user_request: UserModel = request.try_into()?;
 
-		let updated_user =
-			database::users::update_user_by_id(&update_user_request, self.database_ref()).await?;
+		let updated_user = update_user_request.update(self.database_ref()).await?;
 
 		let response = UserResponse::from(updated_user);
 
@@ -152,9 +153,12 @@ impl Users for UsersService {
 		let user_request = request.into_inner();
 		let request_id: &str = user_request.id.as_str();
 		let id = Uuid::try_parse(request_id).unwrap();
-		let is_deleted = database::users::delete_user_by_id(&id, self.database_ref()).await?;
+		let user =
+			database::UserModel::from_user_id(&id, self.database_ref()).await?;
+		let rows_affected = user.delete(self.database_ref()).await?;
 
-		// Build tonic response from UserResponse vector
+		let is_deleted = rows_affected == 1;
+
 		let response = DeleteUserResponse { is_deleted };
 
 		Ok(Response::new(response))

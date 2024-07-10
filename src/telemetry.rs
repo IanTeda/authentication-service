@@ -64,8 +64,8 @@ where
 {
 	// We are falling back to printing all spans at configuration log level or
 	// above if the RUST_LOG environment variable has not been set.
-	let env_filter =
-		EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(log_level));
+	let env_filter = EnvFilter::try_from_default_env()
+		.unwrap_or_else(|_| EnvFilter::new(log_level));
 
 	// When running in a development environment, output records to pretty std.out
 	let emit_pretty = env == configuration::Environment::Development;
@@ -76,9 +76,10 @@ where
 
 	// When running in a Production environment, output records in JSON
 	let emit_bunyan = env == configuration::Environment::Production;
-	let bunyan_json_layer = JsonStorageLayer.with_filter(filter_fn(move |_| emit_bunyan));
-	let bunyan_formatting_layer =
-		BunyanFormattingLayer::new(name, sink).with_filter(filter_fn(move |_| emit_bunyan));
+	let bunyan_json_layer =
+		JsonStorageLayer.with_filter(filter_fn(move |_| emit_bunyan));
+	let bunyan_formatting_layer = BunyanFormattingLayer::new(name, sink)
+		.with_filter(filter_fn(move |_| emit_bunyan));
 
 	// TODO: Add console subscriber
 	// let console_subscriber =
@@ -104,7 +105,9 @@ where
 ///
 /// * `subscribers` - A registry of tracing subscribers.
 ///
-pub fn init_tracing(subscribers: impl Subscriber + Sync + Send) -> Result<(), BackendError> {
+pub fn init_tracing(
+	subscribers: impl Subscriber + Sync + Send,
+) -> Result<(), BackendError> {
 	// Convert all log records into tracing events.
 	LogTracer::init()?;
 

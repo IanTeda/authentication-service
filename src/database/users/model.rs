@@ -6,9 +6,9 @@
 // #![allow(unused)] // For development only
 
 use crate::{
-    domains::{EmailAddress, PasswordHash, UserName},
-    prelude::*,
-    rpc::ledger::{CreateUserRequest, UpdateUserRequest},
+	domains::{EmailAddress, PasswordHash, UserName},
+	prelude::*,
+	rpc::ledger::{CreateUserRequest, UpdateUserRequest},
 };
 
 use chrono::prelude::*;
@@ -56,7 +56,9 @@ impl TryFrom<UpdateUserRequest> for UserModel {
 		let id = Uuid::parse_str(value.id.as_str())?;
 		let email = EmailAddress::parse(value.email)?;
 		let user_name = UserName::parse(value.user_name)?;
-		let password_hash = PasswordHash::parse(Secret::new("Place holder as password is not updated here".to_string()))?;
+		let password_hash = PasswordHash::parse(Secret::new(
+			"Place holder as password is not updated here".to_string(),
+		))?;
 		let is_active = value.is_active;
 		let created_on = Utc::now();
 
@@ -71,26 +73,20 @@ impl TryFrom<UpdateUserRequest> for UserModel {
 	}
 }
 
-//-- Unit Tests
-#[cfg(test)]
-pub mod tests {
+impl UserModel {
+	#[cfg(test)]
+	pub async fn generate_random() -> Result<Self, crate::error::BackendError> {
+		use fake::faker::boolean::en::Boolean;
+		use fake::faker::chrono::en::{DateTime, DateTimeAfter};
+		use fake::faker::internet::en::SafeEmail;
+		use fake::faker::name::en::Name;
+		use fake::Fake;
 
-	// Bring module functions into test scope
-	use super::*;
-
-	use fake::faker::boolean::en::Boolean;
-	use fake::faker::internet::en::SafeEmail;
-	use fake::faker::name::en::Name;
-	use fake::faker::{chrono::en::DateTime, chrono::en::DateTimeAfter};
-	use fake::Fake;
-
-	// Override with more flexible error
-	pub type Result<T> = core::result::Result<T, Error>;
-	pub type Error = Box<dyn std::error::Error>;
-
-	pub fn generate_random_user() -> Result<UserModel> {
+		//-- Generate a random id (Uuid V7) by first generating a random timestamp
 		// Generate random DateTime after UNIX time epoch (00:00:00 UTC on 1 January 1970)
-		let random_datetime: DateTime<Utc> = DateTimeAfter(chrono::DateTime::UNIX_EPOCH).fake();
+		let random_datetime: DateTime<Utc> =
+			DateTimeAfter(chrono::DateTime::UNIX_EPOCH).fake();
+
 		// Convert datetime to a UUID timestamp
 		let random_uuid_timestamp: uuid::Timestamp = uuid::Timestamp::from_unix(
 			uuid::NoContext,
@@ -108,7 +104,7 @@ pub mod tests {
 		let random_name: String = Name().fake();
 		let user_name = UserName::parse(random_name)?;
 
-		// Generate random password string
+		// Generate random password hash
 		let random_count = (5..30).fake::<i64>() as usize;
 		let password = "aB1%".repeat(random_count);
 		let password = Secret::new(password);
@@ -130,41 +126,5 @@ pub mod tests {
 		};
 
 		Ok(random_user)
-	}
-
-	#[test]
-	fn convert_tonic_request_to_user_model() -> Result<()> {
-		//-- Setup and Fixtures (Arrange)
-		// Generate random user to construct Tonic Request
-		let random_user = generate_random_user()?;
-		// Request will consume random_user so lets clone for asserts
-		let tonic_user = random_user.clone();
-		// Build Tonic request
-		// let password: String = Password(14..255).fake();
-		let random_count = (5..30).fake::<i64>() as usize;
-		let password = "aB1%".repeat(random_count);
-		let password = PasswordHash::parse(Secret::new(password))?;
-
-		let tonic_request: CreateUserRequest = CreateUserRequest {
-			email: tonic_user.email.as_ref().to_string(),
-			user_name: tonic_user.user_name.as_ref().to_string(),
-			password: password.as_ref().to_string(),
-			is_active: tonic_user.is_active,
-		};
-		// println!("{tonic_request:#?}");
-
-		//-- Execute Function (Act)
-		// Transform CreateUserRequest into UserModel
-		let new_user: UserModel = tonic_request.try_into()?;
-		// println!("{new_user:#?}");
-
-		//-- Checks (Assertions)
-		assert_ne!(random_user.id, new_user.id); // id is dropped so it is not equal
-		assert_eq!(random_user.email, new_user.email);
-		assert_eq!(random_user.user_name, new_user.user_name);
-		assert_eq!(random_user.is_active, new_user.is_active);
-		assert_ne!(random_user.created_on, new_user.created_on); // created_on is dropped so it is not equal
-
-		Ok(())
 	}
 }

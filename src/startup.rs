@@ -28,7 +28,6 @@ impl TonicServer {
 		config: Configuration,
 		database: Pool<Postgres>,
 	) -> Result<Self, BackendError> {
-
 		// TODO: Refactor into config file
 		let address = format!(
 			"{}:{}",

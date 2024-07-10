@@ -1,13 +1,13 @@
 //-- ./src/database/refresh_token/update.rs
 
 //! Update Refresh Token in the database
-//! 
+//!
 //! This module has three impl functions for RefreshTokenModel:
-//! 
+//!
 //!  1. `update`: Update the RefreshTokenModel instance in the database
 //!  2. `revoke`: Revoke the RefreshTokenModel instance in the database
 //!  3. `revoke_user_id`: Revoke all the RefreshTokenModel rows in the database with the user_id
-//! 
+//!
 //! ---
 
 // #![allow(unused)] // For development only
@@ -18,7 +18,6 @@ use super::model::RefreshTokenModel;
 
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
-
 
 impl super::RefreshTokenModel {
 	/// Update a `Refresh Token` in the database, returning a result with a RefreshTokenModel instance
@@ -83,8 +82,8 @@ impl super::RefreshTokenModel {
     	)
 	)]
 	pub async fn revoke(
-		&self, 
-		database: &Pool<Postgres>
+		&self,
+		database: &Pool<Postgres>,
 	) -> Result<Self, BackendError> {
 		let database_record = sqlx::query_as!(
 			RefreshTokenModel,
@@ -115,8 +114,8 @@ impl super::RefreshTokenModel {
 		skip(database)
 	)]
 	pub async fn revoke_user_id(
-		user_id: &Uuid, 
-		database: &Pool<Postgres>
+		user_id: &Uuid,
+		database: &Pool<Postgres>,
 	) -> Result<u64, sqlx::Error> {
 		let rows_affected = sqlx::query_as!(
 			RefreshTokenModel,
@@ -139,10 +138,10 @@ impl super::RefreshTokenModel {
 #[cfg(test)]
 pub mod tests {
 
-	use crate::database::{refresh_token::RefreshTokenModel, users::{insert_user, model::tests::generate_random_user}};
-
 	use fake::Fake;
 	use sqlx::{Pool, Postgres};
+
+	use crate::database::{RefreshTokenModel, UserModel};
 
 	// Override with more flexible error
 	pub type Result<T> = core::result::Result<T, Error>;
@@ -151,11 +150,11 @@ pub mod tests {
 	#[sqlx::test]
 	async fn update_refresh_token(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
-		// Generate random user
-		let random_user = generate_random_user()?;
+		// Generate radom user for testing
+		let random_user = UserModel::generate_random().await?;
 
-		// Insert random user into the database
-		insert_user(&random_user, &database).await?;
+		// Insert user in the database
+		random_user.insert(&database).await?;
 
 		// Generate refresh token
 		let mut refresh_token =
@@ -168,21 +167,20 @@ pub mod tests {
 		refresh_token.insert(&database).await?;
 
 		// Generate a new user and refresh token for updating
-		let random_user_update = generate_random_user()?;
+		let random_user_update = UserModel::generate_random().await?;
 
-		// Insert random user into the database
-		insert_user(&random_user_update, &database).await?;
+		// Insert user in the database
+		random_user_update.insert(&database).await?;
 
 		// Generate refresh token
 		let refresh_token_update =
 			RefreshTokenModel::create_random(&random_user_update.id).await?;
-		
+
 		// refresh_token.id = refresh_token_update.id;
 		refresh_token.user_id = random_user_update.id;
 		refresh_token.refresh_token = refresh_token_update.clone().refresh_token;
 		refresh_token.is_active = refresh_token_update.clone().is_active;
 		refresh_token.created_on = refresh_token_update.clone().created_on;
-
 
 		//-- Execute Function (Act)
 		// Generate an updated Refresh Token
@@ -191,7 +189,10 @@ pub mod tests {
 		//-- Checks (Assertions)
 		assert_eq!(database_record.id, original_refresh_token_id);
 		assert_eq!(database_record.user_id, random_user_update.id);
-		assert_eq!(database_record.refresh_token, refresh_token_update.refresh_token);
+		assert_eq!(
+			database_record.refresh_token,
+			refresh_token_update.refresh_token
+		);
 		assert_eq!(database_record.is_active, refresh_token_update.is_active);
 		assert_eq!(
 			database_record.created_on.timestamp(),
@@ -205,16 +206,16 @@ pub mod tests {
 	#[sqlx::test]
 	async fn revoke_refresh_token(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
-		// Generate random user
-		let random_user = generate_random_user()?;
+		// Generate radom user for testing
+		let random_user = UserModel::generate_random().await?;
 
-		// Insert random user into the database
-		insert_user(&random_user, &database).await?;
+		// Insert user in the database
+		random_user.insert(&database).await?;
 
 		// Generate refresh token
 		let mut refresh_token =
 			RefreshTokenModel::create_random(&random_user.id).await?;
-			
+
 		// Set Refresh Token active to true
 		refresh_token.is_active = true;
 
@@ -226,7 +227,8 @@ pub mod tests {
 
 		//-- Execute Function (Act)
 		// Generate an updated Refresh Token
-		let database_record = RefreshTokenModel::from_id(&refresh_token.id, &database).await?;
+		let database_record =
+			RefreshTokenModel::from_id(&refresh_token.id, &database).await?;
 
 		//-- Checks (Assertions)
 		assert_eq!(database_record.is_active, false);
@@ -237,12 +239,12 @@ pub mod tests {
 
 	#[sqlx::test]
 	async fn revoke_all_user_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
-				//-- Setup and Fixtures (Arrange)
-		// Generate random user
-		let random_user = generate_random_user()?;
+		//-- Setup and Fixtures (Arrange)
+		// Generate radom user for testing
+		let random_user = UserModel::generate_random().await?;
 
-		// Insert random user into the database
-		insert_user(&random_user, &database).await?;
+		// Insert user in the database
+		random_user.insert(&database).await?;
 
 		let mut test_vec: Vec<RefreshTokenModel> = Vec::new();
 		let random_count: i64 = (10..30).fake::<i64>();
@@ -250,7 +252,7 @@ pub mod tests {
 			// Generate refresh token
 			let mut refresh_token =
 				RefreshTokenModel::create_random(&random_user.id).await?;
-			
+
 			// Set Refresh Token active to true
 			refresh_token.is_active = true;
 
@@ -263,7 +265,8 @@ pub mod tests {
 
 		//-- Execute Function (Act)
 		// Generate an updated Refresh Token
-		let rows_affected = RefreshTokenModel::revoke_user_id(&random_user.id, &database).await?;
+		let rows_affected =
+			RefreshTokenModel::revoke_user_id(&random_user.id, &database).await?;
 
 		//-- Checks (Assertions)
 		assert!(rows_affected == random_count as u64);
@@ -272,7 +275,9 @@ pub mod tests {
 		let random_index_number = (1..random_count).fake::<i64>() as usize;
 
 		// Get the database record
-		let database_record = RefreshTokenModel::from_id(&test_vec[random_index_number].id, &database).await?;
+		let database_record =
+			RefreshTokenModel::from_id(&test_vec[random_index_number].id, &database)
+				.await?;
 
 		// Check the is_active status is false
 		assert_eq!(database_record.is_active, false);

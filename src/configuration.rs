@@ -169,9 +169,11 @@ impl Configuration {
 	/// `Configuration` result.
 	pub fn parse() -> Result<Configuration, BackendError> {
 		// Define the configuration directory within the base application directory
-		let base_dir_path: PathBuf = std::env::current_dir()?.join(CONFIGURATION_DIRECTORY_PREFIX);
+		let base_dir_path: PathBuf =
+			std::env::current_dir()?.join(CONFIGURATION_DIRECTORY_PREFIX);
 
-		let environment_filename = format!("{}.yaml", get_runtime_environment()?.as_str());
+		let environment_filename =
+			format!("{}.yaml", get_runtime_environment()?.as_str());
 
 		// Build our configuration instance. Configuration files are added in
 		// this order, with subsequent files overwriting previous configurations

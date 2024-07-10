@@ -7,10 +7,9 @@
 use std::sync::Arc;
 
 use crate::configuration::Configuration;
-use crate::{database, domains};
-use crate::database::users::update_password_by_id;
-use crate::domains::{AccessToken, EmailAddress, PasswordHash, RefreshToken };
+use crate::domains::{AccessToken, EmailAddress, PasswordHash, RefreshToken};
 use crate::prelude::BackendError;
+use crate::{database, domains};
 
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
@@ -54,8 +53,7 @@ impl Authentication for AuthenticationService {
 		let request = request.into_inner();
 
 		// Parse the request string into an EmailAddress
-		let email = EmailAddress::parse(&request.email)
-		.map_err(|_| {
+		let email = EmailAddress::parse(&request.email).map_err(|_| {
 			BackendError::AuthenticationError("Authentication failed!".to_string())
 		})?;
 
@@ -63,10 +61,12 @@ impl Authentication for AuthenticationService {
 		let token_secret = &self.config.application.token_secret;
 		let token_secret = Secret::new(token_secret.to_owned());
 
-		let user = database::UserModel::from_user_by_email(&email, &self.database)
+		let user = database::UserModel::from_user_email(&email, &self.database)
 			.await
 			.map_err(|_| {
-				BackendError::AuthenticationError("Authentication failed!".to_string())
+				BackendError::AuthenticationError(
+					"Authentication failed!".to_string(),
+				)
 			})?;
 
 		let password_hash = domains::PasswordHash::from(user.password_hash);
@@ -77,10 +77,12 @@ impl Authentication for AuthenticationService {
 		match password_hash.verify_password(&password_secret)? {
 			true => {
 				// Build JWT access token claim
-				let access_token = domains::AccessToken::new(&token_secret, &user.id).await?;
+				let access_token =
+					domains::AccessToken::new(&token_secret, &user.id).await?;
 
 				// Build JWT refresh token claim
-				let refresh_token = domains::RefreshToken::new(&token_secret, &user.id).await?;
+				let refresh_token =
+					domains::RefreshToken::new(&token_secret, &user.id).await?;
 
 				// Build Authenticate Response with the token
 				let response = AuthenticateResponse {

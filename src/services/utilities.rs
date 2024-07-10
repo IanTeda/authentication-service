@@ -6,8 +6,8 @@
 
 use std::sync::Arc;
 
-use tonic::{Request, Response, Status};
 use crate::configuration::Configuration;
+use tonic::{Request, Response, Status};
 
 use crate::rpc::ledger::utilities_server::Utilities;
 use crate::rpc::ledger::{Empty, PingResponse};
@@ -33,7 +33,10 @@ impl Utilities for UtilitiesService {
 		// 	Request = %_request
 		// ),
 	)]
-	async fn ping(&self, _request: Request<Empty>) -> Result<Response<PingResponse>, Status> {
+	async fn ping(
+		&self,
+		_request: Request<Empty>,
+	) -> Result<Response<PingResponse>, Status> {
 		let reply = PingResponse {
 			message: "Pong...".to_string(),
 		};

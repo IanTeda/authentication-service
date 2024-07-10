@@ -1,6 +1,6 @@
 //-- ./src/database/refresh_token/insert.rs
 
-//! Create [insert] a Refresh Token into the database, returning a Result with a 
+//! Create [insert] a Refresh Token into the database, returning a Result with a
 //! RefreshTokenModel instance
 //! ---
 
@@ -60,9 +60,10 @@ impl super::RefreshTokenModel {
 #[cfg(test)]
 pub mod tests {
 
+	use crate::database::UserModel;
+
 	// Bring module functions into test scope
 	use super::*;
-	use crate::database::users::{insert_user, model::tests::generate_random_user};
 
 	use sqlx::{Pool, Postgres};
 
@@ -74,11 +75,11 @@ pub mod tests {
 	#[sqlx::test]
 	async fn create_database_record(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
-		// Generate random user
-		let random_user = generate_random_user()?;
+		// Generate radom user for testing
+		let random_user = UserModel::generate_random().await?;
 
-		// Insert random user into the database
-		insert_user(&random_user, &database).await?;
+		// Insert user in the database
+		random_user.insert(&database).await?;
 
 		// Generate refresh token
 		let refresh_token =

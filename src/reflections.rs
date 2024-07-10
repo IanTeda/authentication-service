@@ -14,7 +14,8 @@ mod rpc {
 		tonic::include_file_descriptor_set!("ledger_descriptor");
 }
 
-pub fn get_reflection() -> Result<ServerReflectionServer<impl ServerReflection>, BackendError> {
+pub fn get_reflection(
+) -> Result<ServerReflectionServer<impl ServerReflection>, BackendError> {
 	let reflections_server = tonic_reflection::server::Builder::configure()
 		.register_encoded_file_descriptor_set(rpc::DESCRIPTOR_SET)
 		.build()?;

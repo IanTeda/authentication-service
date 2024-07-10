@@ -38,7 +38,9 @@ impl RefreshTokenModel {
 	}
 
 	#[cfg(test)]
-	pub async fn create_random(user_id: &Uuid) -> Result<Self, crate::error::BackendError> {
+	pub async fn create_random(
+		user_id: &Uuid,
+	) -> Result<Self, crate::error::BackendError> {
 		use fake::faker::boolean::en::Boolean;
 		use fake::faker::{chrono::en::DateTime, chrono::en::DateTimeAfter};
 		use fake::Fake;

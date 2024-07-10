@@ -5,7 +5,7 @@
 //! Password domain parsing
 //!
 //! Parse string into a Password, checking for validation and hash as we go.
-//! 
+//!
 //! //TODO: This can be written / structured better
 //!
 //! # References
@@ -17,10 +17,10 @@
 
 use crate::prelude::*;
 
+use crate::domains::RefreshToken;
 use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, PasswordVerifier, Version};
-use secrecy::{ExposeSecret, Secret };
-use crate::domains::RefreshToken;
+use secrecy::{ExposeSecret, Secret};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct PasswordHash(String);
@@ -74,7 +74,12 @@ impl PasswordHash {
 
 		// If any of the validations fail return an error else hash the password
 		// and return within a Password Struct.
-		if is_to_short || is_to_long || no_uppercase || no_lowercase || no_number || no_special {
+		if is_to_short
+			|| is_to_long
+			|| no_uppercase
+			|| no_lowercase
+			|| no_number || no_special
+		{
 			Err(BackendError::PasswordFormatInvalid)
 		} else {
 			// Generate encryption salt hash
@@ -89,7 +94,8 @@ impl PasswordHash {
 
 			// Hash password to PHC string ($argon2id$v=19$...)
 			let mut password_hash = argon2
-				.hash_password(password.expose_secret().as_bytes(), &salt).unwrap()
+				.hash_password(password.expose_secret().as_bytes(), &salt)
+				.unwrap()
 				.to_string();
 
 			Ok(Self(password_hash))
@@ -119,8 +125,8 @@ impl PasswordHash {
 
 		let verified = argon2
 			.verify_password(
-				password.expose_secret().as_bytes(), 
-				&argon2::PasswordHash::new(self.as_ref()).unwrap()
+				password.expose_secret().as_bytes(),
+				&argon2::PasswordHash::new(self.as_ref()).unwrap(),
 			)
 			.is_ok();
 
@@ -158,7 +164,7 @@ mod tests {
 	use argon2::{Argon2, PasswordVerifier};
 	use claims::{assert_err, assert_ok};
 	use fake::Fake;
-use secrecy::{ExposeSecret, Secret};
+	use secrecy::{ExposeSecret, Secret};
 
 	#[tokio::test]
 	async fn less_than_twelve_fails() -> Result<()> {
@@ -199,7 +205,7 @@ use secrecy::{ExposeSecret, Secret};
 		Ok(())
 	}
 
-	#[tokio:: test]
+	#[tokio::test]
 	async fn no_special_characters_fails() -> Result<()> {
 		let random_count = (5..30).fake::<i64>() as usize;
 		let password = "aB15".repeat(random_count);

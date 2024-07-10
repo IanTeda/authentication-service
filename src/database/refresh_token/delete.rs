@@ -100,10 +100,7 @@ pub mod tests {
 	use fake::Fake;
 	use sqlx::{Pool, Postgres};
 
-	use crate::database::{
-		refresh_token::RefreshTokenModel,
-		users::{insert_user, model::tests::generate_random_user},
-	};
+	use crate::database::{RefreshTokenModel, UserModel};
 
 	// Override with more flexible error
 	pub type Result<T> = core::result::Result<T, Error>;
@@ -113,11 +110,11 @@ pub mod tests {
 	#[sqlx::test]
 	async fn delete_refresh_token_record(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
-		// Generate random user
-		let random_user = generate_random_user()?;
+		// Generate radom user for testing
+		let random_user = UserModel::generate_random().await?;
 
-		// Insert random user into the database
-		insert_user(&random_user, &database).await?;
+		// Insert user in the database
+		random_user.insert(&database).await?;
 
 		// Generate refresh token
 		let refresh_token =
@@ -144,11 +141,11 @@ pub mod tests {
 		database: Pool<Postgres>,
 	) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
-		// Generate random user
-		let random_user = generate_random_user()?;
+		// Generate radom user for testing
+		let random_user = UserModel::generate_random().await?;
 
-		// Insert random user into the database
-		insert_user(&random_user, &database).await?;
+		// Insert user in the database
+		random_user.insert(&database).await?;
 
 		let random_count: i64 = (10..30).fake::<i64>();
 		for _count in 0..random_count {

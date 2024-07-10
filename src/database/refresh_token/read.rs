@@ -14,8 +14,7 @@ use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 impl super::RefreshTokenModel {
-
-	/// Get a Refresh Token from the database by querying the uuid, returning a 
+	/// Get a Refresh Token from the database by querying the uuid, returning a
 	/// Refresh Token instance or sqlx error.
 	///
 	/// # Parameters
@@ -131,10 +130,10 @@ impl super::RefreshTokenModel {
 #[cfg(test)]
 pub mod tests {
 
+	use crate::database::UserModel;
+
 	// Bring module functions into test scope
 	use super::*;
-
-	use crate::database::users::{insert_user, model::tests::generate_random_user};
 
 	use fake::Fake;
 	use sqlx::{Pool, Postgres};
@@ -147,11 +146,11 @@ pub mod tests {
 	#[sqlx::test]
 	async fn get_refresh_token_record_by_id(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
-		// Generate random user
-		let random_user = generate_random_user()?;
+		// Generate radom user for testing
+		let random_user = UserModel::generate_random().await?;
 
-		// Insert random user into the database
-		insert_user(&random_user, &database).await?;
+		// Insert user in the database
+		random_user.insert(&database).await?;
 
 		// Generate refresh token
 		let refresh_token =
@@ -162,7 +161,8 @@ pub mod tests {
 
 		//-- Execute Function (Act)
 		// Insert user into database
-		let database_record = RefreshTokenModel::from_id(&refresh_token.id, &database).await?;
+		let database_record =
+			RefreshTokenModel::from_id(&refresh_token.id, &database).await?;
 		// println!("{record:#?}");
 
 		//-- Checks (Assertions)
@@ -179,18 +179,15 @@ pub mod tests {
 		Ok(())
 	}
 
-
 	// Test getting user from database using unique UUID
 	#[sqlx::test]
-	async fn count_index_from_user_id(
-		database: Pool<Postgres>,
-	) -> Result<()> {
+	async fn count_index_from_user_id(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
-		// Generate random user
-		let random_user = generate_random_user()?;
+		// Generate radom user for testing
+		let random_user = UserModel::generate_random().await?;
 
-		// Insert random user into the database
-		insert_user(&random_user, &database).await?;
+		// Insert user in the database
+		random_user.insert(&database).await?;
 
 		let random_count: i64 = (10..30).fake::<i64>();
 		for _count in 0..random_count {
@@ -208,7 +205,13 @@ pub mod tests {
 		// Get a random offset from the count
 		let random_offset = (1..random_count).fake::<i64>();
 		// Insert user into database
-		let database_records = RefreshTokenModel::index_from_user_id(&random_user.id, &random_limit, &random_offset, &database).await?;
+		let database_records = RefreshTokenModel::index_from_user_id(
+			&random_user.id,
+			&random_limit,
+			&random_offset,
+			&database,
+		)
+		.await?;
 		// println!("{rows_affected:#?}");
 
 		//-- Checks (Assertions)
@@ -226,17 +229,15 @@ pub mod tests {
 		Ok(())
 	}
 
-		// Test getting user from database using unique UUID
+	// Test getting user from database using unique UUID
 	#[sqlx::test]
-	async fn count_index(
-		database: Pool<Postgres>,
-	) -> Result<()> {
+	async fn count_index(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
-		// Generate random user
-		let random_user = generate_random_user()?;
+		// Generate radom user for testing
+		let random_user = UserModel::generate_random().await?;
 
-		// Insert random user into the database
-		insert_user(&random_user, &database).await?;
+		// Insert user in the database
+		random_user.insert(&database).await?;
 
 		let random_count: i64 = (10..30).fake::<i64>();
 		for _count in 0..random_count {
@@ -254,7 +255,9 @@ pub mod tests {
 		// Get a random offset from the count
 		let random_offset = (1..random_count).fake::<i64>();
 		// Insert user into database
-		let database_records = RefreshTokenModel::index(&random_limit, &random_offset, &database).await?;
+		let database_records =
+			RefreshTokenModel::index(&random_limit, &random_offset, &database)
+				.await?;
 		// println!("{rows_affected:#?}");
 
 		//-- Checks (Assertions)

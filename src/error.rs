@@ -85,32 +85,28 @@ pub enum BackendError {
 }
 
 impl From<BackendError> for tonic::Status {
-    fn from(backend_error: BackendError) -> tonic::Status {
-        match backend_error {
-			BackendError::AuthenticationError(m) => {
-				Status::unauthenticated(m)
-			}
-            // BackendError::EmailFormatInvalid(_) => {
-            //     Status::invalid_argument(format!("{:?}", backend_error))
-            // }
+	fn from(backend_error: BackendError) -> tonic::Status {
+		match backend_error {
+			BackendError::AuthenticationError(m) => Status::unauthenticated(m),
+			// BackendError::EmailFormatInvalid(_) => {
+			//     Status::invalid_argument(format!("{:?}", backend_error))
+			// }
 			//  BackendError::Uuid(_) => {
 			// 	Status::internal("Internal server error")
 			//  }
-            // BackendError::InvalidUsernameOrPassword => {
-            //     tonic::Status::unauthenticated(format!("{:?}", backend_error))
-            // }
-            // BackendError::UserAlreadyExists(_) => {
-            //     tonic::Status::invalid_argument(format!("{:?}", backend_error))
-            // }
-            // BackendError::DatabaseError(_) => tonic::Status::unavailable(format!("{:?}", backend_error)),
-            // BackendError::InvalidToken(_) => {
-            //     tonic::Status::unauthenticated(format!("{:?}", backend_error))
-            // }
-            // BackendError::HashingError => tonic::Status::unavailable(format!("{:?}", backend_error)),
-            // _ => tonic::Status::unknown(format!("{:?}", backend_error)),
-			_ => {
-				Status::internal("Internal server error")
-			}
-        }
-    }
+			// BackendError::InvalidUsernameOrPassword => {
+			//     tonic::Status::unauthenticated(format!("{:?}", backend_error))
+			// }
+			// BackendError::UserAlreadyExists(_) => {
+			//     tonic::Status::invalid_argument(format!("{:?}", backend_error))
+			// }
+			// BackendError::DatabaseError(_) => tonic::Status::unavailable(format!("{:?}", backend_error)),
+			// BackendError::InvalidToken(_) => {
+			//     tonic::Status::unauthenticated(format!("{:?}", backend_error))
+			// }
+			// BackendError::HashingError => tonic::Status::unavailable(format!("{:?}", backend_error)),
+			// _ => tonic::Status::unknown(format!("{:?}", backend_error)),
+			_ => Status::internal("Internal server error"),
+		}
+	}
 }
