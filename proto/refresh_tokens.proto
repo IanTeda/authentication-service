@@ -7,18 +7,23 @@ package ledger;
 import "common.proto";
 
 service RefreshTokens {
-  rpc RevokeRefreshToken (RefreshTokenRequest) returns (RevokeTokensResponse);
-  rpc DeleteRefreshToken(RefreshTokenRequest) returns (DeleteRefreshTokensResponse);
+  rpc RevokeRefreshToken (RevokeRefreshTokenRequest) returns (RevokeTokenResponse);
+  rpc RevokeUserRefreshToken (RevokeUserRefreshTokensRequest) returns (RevokeTokenResponse);
+  rpc DeleteRefreshToken(DeleteUsersRefreshTokensRequest) returns (RevokeTokenResponse);
 }
 
-message RefreshTokenRequest {
+message RevokeRefreshTokenRequest {
   string id = 1;
 }
 
-message RevokeTokensResponse {
-  bool is_revoked = 1;
+message RevokeUserRefreshTokensRequest {
+  string id = 1;
 }
 
-message DeleteRefreshTokensResponse {
-  bool is_deleted = 1;
+message DeleteUsersRefreshTokensRequest {
+  string user_id = 1;
+}
+
+message RevokeTokenResponse {
+  bool is_revoked = 1;
 }

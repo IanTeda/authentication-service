@@ -661,21 +661,27 @@ pub mod authentication_server {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct RefreshTokenRequest {
+pub struct RevokeRefreshTokenRequest {
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct RevokeTokensResponse {
-    #[prost(bool, tag = "1")]
-    pub is_revoked: bool,
+pub struct RevokeUserRefreshTokensRequest {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct DeleteRefreshTokensResponse {
+pub struct DeleteUsersRefreshTokensRequest {
+    #[prost(string, tag = "1")]
+    pub user_id: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RevokeTokenResponse {
     #[prost(bool, tag = "1")]
-    pub is_deleted: bool,
+    pub is_revoked: bool,
 }
 /// Generated client implementations.
 pub mod refresh_tokens_client {
@@ -764,9 +770,9 @@ pub mod refresh_tokens_client {
         }
         pub async fn revoke_refresh_token(
             &mut self,
-            request: impl tonic::IntoRequest<super::RefreshTokenRequest>,
+            request: impl tonic::IntoRequest<super::RevokeRefreshTokenRequest>,
         ) -> std::result::Result<
-            tonic::Response<super::RevokeTokensResponse>,
+            tonic::Response<super::RevokeTokenResponse>,
             tonic::Status,
         > {
             self.inner
@@ -787,11 +793,38 @@ pub mod refresh_tokens_client {
                 .insert(GrpcMethod::new("ledger.RefreshTokens", "RevokeRefreshToken"));
             self.inner.unary(req, path, codec).await
         }
+        pub async fn revoke_user_refresh_token(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RevokeUserRefreshTokensRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::RevokeTokenResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ledger.RefreshTokens/RevokeUserRefreshToken",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("ledger.RefreshTokens", "RevokeUserRefreshToken"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
         pub async fn delete_refresh_token(
             &mut self,
-            request: impl tonic::IntoRequest<super::RefreshTokenRequest>,
+            request: impl tonic::IntoRequest<super::DeleteUsersRefreshTokensRequest>,
         ) -> std::result::Result<
-            tonic::Response<super::DeleteRefreshTokensResponse>,
+            tonic::Response<super::RevokeTokenResponse>,
             tonic::Status,
         > {
             self.inner
@@ -823,16 +856,23 @@ pub mod refresh_tokens_server {
     pub trait RefreshTokens: Send + Sync + 'static {
         async fn revoke_refresh_token(
             &self,
-            request: tonic::Request<super::RefreshTokenRequest>,
+            request: tonic::Request<super::RevokeRefreshTokenRequest>,
         ) -> std::result::Result<
-            tonic::Response<super::RevokeTokensResponse>,
+            tonic::Response<super::RevokeTokenResponse>,
+            tonic::Status,
+        >;
+        async fn revoke_user_refresh_token(
+            &self,
+            request: tonic::Request<super::RevokeUserRefreshTokensRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::RevokeTokenResponse>,
             tonic::Status,
         >;
         async fn delete_refresh_token(
             &self,
-            request: tonic::Request<super::RefreshTokenRequest>,
+            request: tonic::Request<super::DeleteUsersRefreshTokensRequest>,
         ) -> std::result::Result<
-            tonic::Response<super::DeleteRefreshTokensResponse>,
+            tonic::Response<super::RevokeTokenResponse>,
             tonic::Status,
         >;
     }
@@ -920,16 +960,16 @@ pub mod refresh_tokens_server {
                     struct RevokeRefreshTokenSvc<T: RefreshTokens>(pub Arc<T>);
                     impl<
                         T: RefreshTokens,
-                    > tonic::server::UnaryService<super::RefreshTokenRequest>
+                    > tonic::server::UnaryService<super::RevokeRefreshTokenRequest>
                     for RevokeRefreshTokenSvc<T> {
-                        type Response = super::RevokeTokensResponse;
+                        type Response = super::RevokeTokenResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::RefreshTokenRequest>,
+                            request: tonic::Request<super::RevokeRefreshTokenRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
@@ -962,21 +1002,75 @@ pub mod refresh_tokens_server {
                     };
                     Box::pin(fut)
                 }
-                "/ledger.RefreshTokens/DeleteRefreshToken" => {
+                "/ledger.RefreshTokens/RevokeUserRefreshToken" => {
                     #[allow(non_camel_case_types)]
-                    struct DeleteRefreshTokenSvc<T: RefreshTokens>(pub Arc<T>);
+                    struct RevokeUserRefreshTokenSvc<T: RefreshTokens>(pub Arc<T>);
                     impl<
                         T: RefreshTokens,
-                    > tonic::server::UnaryService<super::RefreshTokenRequest>
-                    for DeleteRefreshTokenSvc<T> {
-                        type Response = super::DeleteRefreshTokensResponse;
+                    > tonic::server::UnaryService<super::RevokeUserRefreshTokensRequest>
+                    for RevokeUserRefreshTokenSvc<T> {
+                        type Response = super::RevokeTokenResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::RefreshTokenRequest>,
+                            request: tonic::Request<
+                                super::RevokeUserRefreshTokensRequest,
+                            >,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as RefreshTokens>::revoke_user_refresh_token(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = RevokeUserRefreshTokenSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ledger.RefreshTokens/DeleteRefreshToken" => {
+                    #[allow(non_camel_case_types)]
+                    struct DeleteRefreshTokenSvc<T: RefreshTokens>(pub Arc<T>);
+                    impl<
+                        T: RefreshTokens,
+                    > tonic::server::UnaryService<super::DeleteUsersRefreshTokensRequest>
+                    for DeleteRefreshTokenSvc<T> {
+                        type Response = super::RevokeTokenResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<
+                                super::DeleteUsersRefreshTokensRequest,
+                            >,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {

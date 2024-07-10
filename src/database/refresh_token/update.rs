@@ -12,6 +12,8 @@
 
 // #![allow(unused)] // For development only
 
+use crate::prelude::BackendError;
+
 use super::model::RefreshTokenModel;
 
 use sqlx::{Pool, Postgres};
@@ -41,8 +43,8 @@ impl super::RefreshTokenModel {
 	pub async fn update(
 		&self,
 		database: &Pool<Postgres>,
-	) -> Result<RefreshTokenModel, sqlx::Error> {
-		sqlx::query_as!(
+	) -> Result<RefreshTokenModel, BackendError> {
+		let database_record = sqlx::query_as!(
 			RefreshTokenModel,
 			r#"
 				UPDATE refresh_tokens 
@@ -56,7 +58,9 @@ impl super::RefreshTokenModel {
 			self.is_active,
 		)
 		.fetch_one(database)
-		.await
+		.await?;
+
+		Ok(database_record)
 	}
 
 	/// Revoke (make non-active) a Refresh Token in the database, returning a result
@@ -81,8 +85,8 @@ impl super::RefreshTokenModel {
 	pub async fn revoke(
 		&self, 
 		database: &Pool<Postgres>
-	) -> Result<Self, sqlx::Error> {
-		sqlx::query_as!(
+	) -> Result<Self, BackendError> {
+		let database_record = sqlx::query_as!(
 			RefreshTokenModel,
 			r#"
 				UPDATE refresh_tokens 
@@ -93,7 +97,9 @@ impl super::RefreshTokenModel {
 			self.id
 		)
 		.fetch_one(database)
-		.await
+		.await?;
+
+		Ok(database_record)
 	}
 
 	/// Revoke (make non-active) all Refresh Token in the database for a give user_id,

@@ -6,9 +6,9 @@
 // #![allow(unused)] // For development only
 
 use crate::{
-	domains::{EmailAddress, Password, UserName},
-	prelude::*,
-	rpc::ledger::{CreateUserRequest, UpdateUserRequest},
+    domains::{EmailAddress, PasswordHash, UserName},
+    prelude::*,
+    rpc::ledger::{CreateUserRequest, UpdateUserRequest},
 };
 
 use chrono::prelude::*;
@@ -22,7 +22,7 @@ pub struct UserModel {
 	pub id: Uuid,
 	pub email: EmailAddress,
 	pub user_name: UserName,
-	pub password_hash: Password,
+	pub password_hash: PasswordHash,
 	pub is_active: bool,
 	pub created_on: DateTime<Utc>,
 }
@@ -34,7 +34,7 @@ impl TryFrom<CreateUserRequest> for UserModel {
 		let id = Uuid::now_v7();
 		let email = EmailAddress::parse(value.email)?;
 		let user_name = UserName::parse(value.user_name)?;
-		let password_hash = Password::parse(Secret::new(value.password))?;
+		let password_hash = PasswordHash::parse(Secret::new(value.password))?;
 		let is_active = value.is_active;
 		let created_on = Utc::now();
 
@@ -56,7 +56,7 @@ impl TryFrom<UpdateUserRequest> for UserModel {
 		let id = Uuid::parse_str(value.id.as_str())?;
 		let email = EmailAddress::parse(value.email)?;
 		let user_name = UserName::parse(value.user_name)?;
-		let password_hash = Password::parse(Secret::new("Place holder as password is not updated here".to_string()))?;
+		let password_hash = PasswordHash::parse(Secret::new("Place holder as password is not updated here".to_string()))?;
 		let is_active = value.is_active;
 		let created_on = Utc::now();
 
@@ -112,7 +112,7 @@ pub mod tests {
 		let random_count = (5..30).fake::<i64>() as usize;
 		let password = "aB1%".repeat(random_count);
 		let password = Secret::new(password);
-		let password_hash = Password::parse(password)?;
+		let password_hash = PasswordHash::parse(password)?;
 
 		// Generate random boolean value
 		let is_active: bool = Boolean(4).fake();
@@ -143,7 +143,7 @@ pub mod tests {
 		// let password: String = Password(14..255).fake();
 		let random_count = (5..30).fake::<i64>() as usize;
 		let password = "aB1%".repeat(random_count);
-		let password = Password::parse(Secret::new(password))?;
+		let password = PasswordHash::parse(Secret::new(password))?;
 
 		let tonic_request: CreateUserRequest = CreateUserRequest {
 			email: tonic_user.email.as_ref().to_string(),

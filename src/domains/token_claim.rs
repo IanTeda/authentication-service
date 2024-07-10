@@ -23,21 +23,20 @@ use uuid::Uuid;
 use crate::prelude::*;
 
 pub static TOKEN_ISSUER: &str = "Personal Ledger Backend";
-
-pub struct Keys {
-	encoding: EncodingKey,
-	decoding: DecodingKey,
-}
-
-impl Keys {
-	pub fn new(secret: &[u8]) -> Self {
-		Self {
-			encoding: EncodingKey::from_secret(secret),
-			decoding: DecodingKey::from_secret(secret),
-		}
-	}
-}
-
+//
+// pub struct Keys {
+// 	encoding: EncodingKey,
+// 	decoding: DecodingKey,
+// }
+//
+// impl Keys {
+// 	pub fn new(secret: &[u8]) -> Self {
+// 		Self {
+// 			encoding: EncodingKey::from_secret(secret),
+// 			decoding: DecodingKey::from_secret(secret),
+// 		}
+// 	}
+// }
 
 #[derive(Display, PartialEq)]
 pub enum TokenType {
@@ -56,7 +55,7 @@ impl rand::distributions::Distribution<TokenType> for rand::distributions::Stand
 
 /// Token Claim used in generating JSON Web Tokens (JWT)
 /// 
-/// JWT's have a limited time span and are used to authenticate requests to the server
+/// Tokens have a limited time span and are used to authenticate requests to the server
 /// 
 /// # References
 ///

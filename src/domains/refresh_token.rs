@@ -37,7 +37,6 @@ impl std::fmt::Display for RefreshToken {
 	}
 }
 
-
 impl From<String> for RefreshToken {
 	fn from(value: String) -> Self {
 		Self(value)

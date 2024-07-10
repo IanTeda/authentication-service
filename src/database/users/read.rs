@@ -10,6 +10,104 @@ use crate::{database::users::UserModel, domains::EmailAddress, prelude::*};
 
 use uuid::Uuid;
 
+impl super::UserModel {
+	/// Get a User from the database by querying the User uuid, returning a User Model (Self)
+	/// instance or sqlx error.
+	///
+	/// # Parameters
+	///
+	/// * `id` - The uuid of thing to be returned
+	/// * `database` - An sqlx database pool that the thing will be searched in.
+	/// ---
+	#[tracing::instrument(
+		name = "Get a User from the database using its id (uuid)."
+		skip(database)
+	)]
+	pub async fn from_user_id(
+		id: &Uuid,
+		database: &sqlx::Pool<sqlx::Postgres>,
+	) -> Result<Self, BackendError> {
+		let database_record = sqlx::query_as!(
+			UserModel,
+			r#"
+				SELECT * 
+				FROM users 
+				WHERE id = $1
+			"#,
+			id
+		)
+		.fetch_one(database)
+		.await?;
+
+		Ok(database_record)
+	}
+
+	/// Get User from the database by querying the User Email, returning a User
+	/// Model (Self) instance or sqlx error.
+	///
+	/// # Parameters
+	///
+	/// * `id` - The uuid of thing to be returned
+	/// * `database` - An sqlx database pool that the thing will be searched in.
+	/// ---
+	#[tracing::instrument(
+		name = "Get a User from the database using its id (uuid)."
+		skip(database)
+	)]
+	pub async fn from_user_by_email(
+		email: &EmailAddress,
+		database: &sqlx::Pool<sqlx::Postgres>,
+	) -> Result<Self, BackendError> {
+		let database_record = sqlx::query_as!(
+			UserModel,
+			r#"
+				SELECT * 
+				FROM users 
+				WHERE email = $1
+			"#,
+			email.as_ref()
+		)
+		.fetch_one(database)
+		.await?;
+
+		Ok(database_record)
+	}
+
+	/// Get an index of Users, returning a vector of Users
+	///
+	/// # Parameters
+	///
+	/// * `limit` - An i64 limiting the page length
+	/// * `offset` - An i64 of where the limit should start
+	/// * `database` - An sqlx database pool that the things will be searched in.
+	/// ---
+	#[tracing::instrument(
+		name = "Index of Users with offset and limit"
+		skip(database)
+	)]
+	pub async fn select_user_index(
+		limit: &i64,
+		offset: &i64,
+		database: &sqlx::Pool<sqlx::Postgres>,
+	) -> Result<Vec<UserModel>, BackendError> {
+		let database_records = sqlx::query_as!(
+			UserModel,
+			r#"
+				SELECT * 
+				FROM users 
+				ORDER BY id
+				LIMIT $1 OFFSET $2
+			"#,
+			limit,
+			offset,
+		)
+		.fetch_all(database)
+		.await?;
+
+		Ok(database_records)
+	}
+}
+
 /// Get User from the database by querying the User uuid,
 /// returning a thing instance or sqlx error.
 ///
@@ -160,7 +258,7 @@ pub mod tests {
 	#[sqlx::test]
 	async fn get_user_record_by_email(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
-		// Generate radom user for testing
+		// Generate random user for testing
 		let random_test_user = generate_random_user()?;
 		insert_user(&random_test_user, &database).await?;
 		// println!("{test_thing:#?}");

@@ -1,6 +1,6 @@
 //-- ./src/errors.rs
 
-#![allow(unused)] // For beginning only.
+// #![allow(unused)] // For beginning only.
 
 //! Main Crate Error
 //! # References
@@ -77,7 +77,7 @@ pub enum BackendError {
 	#[error(transparent)]
 	Uuid(#[from] uuid::Error),
 	// #[error(transparent)]
-	// Argon2(#[from] argon2::Error)
+	// Argon2(#[from] argon2::password_hash::Error),
 	#[error("json: {0}")]
 	Json(#[from] serde_json::Error),
 	#[error("json web token: {0}")]

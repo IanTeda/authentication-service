@@ -6,6 +6,8 @@
 
 // // #![allow(unused)] // For development only
 
+use crate::prelude::*;
+
 use super::model::RefreshTokenModel;
 
 use sqlx::{Pool, Postgres};
@@ -31,8 +33,8 @@ impl super::RefreshTokenModel {
 	pub async fn from_id(
 		id: &Uuid,
 		database: &Pool<Postgres>,
-	) -> Result<RefreshTokenModel, sqlx::Error> {
-		sqlx::query_as!(
+	) -> Result<RefreshTokenModel, BackendError> {
+		let database_record = sqlx::query_as!(
 			RefreshTokenModel,
 			r#"
 				SELECT * 
@@ -42,7 +44,9 @@ impl super::RefreshTokenModel {
 			id
 		)
 		.fetch_one(database)
-		.await
+		.await?;
+
+		Ok(database_record)
 	}
 
 	/// Get an index of Refresh Token from the database by querying a User ID (uuid),
@@ -67,8 +71,8 @@ impl super::RefreshTokenModel {
 		limit: &i64,
 		offset: &i64,
 		database: &Pool<Postgres>,
-	) -> Result<Vec<RefreshTokenModel>, sqlx::Error> {
-		sqlx::query_as!(
+	) -> Result<Vec<RefreshTokenModel>, BackendError> {
+		let database_records = sqlx::query_as!(
 			RefreshTokenModel,
 			r#"
 				SELECT * 
@@ -82,7 +86,9 @@ impl super::RefreshTokenModel {
 			offset,
 		)
 		.fetch_all(database)
-		.await
+		.await?;
+
+		Ok(database_records)
 	}
 
 	/// Get an index of Refresh Tokens, returning a vector of Refresh Tokens or
@@ -102,8 +108,8 @@ impl super::RefreshTokenModel {
 		limit: &i64,
 		offset: &i64,
 		database: &Pool<Postgres>,
-	) -> Result<Vec<RefreshTokenModel>, sqlx::Error> {
-		sqlx::query_as!(
+	) -> Result<Vec<RefreshTokenModel>, BackendError> {
+		let database_records = sqlx::query_as!(
 			RefreshTokenModel,
 			r#"
 				SELECT * 
@@ -115,7 +121,9 @@ impl super::RefreshTokenModel {
 			offset,
 		)
 		.fetch_all(database)
-		.await
+		.await?;
+
+		Ok(database_records)
 	}
 }
 

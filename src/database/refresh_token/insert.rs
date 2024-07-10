@@ -8,6 +8,8 @@
 
 use sqlx::{Pool, Postgres};
 
+use crate::prelude::*;
+
 use super::model::RefreshTokenModel;
 
 impl super::RefreshTokenModel {
@@ -33,8 +35,8 @@ impl super::RefreshTokenModel {
 	pub async fn insert(
 		&self,
 		database: &Pool<Postgres>,
-	) -> Result<Self, sqlx::Error> {
-		sqlx::query_as!(
+	) -> Result<Self, BackendError> {
+		let database_record = sqlx::query_as!(
 			RefreshTokenModel,
 			r#"
 				INSERT INTO refresh_tokens (id, user_id, refresh_token, is_active, created_on) 
@@ -48,7 +50,9 @@ impl super::RefreshTokenModel {
 			self.created_on
 		)
 		.fetch_one(database)
-		.await
+		.await?;
+
+		Ok(database_record)
 	}
 }
 

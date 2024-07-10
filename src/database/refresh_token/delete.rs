@@ -14,6 +14,8 @@
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
+use crate::prelude::*;
+
 impl super::RefreshTokenModel {
 	/// Delete a Refresh Token from the database by querying the Refresh Token uuid, returning a Result
 	/// with the number of rows deleted or an sqlx error.
@@ -37,7 +39,7 @@ impl super::RefreshTokenModel {
 	pub async fn delete(
 		&self,
 		database: &Pool<Postgres>,
-	) -> Result<u64, sqlx::Error> {
+	) -> Result<u64, BackendError> {
 		let rows_affected = sqlx::query!(
 			r#"
 				Delete 
@@ -71,7 +73,7 @@ impl super::RefreshTokenModel {
 	pub async fn delete_all_user_id(
 		user_id: &Uuid,
 		database: &Pool<Postgres>,
-	) -> Result<u64, sqlx::Error> {
+	) -> Result<u64, BackendError> {
 		let rows_affected = sqlx::query!(
 			r#"
 				Delete 

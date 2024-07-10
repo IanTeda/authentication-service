@@ -7,7 +7,7 @@
 
 use uuid::Uuid;
 
-use crate::{database::users::UserModel, domains::Password, prelude::*};
+use crate::{database::users::UserModel, domains::PasswordHash, prelude::*};
 
 /// Update a `User` into the database, returning result with a UserModel instance.
 ///
@@ -47,9 +47,9 @@ pub async fn update_user_by_id(
 }
 
 pub async fn update_password_by_id(
-	id: Uuid,
-	password: Password,
-	database: &sqlx::Pool<sqlx::Postgres>,
+    id: Uuid,
+    password: PasswordHash,
+    database: &sqlx::Pool<sqlx::Postgres>,
 ) -> Result<UserModel, BackendError> {
 	let updated_user = sqlx::query_as!(
 		UserModel,

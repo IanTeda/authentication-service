@@ -10,8 +10,6 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::domains::RefreshToken;
-#[allow(unused)] // Need for test random impl
-use crate::prelude::BackendError;
 
 #[derive(Debug, serde::Deserialize, sqlx::FromRow, Clone)]
 pub struct RefreshTokenModel {
@@ -40,7 +38,7 @@ impl RefreshTokenModel {
 	}
 
 	#[cfg(test)]
-	pub async fn create_random(user_id: &Uuid) -> Result<Self, BackendError> {
+	pub async fn create_random(user_id: &Uuid) -> Result<Self, crate::error::BackendError> {
 		use fake::faker::boolean::en::Boolean;
 		use fake::faker::{chrono::en::DateTime, chrono::en::DateTimeAfter};
 		use fake::Fake;
