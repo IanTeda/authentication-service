@@ -10,18 +10,14 @@
 //! * `reset_password`: Reset my forgotten password
 //! * `logout`: Log me out
 
-#![allow(unused)] // For beginning only.
+// #![allow(unused)] // For beginning only.
 
 use fake::{faker::internet::en::SafeEmail, Fake};
-use jsonwebtoken::Validation;
-use personal_ledger_backend::{
-	configuration::{self, Configuration}, database, domains, rpc::ledger::{authentication_client::AuthenticationClient, AuthenticateRequest}
-};
+use personal_ledger_backend::{domains, rpc::ledger::{authentication_client::AuthenticationClient, AuthenticateRequest}};
 use secrecy::{ExposeSecret, Secret};
 use sqlx::{Pool, Postgres};
 use tonic::Code;
 use uuid::Uuid;
-use personal_ledger_backend::database::UserModel;
 
 use crate::{
 	helpers,
@@ -42,9 +38,6 @@ async fn authenticate_returns_token_with_uuid(database: Pool<Postgres>) -> Resul
 	let random_password = Secret::new(random_password);
 	let random_password_hash = domains::PasswordHash::parse(random_password.clone())?;
 	random_test_user.password_hash = random_password_hash;
-
-	// Insert user into database
-	let created_user = random_test_user.insert(&database).await?;
 
 	// Spawn Tonic test server
 	let tonic_server = helpers::TonicServer::spawn_server(database).await?;

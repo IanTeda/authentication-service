@@ -67,12 +67,18 @@ impl Authentication for AuthenticationService {
 		tracing::info!("Request email: {}", request_email.as_ref());
 
 		// Get the user from the database using the request email, so we can verify password hash
-		let user = database::UserModel::from_user_email(&request_email, &self.database_ref())
-			.await
-			.map_err(|_| {
-				tracing::info!("User email not found in database: {}", request_email.as_ref());
-				BackendError::AuthenticationError("Authentication Failed!".to_string())
-			})?;
+		let user = database::UserModel::from_user_email(
+			&request_email,
+			&self.database_ref(),
+		)
+		.await
+		.map_err(|_| {
+			tracing::info!(
+				"User email not found in database: {}",
+				request_email.as_ref()
+			);
+			BackendError::AuthenticationError("Authentication Failed!".to_string())
+		})?;
 
 		tracing::info!("User {} retrieved from the database.", user.id);
 
@@ -97,6 +103,9 @@ impl Authentication for AuthenticationService {
 				let refresh_token =
 					domains::RefreshToken::new(&token_secret, &user.id).await?;
 
+				let refresh_token_model =
+					database::RefreshTokenModel::new(&user.id, &refresh_token).await;
+
 				tracing::info!("Refresh Token: {}", refresh_token);
 
 				// Build Authenticate Response with the token
@@ -111,7 +120,7 @@ impl Authentication for AuthenticationService {
 			false => {
 				tracing::info!("Password incorrect.");
 				Err(Status::unauthenticated("Authentication Failed!"))
-			},
+			}
 		}
 	}
 

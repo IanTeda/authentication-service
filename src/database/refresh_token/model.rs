@@ -21,10 +21,17 @@ pub struct RefreshTokenModel {
 }
 
 impl RefreshTokenModel {
-	pub async fn new(user_id: &Uuid, refresh_token: &str) -> Self {
+	#[tracing::instrument(
+		name = "Create new Refresh Token Model."
+		// skip(email, database)
+		// fields(
+        // 	user_email = %email.as_ref(),
+    	// )
+	)]
+	pub async fn new(user_id: &Uuid, refresh_token: &RefreshToken) -> Self {
 		let id = Uuid::now_v7();
 		let user_id = user_id.to_owned();
-		let refresh_token = RefreshToken::from(refresh_token.to_string());
+		let refresh_token = refresh_token.to_owned();
 		let is_active = true;
 		let created_on = Utc::now();
 
