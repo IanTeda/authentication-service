@@ -7,7 +7,7 @@
 use std::sync::Arc;
 
 use crate::configuration::Configuration;
-use crate::domains::{AccessToken, EmailAddress, PasswordHash, RefreshToken};
+use crate::domains::EmailAddress;
 use crate::prelude::BackendError;
 use crate::{database, domains};
 
@@ -45,6 +45,13 @@ impl AuthenticationService {
 
 #[tonic::async_trait]
 impl Authentication for AuthenticationService {
+	#[tracing::instrument(
+		name = "Authenticate request"
+		skip(self, request)
+		// fields(
+        // 	user_email = &request.into_inner().email,
+    	// )
+	)]
 	async fn authenticate(
 		&self,
 		request: Request<AuthenticateRequest>,
@@ -57,12 +64,17 @@ impl Authentication for AuthenticationService {
 			BackendError::AuthenticationError("Authentication failed!".to_string())
 		})?;
 
+		tracing::info!("Request email: {}", request_email.as_ref());
+
 		// Get the user from the database using the request email, so we can verify password hash
 		let user = database::UserModel::from_user_email(&request_email, &self.database_ref())
 			.await
 			.map_err(|_| {
+				tracing::info!("User email not found in database: {}", request_email.as_ref());
 				BackendError::AuthenticationError("Authentication Failed!".to_string())
 			})?;
+
+		tracing::info!("User {} retrieved from the database.", user.id);
 
 		// Wrap the Token Secret string in a Secret
 		let token_secret = Secret::new(self.config.application.token_secret.clone());
@@ -73,13 +85,19 @@ impl Authentication for AuthenticationService {
 		// Check password against stored hash
 		match user.password_hash.verify_password(&password_secret)? {
 			true => {
+				tracing::info!("Password verified.");
+
 				// Build JWT access token claim
 				let access_token =
 					domains::AccessToken::new(&token_secret, &user.id).await?;
 
+				tracing::info!("Access Token: {}", access_token);
+
 				// Build JWT refresh token claim
 				let refresh_token =
 					domains::RefreshToken::new(&token_secret, &user.id).await?;
+
+				tracing::info!("Refresh Token: {}", refresh_token);
 
 				// Build Authenticate Response with the token
 				let response = AuthenticateResponse {
@@ -90,7 +108,10 @@ impl Authentication for AuthenticationService {
 				// Send Response
 				Ok(Response::new(response))
 			}
-			false => Err(Status::unauthenticated("Authentication Failed!")),
+			false => {
+				tracing::info!("Password incorrect.");
+				Err(Status::unauthenticated("Authentication Failed!"))
+			},
 		}
 	}
 

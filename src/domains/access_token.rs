@@ -47,6 +47,7 @@ impl AccessToken {
 	/// * `secret`: Secret<String> containing the token encryption secret
 	/// * `user_id`: Uuid of the user that is going to use the Access Token
 	/// ---
+	#[tracing::instrument]
 	pub async fn new(
 		secret: &Secret<String>,
 		user_id: &Uuid,

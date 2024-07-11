@@ -51,8 +51,11 @@ impl super::UserModel {
 	/// * `database` - An sqlx database pool that the thing will be searched in.
 	/// ---
 	#[tracing::instrument(
-		name = "Read a User from the database user a unique email address."
-		skip(database)
+		name = "Read a User from the database."
+		skip(email, database)
+		fields(
+        	user_email = %email.as_ref(),
+    	)
 	)]
 	pub async fn from_user_email(
 		email: &EmailAddress,
@@ -70,7 +73,7 @@ impl super::UserModel {
 		.fetch_one(database)
 		.await?;
 
-		tracing::info!("User database record retrieved: {database_record:#?}");
+		tracing::debug!("User database record retrieved: {database_record:#?}");
 
 		Ok(database_record)
 	}
