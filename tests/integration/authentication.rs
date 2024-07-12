@@ -30,7 +30,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 #[sqlx::test]
 async fn authenticate_returns_token_with_uuid(database: Pool<Postgres>) -> Result<()> {
 	//-- Setup and Fixtures (Arrange)
-	// Generate random user for testing
+	// Generate random user data for testing
 	let mut random_test_user = generate_random_user()?;
 
 	// Override password so we have the original string for verification
@@ -39,11 +39,13 @@ async fn authenticate_returns_token_with_uuid(database: Pool<Postgres>) -> Resul
 	let random_password_hash = domains::PasswordHash::parse(random_password.clone())?;
 	random_test_user.password_hash = random_password_hash;
 
+	// Insert user into database
+	random_test_user.insert(&database).await?;
+
 	// Spawn Tonic test server
 	let tonic_server = helpers::TonicServer::spawn_server(database).await?;
 
 	let token_secret = &tonic_server.clone().config.application.token_secret;
-
 
 	// Build Tonic user client, with authentication intercept
 	let mut authentication_client = AuthenticationClient::with_interceptor(
@@ -66,17 +68,24 @@ async fn authenticate_returns_token_with_uuid(database: Pool<Postgres>) -> Resul
 	// println!("{response:#?}");
 
 	//-- Checks (Assertions)
-	// Parse server config, so we can grab the jwt_secret
-	
+	// Get Token Claim Secret
 	let token_secret = Secret::new(token_secret.to_owned());
 
-	let token_claim = domains::TokenClaim::from_token(&response.access_token, &token_secret).await?;
+	// Build Token Claims
+	let access_token_claim = domains::TokenClaim::from_token(&response.access_token, &token_secret).await?;
+	let refresh_token_claim = domains::TokenClaim::from_token(&response.refresh_token, &token_secret).await?;
 
-	// Confirm uuids are the same
-	assert_eq!(Uuid::parse_str(&token_claim.sub)?, random_test_user.id);
-	// Confirm Access token
-	assert_eq!(&token_claim.jty, "Access");
-	// assert!(matches!(&access_claim.jty, JwtTypes::Access));
+	// Confirm User Id (uuids) are the same
+	assert_eq!(Uuid::parse_str(&access_token_claim.sub)?, random_test_user.id);
+	assert_eq!(Uuid::parse_str(&refresh_token_claim.sub)?, random_test_user.id);
+
+	// Confirm Token Claims
+	assert_eq!(&access_token_claim.jty, "Access");
+	assert_eq!(&refresh_token_claim.jty, "Refresh");
+
+	// // Confirm Refresh Token in database
+	// let database_record = database::RefreshTokenModel::index_from_user_id(&random_test_user.id, &1,& 1, &database).await?;
+	// println!("{database_record:#?}");
 
 	Ok(())
 }

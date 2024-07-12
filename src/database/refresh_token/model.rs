@@ -4,31 +4,31 @@
 //!
 //! ---
 
-#![allow(unused)] // For development only
+// #![allow(unused)] // For development only
 
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-use crate::domains::RefreshToken;
+use crate::domains;
 
 #[derive(Debug, serde::Deserialize, sqlx::FromRow, Clone)]
 pub struct RefreshTokenModel {
 	pub id: Uuid,
 	pub user_id: Uuid,
-	pub refresh_token: RefreshToken,
+	pub refresh_token: domains::RefreshToken,
 	pub is_active: bool,
 	pub created_on: DateTime<Utc>,
 }
 
 impl RefreshTokenModel {
 	#[tracing::instrument(
-		name = "Create new Refresh Token Model."
-		// skip(email, database)
+		name = "Create new database Refresh Token Model instance for: "
+		skip(refresh_token)
 		// fields(
         // 	user_email = %email.as_ref(),
     	// )
 	)]
-	pub async fn new(user_id: &Uuid, refresh_token: &RefreshToken) -> Self {
+	pub async fn new(user_id: &Uuid, refresh_token: &domains::RefreshToken) -> Self {
 		let id = Uuid::now_v7();
 		let user_id = user_id.to_owned();
 		let refresh_token = refresh_token.to_owned();
@@ -45,7 +45,7 @@ impl RefreshTokenModel {
 	}
 
 	#[cfg(test)]
-	pub async fn create_random(
+	pub async fn mock_data(
 		user_id: &Uuid,
 	) -> Result<Self, crate::error::BackendError> {
 		use fake::faker::boolean::en::Boolean;
@@ -53,8 +53,6 @@ impl RefreshTokenModel {
 		use fake::Fake;
 		use rand::distributions::DistString;
 		use secrecy::Secret;
-
-		// use crate::prelude::BackendError;
 
 		//-- Generate Uuid V7
 		// Generate random DateTime after UNIX time epoch (00:00:00 UTC on 1 January 1970)
@@ -79,7 +77,7 @@ impl RefreshTokenModel {
 
 		let random_secret = Secret::new(random_secret);
 
-		let refresh_token = RefreshToken::new(&random_secret, &user_id).await?;
+		let refresh_token = domains::RefreshToken::new(&random_secret, &user_id).await?;
 
 		// Generate random boolean value
 		let random_is_active: bool = Boolean(4).fake();

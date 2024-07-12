@@ -26,10 +26,10 @@ impl super::RefreshTokenModel {
 		skip(self, database)
 		fields(
         	db_id = %self.id,
-			user_id = %self.user_id,
-			refresh_token = %self.refresh_token.as_ref(),
-			is_active = %self.is_active,
-			created_on = %self.created_on,
+			// user_id = %self.user_id,
+			// refresh_token = %self.refresh_token.as_ref(),
+			// is_active = %self.is_active,
+			// created_on = %self.created_on,
     	)
 	)]
 	pub async fn insert(
@@ -76,18 +76,21 @@ pub mod tests {
 	async fn create_database_record(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_user = UserModel::generate_random().await?;
+		let random_user = UserModel::mock_data().await?;
 
 		// Insert user in the database
 		random_user.insert(&database).await?;
 
 		// Generate refresh token
 		let refresh_token =
-			RefreshTokenModel::create_random(&random_user.id).await?;
+			RefreshTokenModel::mock_data(&random_user.id).await?;
 
 		//-- Execute Function (Act)
 		// Insert refresh token into database
-		let database_record = refresh_token.insert(&database).await?;
+		refresh_token.insert(&database).await?;
+
+		// Get database record that was insert above, to be sure.
+		let database_record = RefreshTokenModel::from_id(&refresh_token.id, &database).await?;
 
 		//-- Checks (Assertions)
 		assert_eq!(database_record.id, refresh_token.id);

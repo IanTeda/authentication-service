@@ -26,12 +26,15 @@ pub fn get_router(
 	database: Pool<Postgres>,
 	config: Configuration,
 ) -> Result<Router, BackendError> {
-	// Wraps our database pool an Atomic Reference Counted pointer (Arc). Each instance of
-	// the backend will get a pointer to the pool instead of getting a raw copy.
+	// Wraps our database pool in an Atomic Reference Counted pointer (Arc). 
+	// Each instance of the backend will get a pointer to the pool instead of getting a raw copy.
 	let database = Arc::new(database);
 
 	// Wrap config in an Atomic Reference Counted (ARC) pointer.
 	let config = Arc::new(config);
+
+	// Build reflections server
+	let reflections_server = reflections::get_reflection()?;
 
 	// Build Utilities server
 	let utilities_server =
@@ -48,9 +51,6 @@ pub fn get_router(
 		Arc::clone(&database),
 		Arc::clone(&config),
 	));
-
-	// Build reflections server
-	let reflections_server = reflections::get_reflection()?;
 
 	// Build RPC server router
 	let router = Server::builder()

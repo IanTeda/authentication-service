@@ -111,14 +111,14 @@ pub mod tests {
 	async fn delete_refresh_token_record(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_user = UserModel::generate_random().await?;
+		let random_user = UserModel::mock_data().await?;
 
 		// Insert user in the database
 		random_user.insert(&database).await?;
 
 		// Generate refresh token
 		let refresh_token =
-			RefreshTokenModel::create_random(&random_user.id).await?;
+			RefreshTokenModel::mock_data(&random_user.id).await?;
 
 		// Insert refresh token in the database for deleting
 		refresh_token.insert(&database).await?;
@@ -142,7 +142,7 @@ pub mod tests {
 	) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_user = UserModel::generate_random().await?;
+		let random_user = UserModel::mock_data().await?;
 
 		// Insert user in the database
 		random_user.insert(&database).await?;
@@ -151,7 +151,7 @@ pub mod tests {
 		for _count in 0..random_count {
 			// Generate refresh token
 			let refresh_token =
-				RefreshTokenModel::create_random(&random_user.id).await?;
+				RefreshTokenModel::mock_data(&random_user.id).await?;
 
 			// Insert refresh token in the database for deleting
 			refresh_token.insert(&database).await?;

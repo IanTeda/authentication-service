@@ -70,7 +70,7 @@ pub mod tests {
 	async fn create_database_record(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate random user for testing
-		let random_test_user = UserModel::generate_random().await?;
+		let random_test_user = UserModel::mock_data().await?;
 
 		//-- Execute Function (Act)
 		// Insert user into database

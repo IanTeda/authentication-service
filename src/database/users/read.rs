@@ -20,7 +20,7 @@ impl super::UserModel {
 	/// * `database` - An sqlx database pool that the thing will be searched in.
 	/// ---
 	#[tracing::instrument(
-		name = "Read a User from the database using its id (uuid)."
+		name = "Read a User from the database: "
 		skip(database)
 	)]
 	pub async fn from_user_id(
@@ -51,7 +51,7 @@ impl super::UserModel {
 	/// * `database` - An sqlx database pool that the thing will be searched in.
 	/// ---
 	#[tracing::instrument(
-		name = "Read a User from the database."
+		name = "Read a User from the database: "
 		skip(email, database)
 		fields(
         	user_email = %email.as_ref(),
@@ -134,7 +134,7 @@ pub mod tests {
 	async fn get_user_record_by_id(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_test_user = UserModel::generate_random().await?;
+		let random_test_user = UserModel::mock_data().await?;
 
 		// Insert user in the database
 		random_test_user.insert(&database).await?;
@@ -169,7 +169,7 @@ pub mod tests {
 	async fn get_user_record_by_email(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_test_user = UserModel::generate_random().await?;
+		let random_test_user = UserModel::mock_data().await?;
 
 		// Insert user in the database
 		random_test_user.insert(&database).await?;
@@ -205,7 +205,7 @@ pub mod tests {
 		let mut test_vec: Vec<UserModel> = Vec::new();
 		for _count in 0..random_count {
 			// Generate radom user for testing
-			let random_test_user = UserModel::generate_random().await?;
+			let random_test_user = UserModel::mock_data().await?;
 
 			// Insert user in the database
 			test_vec.push(random_test_user.insert(&database).await?);

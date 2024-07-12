@@ -75,7 +75,7 @@ impl TryFrom<UpdateUserRequest> for UserModel {
 
 impl UserModel {
 	#[cfg(test)]
-	pub async fn generate_random() -> Result<Self, crate::error::BackendError> {
+	pub async fn mock_data() -> Result<Self, crate::error::BackendError> {
 		use fake::faker::boolean::en::Boolean;
 		use fake::faker::chrono::en::{DateTime, DateTimeAfter};
 		use fake::faker::internet::en::SafeEmail;

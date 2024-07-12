@@ -68,7 +68,7 @@ pub mod tests {
 	async fn delete_user_record(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_test_user = UserModel::generate_random().await?;
+		let random_test_user = UserModel::mock_data().await?;
 
 		// Insert user in the database
 		random_test_user.insert(&database).await?;
@@ -89,13 +89,13 @@ pub mod tests {
 	async fn delete_user_false(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let mut random_test_user = UserModel::generate_random().await?;
+		let mut random_test_user = UserModel::mock_data().await?;
 
 		// Insert user in the database
 		random_test_user.insert(&database).await?;
 
 		// Generate a new random user id and push to instance for testing
-		random_test_user.id = UserModel::generate_random().await?.id;
+		random_test_user.id = UserModel::mock_data().await?.id;
 
 		//-- Execute Function (Act)
 		// Insert user into database

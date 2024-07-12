@@ -235,6 +235,7 @@ mod tests {
 		//-- Execute Function (Act)
 		// Parse a password hash from the domain
 		let password_hash = PasswordHash::parse(password_secret.clone())?;
+		println!("{password_hash:#?}");
 
 		//-- Checks (Assertions)
 		assert_ok!(password_hash.verify_password(&password_secret));

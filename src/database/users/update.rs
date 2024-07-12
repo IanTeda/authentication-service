@@ -64,13 +64,13 @@ pub mod tests {
 	async fn create_database_record(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let original_test_user = UserModel::generate_random().await?;
+		let original_test_user = UserModel::mock_data().await?;
 
 		// Insert user in the database
 		original_test_user.insert(&database).await?;
 
 		// Generate new data for updating the database
-		let mut updated_test_user = UserModel::generate_random().await?;
+		let mut updated_test_user = UserModel::mock_data().await?;
 		updated_test_user.id = original_test_user.id;
 		updated_test_user.created_on = original_test_user.created_on;
 

@@ -151,14 +151,14 @@ pub mod tests {
 	async fn update_refresh_token(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_user = UserModel::generate_random().await?;
+		let random_user = UserModel::mock_data().await?;
 
 		// Insert user in the database
 		random_user.insert(&database).await?;
 
 		// Generate refresh token
 		let mut refresh_token =
-			RefreshTokenModel::create_random(&random_user.id).await?;
+			RefreshTokenModel::mock_data(&random_user.id).await?;
 
 		let original_refresh_token_id = refresh_token.id;
 		let original_refresh_token_created_on = refresh_token.created_on;
@@ -167,14 +167,14 @@ pub mod tests {
 		refresh_token.insert(&database).await?;
 
 		// Generate a new user and refresh token for updating
-		let random_user_update = UserModel::generate_random().await?;
+		let random_user_update = UserModel::mock_data().await?;
 
 		// Insert user in the database
 		random_user_update.insert(&database).await?;
 
 		// Generate refresh token
 		let refresh_token_update =
-			RefreshTokenModel::create_random(&random_user_update.id).await?;
+			RefreshTokenModel::mock_data(&random_user_update.id).await?;
 
 		// refresh_token.id = refresh_token_update.id;
 		refresh_token.user_id = random_user_update.id;
@@ -207,14 +207,14 @@ pub mod tests {
 	async fn revoke_refresh_token(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_user = UserModel::generate_random().await?;
+		let random_user = UserModel::mock_data().await?;
 
 		// Insert user in the database
 		random_user.insert(&database).await?;
 
 		// Generate refresh token
 		let mut refresh_token =
-			RefreshTokenModel::create_random(&random_user.id).await?;
+			RefreshTokenModel::mock_data(&random_user.id).await?;
 
 		// Set Refresh Token active to true
 		refresh_token.is_active = true;
@@ -241,7 +241,7 @@ pub mod tests {
 	async fn revoke_all_user_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
 		//-- Setup and Fixtures (Arrange)
 		// Generate radom user for testing
-		let random_user = UserModel::generate_random().await?;
+		let random_user = UserModel::mock_data().await?;
 
 		// Insert user in the database
 		random_user.insert(&database).await?;
@@ -251,7 +251,7 @@ pub mod tests {
 		for _count in 0..random_count {
 			// Generate refresh token
 			let mut refresh_token =
-				RefreshTokenModel::create_random(&random_user.id).await?;
+				RefreshTokenModel::mock_data(&random_user.id).await?;
 
 			// Set Refresh Token active to true
 			refresh_token.is_active = true;

@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use crate::configuration::Configuration;
 use crate::domains::EmailAddress;
-use crate::prelude::BackendError;
+use crate::prelude::*;
 use crate::{database, domains};
 
 use secrecy::Secret;
@@ -24,20 +24,24 @@ use crate::rpc::ledger::{
 
 /// Authentication service containing a database pool
 pub struct AuthenticationService {
+	/// Database Arc reference
 	database: Arc<Pool<Postgres>>,
+	/// Configuration Arc reference
 	config: Arc<Configuration>,
 }
 
 impl AuthenticationService {
+	/// Initiate a new Authentication Service
 	pub fn new(database: Arc<Pool<Postgres>>, config: Arc<Configuration>) -> Self {
 		Self { database, config }
 	}
 
-	/// Shorthand for reference to database pool
+	/// Shorthand reference to database pool
 	fn database_ref(&self) -> &Pool<Postgres> {
 		&self.database
 	}
 
+	/// Shorthand reference to config
 	fn config_ref(&self) -> &Configuration {
 		&self.config
 	}
@@ -64,7 +68,7 @@ impl Authentication for AuthenticationService {
 			BackendError::AuthenticationError("Authentication failed!".to_string())
 		})?;
 
-		tracing::info!("Request email: {}", request_email.as_ref());
+		tracing::debug!("Request email: {}", request_email.as_ref());
 
 		// Get the user from the database using the request email, so we can verify password hash
 		let user = database::UserModel::from_user_email(
@@ -73,14 +77,14 @@ impl Authentication for AuthenticationService {
 		)
 		.await
 		.map_err(|_| {
-			tracing::info!(
+			tracing::error!(
 				"User email not found in database: {}",
 				request_email.as_ref()
 			);
 			BackendError::AuthenticationError("Authentication Failed!".to_string())
 		})?;
 
-		tracing::info!("User {} retrieved from the database.", user.id);
+		tracing::debug!("User {} retrieved from the database.", user.id);
 
 		// Wrap the Token Secret string in a Secret
 		let token_secret = Secret::new(self.config.application.token_secret.clone());
@@ -93,20 +97,24 @@ impl Authentication for AuthenticationService {
 			true => {
 				tracing::info!("Password verified.");
 
-				// Build JWT access token claim
+				// Build an Access Token
 				let access_token =
 					domains::AccessToken::new(&token_secret, &user.id).await?;
 
-				tracing::info!("Access Token: {}", access_token);
+				tracing::debug!("Using Access Token: {}", access_token);
 
-				// Build JWT refresh token claim
+				// Build a Refresh Token
 				let refresh_token =
 					domains::RefreshToken::new(&token_secret, &user.id).await?;
 
+				// Build a new Refresh Token database instance
 				let refresh_token_model =
 					database::RefreshTokenModel::new(&user.id, &refresh_token).await;
 
-				tracing::info!("Refresh Token: {}", refresh_token);
+				// Add Refresh Token to database
+				refresh_token_model.insert(&self.database_ref()).await?;
+				
+				tracing::debug!("Using Refresh Token: {}", refresh_token);
 
 				// Build Authenticate Response with the token
 				let response = AuthenticateResponse {
@@ -118,12 +126,20 @@ impl Authentication for AuthenticationService {
 				Ok(Response::new(response))
 			}
 			false => {
-				tracing::info!("Password incorrect.");
+				tracing::error!("Password verification failed.");
 				Err(Status::unauthenticated("Authentication Failed!"))
 			}
 		}
 	}
 
+	/// Get a new Access Token using the Refresh Token that has a longer life
+	#[tracing::instrument(
+		name = "Authenticate request"
+		skip(self, request)
+		// fields(
+        // 	user_email = &request.into_inner().email,
+    	// )
+	)]
 	async fn refresh_authentication(
 		&self,
 		request: Request<RefreshAuthenticationRequest>,

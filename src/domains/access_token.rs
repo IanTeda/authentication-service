@@ -47,7 +47,17 @@ impl AccessToken {
 	/// * `secret`: Secret<String> containing the token encryption secret
 	/// * `user_id`: Uuid of the user that is going to use the Access Token
 	/// ---
-	#[tracing::instrument]
+	#[tracing::instrument(
+		name = "Generate a new Access Token for: "
+		skip(secret)
+		// fields(
+        // 	db_id = %self.id,
+		// 	user_id = %self.user_id,
+		// 	refresh_token = %self.refresh_token.as_ref(),
+		// 	is_active = %self.is_active,
+		// 	created_on = %self.created_on,
+    	// )
+	)]
 	pub async fn new(
 		secret: &Secret<String>,
 		user_id: &Uuid,
@@ -90,7 +100,7 @@ mod tests {
 		let secret = Secret::new(secret);
 
 		// Get a random user_id for subject
-		let random_user = UserModel::generate_random().await?;
+		let random_user = UserModel::mock_data().await?;
 
 		let access_token = AccessToken::new(&secret, &random_user.id).await?;
 
