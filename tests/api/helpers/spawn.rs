@@ -90,6 +90,10 @@ impl TonicServer {
 		// unimplemented!()
 		Ok(channel)
 	}
+
+	pub async fn authenticate() {
+		
+	}
 }
 
 /// This function will get called on each outbound request. Returning a

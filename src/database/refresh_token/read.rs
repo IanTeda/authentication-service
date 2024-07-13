@@ -48,6 +48,40 @@ impl super::RefreshTokenModel {
 		Ok(database_record)
 	}
 
+		/// Get a Refresh Token from the database by querying the uuid, returning a
+	/// Refresh Token instance or sqlx error.
+	///
+	/// # Parameters
+	///
+	/// * `refresh_token` - The &str of the Refresh Token in the database.
+	/// * `database` - The sqlx database pool for the database to be queried.
+	/// ---
+	#[tracing::instrument(
+		name = "Get a Refresh Token from the database using the token."
+		skip(refresh_token, database)
+		// fields(
+		// 	refresh_token = %,
+    	// )
+	)]
+	pub async fn from_token(
+		refresh_token: &str,
+		database: &Pool<Postgres>,
+	) -> Result<RefreshTokenModel, BackendError> {
+		let database_record = sqlx::query_as!(
+			RefreshTokenModel,
+			r#"
+				SELECT * 
+				FROM refresh_tokens 
+				WHERE refresh_token = $1
+			"#,
+			refresh_token
+		)
+		.fetch_one(database)
+		.await?;
+
+		Ok(database_record)
+	}
+
 	/// Get an index of Refresh Token from the database by querying a User ID (uuid),
 	/// returning a Vec of Refresh Tokens or an sqlx error.
 	///
@@ -163,6 +197,43 @@ pub mod tests {
 		// Insert user into database
 		let database_record =
 			RefreshTokenModel::from_id(&refresh_token.id, &database).await?;
+		// println!("{record:#?}");
+
+		//-- Checks (Assertions)
+		assert_eq!(database_record.id, refresh_token.id);
+		assert_eq!(database_record.user_id, random_user.id);
+		assert_eq!(database_record.refresh_token, refresh_token.refresh_token);
+		assert_eq!(database_record.is_active, refresh_token.is_active);
+		assert_eq!(
+			database_record.created_on.timestamp(),
+			refresh_token.created_on.timestamp()
+		);
+
+		// -- Return
+		Ok(())
+	}
+
+		// Test getting Refresh Token from database using unique UUID
+	#[sqlx::test]
+	async fn get_refresh_token_record_by_token(database: Pool<Postgres>) -> Result<()> {
+		//-- Setup and Fixtures (Arrange)
+		// Generate radom user for testing
+		let random_user = UserModel::mock_data().await?;
+
+		// Insert user in the database
+		random_user.insert(&database).await?;
+
+		// Generate refresh token
+		let refresh_token =
+			RefreshTokenModel::mock_data(&random_user.id).await?;
+
+		// Insert refresh token into database for reading later
+		refresh_token.insert(&database).await?;
+
+		//-- Execute Function (Act)
+		// Insert user into database
+		let database_record =
+			RefreshTokenModel::from_token(&refresh_token.refresh_token.as_ref(), &database).await?;
 		// println!("{record:#?}");
 
 		//-- Checks (Assertions)

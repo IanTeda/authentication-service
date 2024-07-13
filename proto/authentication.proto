@@ -7,24 +7,25 @@ package ledger;
 import "common.proto";
 
 service Authentication {
-    rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse);
-    rpc RefreshAuthentication (RefreshAuthenticationRequest) returns (AuthenticateResponse);
-    rpc UpdatePassword (UpdatePasswordRequest) returns (AuthenticateResponse);
+    rpc Login (LoginRequest) returns (TokenResponse);
+    rpc Refresh(RefreshRequest) returns (TokenResponse);
+    rpc UpdatePassword (UpdatePasswordRequest) returns (TokenResponse);
     rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse);
+    rpc SignUp (SignUpRequest) returns (TokenResponse);
     rpc Logout (LogoutRequest) returns (Empty);
 }
 
-message AuthenticateRequest {
+message LoginRequest {
     string email = 1;
     string password = 2;
 }
 
-message AuthenticateResponse {
+message TokenResponse {
     string access_token = 1;
     string refresh_token = 2;
 }
 
-message RefreshAuthenticationRequest {
+message RefreshRequest {
     string refresh_token = 1;
 }
 
@@ -40,6 +41,11 @@ message ResetPasswordRequest {
 
 message ResetPasswordResponse {
     string message = 1;
+}
+
+message SignUpRequest {
+    string email = 1;
+    string password = 2;
 }
 
 message LogoutRequest {

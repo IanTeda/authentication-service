@@ -101,6 +101,39 @@ impl super::RefreshTokenModel {
 		Ok(database_record)
 	}
 
+	/// Revoke (make non-active) all Refresh Token in the database associated to 
+	/// the user_id, returning a result with the number RefreshTokenModels revoked 
+	/// or an SQLx error
+	///
+	/// # Parameters
+	///
+	/// * `self` - A RefreshTokenModel instance for the user_id Refresh Tokens to be revoked.
+	/// * `database` - An Sqlx database connection pool.
+	/// ---
+	#[tracing::instrument(
+		name = "Revoke all Refresh Tokens for a given user_id in the database."
+		skip(self, database)
+	)]
+	pub async fn revoke_all_associated(
+		&self,
+		database: &Pool<Postgres>,
+	) -> Result<u64, BackendError> {
+		let rows_affected = sqlx::query_as!(
+			RefreshTokenModel,
+			r#"
+				UPDATE refresh_tokens 
+				SET is_active = false
+				WHERE user_id = $1 
+			"#,
+			self.user_id
+		)
+		.execute(database)
+		.await?
+		.rows_affected();
+
+		Ok(rows_affected)
+	}
+
 	/// Revoke (make non-active) all Refresh Token in the database for a give user_id,
 	/// returning a result with the number RefreshTokenModels revoked or an SQLx error
 	///
@@ -116,7 +149,7 @@ impl super::RefreshTokenModel {
 	pub async fn revoke_user_id(
 		user_id: &Uuid,
 		database: &Pool<Postgres>,
-	) -> Result<u64, sqlx::Error> {
+	) -> Result<u64, BackendError> {
 		let rows_affected = sqlx::query_as!(
 			RefreshTokenModel,
 			r#"

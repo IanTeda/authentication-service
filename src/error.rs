@@ -74,12 +74,14 @@ pub enum BackendError {
 	// sqlx::migrate::MigrateError
 	#[error(transparent)]
 	Sqlx(#[from] sqlx::Error),
-	#[error(transparent)]
+	// Parsing String to UUid
+	#[error("Uuid: {0}")]
 	Uuid(#[from] uuid::Error),
 	// #[error(transparent)]
 	// Argon2(#[from] argon2::password_hash::Error),
 	#[error("json: {0}")]
 	Json(#[from] serde_json::Error),
+
 	#[error("json web token: {0}")]
 	JsonWebToken(#[from] jsonwebtoken::errors::Error),
 }
