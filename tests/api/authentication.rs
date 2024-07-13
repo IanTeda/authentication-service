@@ -20,41 +20,32 @@ use personal_ledger_backend::{
         RefreshRequest,
     },
 };
-use secrecy::{ExposeSecret, Secret};
+use secrecy::Secret;
 use sqlx::{Pool, Postgres};
 use tonic::Code;
 use uuid::Uuid;
 
-use crate::{
-    helpers,
-    users::{generate_random_password, generate_random_user},
-};
+use crate::helpers::{self, mocks};
 
 pub type Error = Box<dyn std::error::Error>;
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[sqlx::test]
-async fn authenticate_returns_access_refresh_tokens(
+async fn login_returns_access_refresh_tokens(
     database: Pool<Postgres>,
 ) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
-    // Generate random user data for testing
-    let mut random_test_user = generate_random_user()?;
-
-    // Override password so we have the original string for verification
-    let random_password = generate_random_password();
-    let random_password = Secret::new(random_password);
-    let random_password_hash =
-        domains::PasswordHash::parse(random_password.clone())?;
-    random_test_user.password_hash = random_password_hash;
-
-    // Insert user into database
-    random_test_user.insert(&database).await?;
+    // Generate random user data and insert into database for testing
+    let random_password = mocks::password()?;
+    let random_test_user = mocks::user_model(&random_password)?;
+    let _database_record = random_test_user.insert(&database).await?;
 
     // Spawn Tonic test server
     let tonic_server = helpers::TonicServer::spawn_server(database).await?;
 
+    // Get Token Claim Secret before Tonic Client takes ownership of the server instance
     let token_secret = &tonic_server.clone().config.application.token_secret;
+    let token_secret = Secret::new(token_secret.to_owned());
 
     // Build Tonic user client, with authentication intercept
     let mut authentication_client = AuthenticationClient::with_interceptor(
@@ -66,7 +57,7 @@ async fn authenticate_returns_access_refresh_tokens(
     // Build tonic request
     let request = tonic::Request::new(LoginRequest {
         email: random_test_user.email.to_string(),
-        password: random_password.expose_secret().to_string(),
+        password: random_password.to_string(),
     });
 
     // Send tonic client request to server
@@ -77,10 +68,7 @@ async fn authenticate_returns_access_refresh_tokens(
     // println!("{response:#?}");
 
     //-- Checks (Assertions)
-    // Get Token Claim Secret
-    let token_secret = Secret::new(token_secret.to_owned());
-
-    // Build Token Claims
+    // Build Token Claims from token responses
     let access_token_claim =
         domains::TokenClaim::from_token(&response.access_token, &token_secret)
             .await?;
@@ -112,14 +100,13 @@ async fn authenticate_returns_access_refresh_tokens(
 #[sqlx::test]
 async fn incorrect_password_returns_error(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
-    // Generate a random user
-    let random_user = generate_random_user()?;
+    // Generate random user data and insert into database for testing
+    let random_password = mocks::password()?;
+    let random_test_user = mocks::user_model(&random_password)?;
+    let _database_record = random_test_user.insert(&database).await?;
 
     // Generate an incorrect password
-    let incorrect_password = generate_random_password();
-
-    // Insert random user into database for the server to query
-    random_user.insert(&database).await?;
+    let incorrect_password = String::from("incorrect-password-string");
 
     // Spawn Tonic test server
     let tonic_server = helpers::TonicServer::spawn_server(database).await?;
@@ -133,7 +120,7 @@ async fn incorrect_password_returns_error(database: Pool<Postgres>) -> Result<()
     //-- Execute Test (Act)
     // Build tonic request
     let request = tonic::Request::new(LoginRequest {
-        email: random_user.email.to_string(),
+        email: random_test_user.email.to_string(),
         password: incorrect_password,
     });
 
@@ -157,16 +144,10 @@ async fn incorrect_password_returns_error(database: Pool<Postgres>) -> Result<()
 #[sqlx::test]
 async fn incorrect_email_returns_error(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
-    // Generate a random user
-    let mut random_user = generate_random_user()?;
-
-    // Generate a new password so we have the un-hashed string to authenticate
-    let random_password = generate_random_password();
-    random_user.password_hash =
-        domains::PasswordHash::parse(Secret::new(random_password.clone()))?;
-
-    // Insert random user into database for the server to query
-    random_user.insert(&database).await?;
+    // Generate random user data and insert into database for testing
+    let random_password = mocks::password()?;
+    let random_test_user = mocks::user_model(&random_password)?;
+    let _database_record = random_test_user.insert(&database).await?;
 
     // Spawn Tonic test server
     let tonic_server = helpers::TonicServer::spawn_server(database).await?;
@@ -207,18 +188,10 @@ async fn incorrect_email_returns_error(database: Pool<Postgres>) -> Result<()> {
 #[sqlx::test]
 async fn refresh_access(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
-    // Generate random user data for testing
-    let mut random_test_user = generate_random_user()?;
-
-    // Override password so we have the original string for verification
-    let random_password = generate_random_password();
-    let random_password = Secret::new(random_password);
-    let random_password_hash =
-        domains::PasswordHash::parse(random_password.clone())?;
-    random_test_user.password_hash = random_password_hash;
-
-    // Insert user into database
-    random_test_user.insert(&database).await?;
+    // Generate random user data and insert into database for testing
+    let random_password = mocks::password()?;
+    let random_test_user = mocks::user_model(&random_password)?;
+    let _database_record = random_test_user.insert(&database).await?;
 
     // Spawn Tonic test server
     let tonic_server = helpers::TonicServer::spawn_server(database).await?;
@@ -234,7 +207,7 @@ async fn refresh_access(database: Pool<Postgres>) -> Result<()> {
     // Build tonic request
     let request = tonic::Request::new(LoginRequest {
         email: random_test_user.email.to_string(),
-        password: random_password.expose_secret().to_string(),
+        password: random_password.to_string(),
     });
 
     // Send tonic client request to server
@@ -283,3 +256,4 @@ async fn refresh_access(database: Pool<Postgres>) -> Result<()> {
 
     Ok(())
 }
+

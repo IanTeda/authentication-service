@@ -3,6 +3,6 @@
 // Add modules to include in integration binary
 
 mod authentication;
-mod helpers;
-mod users;
+pub mod helpers;
+// mod users;
 mod utilities;

@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 use once_cell::sync::Lazy;
+use secrecy::Secret;
 use sqlx::{Pool, Postgres};
 
 use personal_ledger_backend::{configuration::Configuration, startup, telemetry};
@@ -11,6 +12,8 @@ use tonic::{
 	Request, Status,
 };
 use personal_ledger_backend::configuration::{Environment, LogLevels};
+
+use super::mocks;
 
 pub type Error = Box<dyn std::error::Error>;
 
@@ -41,6 +44,7 @@ static TRACING: Lazy<()> = Lazy::new(|| {
 #[derive(Clone)]
 pub struct TonicServer {
 	pub address: String,
+	pub access_token: String,
 	pub config: Arc<Configuration>,
 }
 
@@ -56,6 +60,11 @@ impl TonicServer {
 			s.application.port = 0;
 			s
 		};
+
+		// Generate random user data for testing and insert in test database
+		let random_password = mocks::password()?; // In case we need it in the future
+		let random_user = mocks::user_model(&random_password)?;
+		let _database_record = random_user.insert(&database).await?;
 
 		// Build Tonic server using startup
 		let tonic_server = startup::TonicServer::build(config.clone(), database).await?;
@@ -76,10 +85,15 @@ impl TonicServer {
 		// Give the test server a few ms to become available
 		tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
+		// Generate access token for Tonic Client requests
+		let token_secret = &config.application.token_secret;
+		let token_secret = Secret::new(token_secret.to_owned());
+		let access_token = mocks::access_token(&random_user.id, &token_secret).await?.to_string();
+
 		let config = Arc::new(config);
 
 		// unimplemented!()
-		Ok(Self { address, config })
+		Ok(Self { access_token, address, config })
 	}
 
 	pub async fn client_channel(self) -> Result<Channel, Error> {
