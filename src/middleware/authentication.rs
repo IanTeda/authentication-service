@@ -9,10 +9,10 @@
 use tonic::{metadata::MetadataValue, Request, Status};
 
 pub enum AuthError {
-	InvalidToken,
-	WrongCredentials,
-	TokenCreation,
-	MissingCredentials,
+    InvalidToken,
+    WrongCredentials,
+    TokenCreation,
+    MissingCredentials,
 }
 
 // impl IntoResponse for AuthError {
@@ -31,10 +31,10 @@ pub enum AuthError {
 // }
 
 pub fn check_authentication(request: Request<()>) -> Result<Request<()>, Status> {
-	let token: MetadataValue<_> = "Bearer some-auth-token".parse().unwrap();
+    let token: MetadataValue<_> = "Bearer some-auth-token".parse().unwrap();
 
-	match request.metadata().get("authorization") {
-		Some(t) if token == t => Ok(request),
-		_ => Err(Status::unauthenticated("No valid auth token")),
-	}
+    match request.metadata().get("authorization") {
+        Some(t) if token == t => Ok(request),
+        _ => Err(Status::unauthenticated("No valid auth token")),
+    }
 }

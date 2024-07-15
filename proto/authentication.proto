@@ -11,7 +11,7 @@ service Authentication {
     rpc Refresh(RefreshRequest) returns (TokenResponse);
     rpc UpdatePassword (UpdatePasswordRequest) returns (TokenResponse);
     rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse);
-    rpc SignUp (SignUpRequest) returns (TokenResponse);
+    rpc Register (RegisterRequest) returns (TokenResponse);
     rpc Logout (LogoutRequest) returns (Empty);
 }
 
@@ -43,7 +43,7 @@ message ResetPasswordResponse {
     string message = 1;
 }
 
-message SignUpRequest {
+message RegisterRequest {
     string email = 1;
     string password = 2;
 }

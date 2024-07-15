@@ -12,9 +12,7 @@ fn main() -> Result<(), Box<(dyn Error)>> {
         .include_file("mod.rs")
         .file_descriptor_set_path(out_dir.join("ledger_descriptor.bin"))
         .protoc_arg("--experimental_allow_proto3_optional")
-        .compile(
-            &["proto/ledger.proto"],
-            &["proto"])?;
+        .compile(&["proto/ledger.proto"], &["proto"])?;
 
     Ok(())
 }

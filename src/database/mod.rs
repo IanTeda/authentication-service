@@ -2,23 +2,29 @@
 
 //! Wrapper around database tables
 
-#![allow(unused)] // For development only
+// #![allow(unused)] // For development only
 
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
+pub use refresh_tokens::RefreshTokens;
+pub use users::Users;
+
 use crate::{configuration::DatabaseConfiguration, prelude::*};
 
-pub mod users;
-mod refresh_token;
+mod users;
 
-pub use users::UserModel;
-pub use refresh_token::RefreshTokenModel;
+mod refresh_tokens;
 
-pub async fn init_pool(database_configuration: &DatabaseConfiguration) -> Result<PgPool, BackendError> {
-	// Build connection pool
-	let database = PgPoolOptions::new().connect_lazy_with(database_configuration.connection());
+pub async fn init_pool(
+    database_configuration: &DatabaseConfiguration,
+) -> Result<PgPool, BackendError> {
+    // Build connection pool
+    let database =
+        PgPoolOptions::new().connect_lazy_with(database_configuration.connection());
 
-	sqlx::migrate!("./migrations").run(&database).await?;
+    // Migrate database
+    sqlx::migrate!("./migrations").run(&database).await?;
 
-	Ok(database)
+    // Return database
+    Ok(database)
 }

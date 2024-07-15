@@ -5,96 +5,86 @@
 
 // #![allow(unused)] // For development only
 
-use crate::prelude::*;
+use crate::database::Users;
+use crate::{domain, prelude::*};
 
-use super::UserModel;
-
-impl super::UserModel {
-	/// Update a `User` into the database, returning result with a UserModel instance.
-	///
-	/// # Parameters
-	///
-	/// * `user` - A User instance
-	/// * `database` - An Sqlx database connection pool
-	/// ---
-	#[tracing::instrument(
-		name = "Update a User in the database."
-		skip(self, database)
-	)]
-	pub async fn update(
-		&self,
-		database: &sqlx::Pool<sqlx::Postgres>,
-	) -> Result<UserModel, BackendError> {
-		let updated_user = sqlx::query_as!(
-			UserModel,
+impl Users {
+    /// Update a `User` into the database, returning result with a UserModel instance.
+    ///
+    /// # Parameters
+    ///
+    /// * `user` - A User instance
+    /// * `database` - An Sqlx database connection pool
+    /// ---
+    #[tracing::instrument(
+        name = "Update a User in the database: ",
+        skip(self, database)
+    )]
+    pub async fn update(
+        &self,
+        database: &sqlx::Pool<sqlx::Postgres>,
+    ) -> Result<Users, BackendError> {
+        let database_record = sqlx::query_as!(
+			Users,
 			r#"
-				UPDATE users 
-				SET email = $2, user_name = $3, password_hash = $4, is_active = $5 
-				WHERE id = $1 
-				RETURNING *
+				UPDATE users
+				SET email = $2, name = $3, password_hash = $4, role = $5, is_active = $6, is_verified = $7
+				WHERE id = $1
+				RETURNING id, email, name, password_hash, role as "role:domain::UserRole", is_active, is_verified, created_on
 			"#,
 			self.id,
 			self.email.as_ref(),
-			self.user_name.as_ref(),
+			self.name.as_ref(),
 			self.password_hash.as_ref(),
+			self.role.clone() as domain::UserRole,
 			self.is_active,
+			self.is_verified,
 		)
-		.fetch_one(database)
-		.await?;
+            .fetch_one(database)
+            .await?;
 
-		Ok(updated_user)
-	}
+        tracing::debug!("User database records retrieved: {database_record:#?}");
+
+        Ok(database_record)
+    }
 }
 
 //-- Unit Tests
 #[cfg(test)]
 pub mod tests {
+    use sqlx::{Pool, Postgres};
 
-	// Bring module functions into test scope
-	use super::*;
+    use crate::database;
 
-	use sqlx::{Pool, Postgres};
+    // Override with more flexible error
+    pub type Result<T> = core::result::Result<T, Error>;
+    pub type Error = Box<dyn std::error::Error>;
 
-	// Override with more flexible error
-	pub type Result<T> = core::result::Result<T, Error>;
-	pub type Error = Box<dyn std::error::Error>;
+    // Test inserting into database
+    #[cfg(feature = "mocks")]
+    #[sqlx::test]
+    async fn create_database_record(database: Pool<Postgres>) -> Result<()> {
+        //-- Setup and Fixtures (Arrange)
+        // Generate random user for testing
+        let original_test_user = database::Users::mock_data()?;
 
-	// Test inserting into database
-	#[sqlx::test]
-	async fn create_database_record(database: Pool<Postgres>) -> Result<()> {
-		//-- Setup and Fixtures (Arrange)
-		// Generate radom user for testing
-		let original_test_user = UserModel::mock_data().await?;
+        // Insert user in the database
+        original_test_user.insert(&database).await?;
 
-		// Insert user in the database
-		original_test_user.insert(&database).await?;
+        // Generate new data for updating the database
+        let mut updated_test_user = database::Users::mock_data()?;
+        updated_test_user.id = original_test_user.id;
+        updated_test_user.created_on = original_test_user.created_on;
 
-		// Generate new data for updating the database
-		let mut updated_test_user = UserModel::mock_data().await?;
-		updated_test_user.id = original_test_user.id;
-		updated_test_user.created_on = original_test_user.created_on;
+        //-- Execute Function (Act)
+        // Insert user into database
+        let database_record = updated_test_user.update(&database).await?;
+        // println!("{updated_user:#?}");
 
-		//-- Execute Function (Act)
-		// Insert user into database
-		let database_record = updated_test_user.update(&database).await?;
-		// println!("{updated_user:#?}");
+        //-- Checks (Assertions)
+        assert_eq!(database_record, updated_test_user);
 
-		//-- Checks (Assertions)
-		assert_eq!(database_record.id, original_test_user.id);
-		assert_eq!(database_record.email, updated_test_user.email);
-		assert_eq!(database_record.user_name, updated_test_user.user_name);
-		assert_eq!(
-			database_record.password_hash,
-			updated_test_user.password_hash
-		);
-		assert_eq!(database_record.is_active, updated_test_user.is_active);
-		// Use timestamp because Postgres time precision is less than Rust
-		assert_eq!(
-			database_record.created_on.timestamp(),
-			original_test_user.created_on.timestamp()
-		);
-
-		// -- Return
-		Ok(())
-	}
+        // -- Return
+        Ok(())
+    }
 }

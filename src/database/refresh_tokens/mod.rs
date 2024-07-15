@@ -4,10 +4,10 @@
 
 // #![allow(unused)] // For development only
 
+pub use model::RefreshTokens;
+
 mod delete;
 mod insert;
 mod model;
 mod read;
 mod update;
-
-pub use model::RefreshTokenModel;

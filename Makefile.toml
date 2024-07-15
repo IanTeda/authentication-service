@@ -26,6 +26,13 @@ install_crate = "cargo-tarpaulin"
 command = "cargo"
 args = ["tarpaulin", "--ignore-tests"]
 
+## Drop Database
+## $ sqlx database create
+[tasks.db_drop]
+install_crate = "sqlx-cli"
+command = "sqlx"
+args = ["database", "drop"]
+
 ## Create Database
 ## $ sqlx database create
 [tasks.db_create]
@@ -40,13 +47,20 @@ install_crate = "sqlx-cli"
 command = "sqlx"
 args = ["migrate", "run"]
 
-[tasks.db]
-dependencies = ["db_create", "db_migrate"]
-
-[tasks.sqlx_prepare]
+[tasks.db_prepare]
 install_crate = "sqlx-cli"
 command = "cargo"
-args = ["sqlx", "prepare", "--", "--bin", "personal_ledger_server" ]
+args = ["sqlx", "prepare", "--check"]
+
+[tasks.db]
+dependencies = ["db_drop", "db_create", "db_migrate", "db_prepare"]
+
+## Migrate database
+## $ sqlx migrate run
+[tasks.test]
+install_crate = "cargo"
+command = "test"
+args = ["--features", "mock"]
 
 # $ cargo make docker_image
 # docker build --network host --tag personal_ledger_server --file Dockerfile .

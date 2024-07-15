@@ -14,34 +14,34 @@ use crate::rpc::ledger::{Empty, PingResponse};
 
 // #[derive(Debug, Default)]
 pub struct UtilitiesService {
-	#[allow(dead_code)]
-	config: Arc<Configuration>,
+    #[allow(dead_code)]
+    config: Arc<Configuration>,
 }
 
 impl UtilitiesService {
-	pub fn new(config: Arc<Configuration>) -> Self {
-		Self { config }
-	}
+    pub fn new(config: Arc<Configuration>) -> Self {
+        Self { config }
+    }
 }
 
 #[tonic::async_trait]
 impl Utilities for UtilitiesService {
-	#[tracing::instrument(
+    #[tracing::instrument(
 		name = "Ping endpoint",
 		skip(self),
 		// fields(
 		// 	Request = %_request
 		// ),
 	)]
-	async fn ping(
-		&self,
-		_request: Request<Empty>,
-	) -> Result<Response<PingResponse>, Status> {
-		let reply = PingResponse {
-			message: "Pong...".to_string(),
-		};
+    async fn ping(
+        &self,
+        _request: Request<Empty>,
+    ) -> Result<Response<PingResponse>, Status> {
+        let reply = PingResponse {
+            message: "Pong...".to_string(),
+        };
 
-		// Send back our ping response.
-		Ok(Response::new(reply))
-	}
+        // Send back our ping response.
+        Ok(Response::new(reply))
+    }
 }

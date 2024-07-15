@@ -1,95 +1,106 @@
 //-- ./src/database/users/insert
 
-//! Insert User instance into the database, returning a Result with a User Model instance
-//! ---
-
 // #![allow(unused)] // For development only
 
-use crate::{database::users::UserModel, prelude::*};
+//! Insert User instance into the database, returning a Result with a User Model instance
+//!
+//! #### References
+//!
+//! * [UPDATE query_as! with a custom ENUM type](https://github.com/launchbadge/sqlx/discussions/3041)
+//! ---
 
-impl super::UserModel {
-	/// Insert a `User` into the database, returning a result with the User Model instance created.
-	///
-	/// # Parameters
-	///
-	/// * `self` - The User Model instance to be inserted in the database.
-	/// * `database` - An Sqlx database connection pool
-	/// ---
-	#[tracing::instrument(
-		name = "Insert a new User into the database."
-		skip(self, database)
-		fields(
-			id = %self.id,
-			email = %self.email,
-			user_name = %self.user_name.as_ref(),
-			password_hash = %self.password_hash.as_ref(),
-			is_active = %self.is_active,
-			created_on = %self.created_on,
-		)
-	)]
-	pub async fn insert(
-		&self,
-		database: &sqlx::Pool<sqlx::Postgres>,
-	) -> Result<UserModel, BackendError> {
-		let created_user = sqlx::query_as!(
-			UserModel,
-			r#"
-				INSERT INTO users (id, email, user_name, password_hash, is_active, created_on)
-				VALUES ($1, $2, $3, $4, $5, $6)
-				RETURNING *
-			"#,
-			self.id,
-			self.email.as_ref(),
-			self.user_name.as_ref(),
-			self.password_hash.as_ref(),
-			self.is_active,
-			self.created_on
-		)
-		.fetch_one(database)
-		.await?;
+use crate::{domain, prelude::*};
+use crate::database::Users;
 
-		Ok(created_user)
-	}
+impl Users {
+    /// Insert a `User` into the database, returning a result with the User database instance created.
+    ///
+    /// # Parameters
+    ///
+    /// * `self` - The User instance to be inserted in the database.
+    /// * `database` - An Sqlx database connection pool
+    /// ---
+    #[tracing::instrument(
+        name = "Insert a new User into the database: ",
+        skip(self, database),
+        fields(
+            id = % self.id,
+            email = % self.email,
+            name = % self.name.as_ref(),
+            role = % self.role,
+            password_hash = % self.password_hash.as_ref(),
+            is_active = % self.is_active,
+            is_verified = % self.is_verified,
+            created_on = % self.created_on,
+        ),
+    )]
+    pub async fn insert(
+        &self,
+        database: &sqlx::Pool<sqlx::Postgres>,
+    ) -> Result<Self, BackendError> {
+        // Insert a new user
+        let database_record = sqlx::query_as!(
+            Users,
+            r#"
+                INSERT INTO users (
+                    id,
+                    email,
+                    name,
+                    password_hash,
+                    role,
+                    is_active,
+                    is_verified,
+                    created_on
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                RETURNING id, email, name, password_hash, role as "role:domain::UserRole", is_active, is_verified, created_on
+            "#,
+            self.id,
+            self.email.as_ref(),
+            self.name.as_ref(),
+            self.password_hash.as_ref(),
+            self.role.clone() as domain::UserRole,
+            self.is_active,
+            self.is_verified,
+			self.created_on,
+        )
+            .fetch_one(database)
+            .await?;
+
+        tracing::debug!("User database records retrieved: {database_record:#?}");
+
+        Ok(database_record)
+    }
 }
 
 //-- Unit Tests
 #[cfg(test)]
-pub mod tests {
+mod tests {
+    use sqlx::{Pool, Postgres};
 
-	// Bring module functions into test scope
-	use super::*;
+    use super::*;
 
-	use sqlx::{Pool, Postgres};
+    // Override with more flexible result and error
+    pub type Result<T> = core::result::Result<T, Error>;
+    pub type Error = Box<dyn std::error::Error>;
 
-	// Override with more flexible error
-	pub type Result<T> = core::result::Result<T, Error>;
-	pub type Error = Box<dyn std::error::Error>;
+    // Test inserting into database
+    #[cfg(feature = "mocks")]
+    #[sqlx::test]
+    async fn create_database_record(database: Pool<Postgres>) -> Result<()> {
+        //-- Setup and Fixtures (Arrange)
 
-	// Test inserting into database
-	#[sqlx::test]
-	async fn create_database_record(database: Pool<Postgres>) -> Result<()> {
-		//-- Setup and Fixtures (Arrange)
-		// Generate random user for testing
-		let random_test_user = UserModel::mock_data().await?;
+        let random_user = Users::mock_data()?;
 
-		//-- Execute Function (Act)
-		// Insert user into database
-		let created_user = random_test_user.insert(&database).await?;
-		// println!("{record:#?}");
+        //-- Execute Function (Act)
+        let database_record = random_user.insert(&database).await?;
+        // println!("{database_record:#?}");
 
-		//-- Checks (Assertions)
-		assert_eq!(created_user.id, random_test_user.id);
-		assert_eq!(created_user.email, random_test_user.email);
-		assert_eq!(created_user.user_name, random_test_user.user_name);
-		assert_eq!(created_user.password_hash, random_test_user.password_hash);
-		assert_eq!(created_user.is_active, random_test_user.is_active);
-		// Use timestamp because Postgres time precision is less than Rust
-		assert_eq!(
-			created_user.created_on.timestamp(),
-			random_test_user.created_on.timestamp()
-		);
+        //-- Checks (Assertions)
+        // Check the two user instances are equal
+        assert_eq!(random_user, database_record);
 
-		// -- Return
-		Ok(())
-	}
+        // -- Return
+        Ok(())
+    }
 }

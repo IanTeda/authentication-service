@@ -49,7 +49,7 @@ pub struct ResetPasswordResponse {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SignUpRequest {
+pub struct RegisterRequest {
     #[prost(string, tag = "1")]
     pub email: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
@@ -237,9 +237,9 @@ pub mod authentication_client {
                 .insert(GrpcMethod::new("ledger.Authentication", "ResetPassword"));
             self.inner.unary(req, path, codec).await
         }
-        pub async fn sign_up(
+        pub async fn register(
             &mut self,
-            request: impl tonic::IntoRequest<super::SignUpRequest>,
+            request: impl tonic::IntoRequest<super::RegisterRequest>,
         ) -> std::result::Result<tonic::Response<super::TokenResponse>, tonic::Status> {
             self.inner
                 .ready()
@@ -252,11 +252,11 @@ pub mod authentication_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/ledger.Authentication/SignUp",
+                "/ledger.Authentication/Register",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("ledger.Authentication", "SignUp"));
+                .insert(GrpcMethod::new("ledger.Authentication", "Register"));
             self.inner.unary(req, path, codec).await
         }
         pub async fn logout(
@@ -309,9 +309,9 @@ pub mod authentication_server {
             tonic::Response<super::ResetPasswordResponse>,
             tonic::Status,
         >;
-        async fn sign_up(
+        async fn register(
             &self,
-            request: tonic::Request<super::SignUpRequest>,
+            request: tonic::Request<super::RegisterRequest>,
         ) -> std::result::Result<tonic::Response<super::TokenResponse>, tonic::Status>;
         async fn logout(
             &self,
@@ -574,13 +574,13 @@ pub mod authentication_server {
                     };
                     Box::pin(fut)
                 }
-                "/ledger.Authentication/SignUp" => {
+                "/ledger.Authentication/Register" => {
                     #[allow(non_camel_case_types)]
-                    struct SignUpSvc<T: Authentication>(pub Arc<T>);
+                    struct RegisterSvc<T: Authentication>(pub Arc<T>);
                     impl<
                         T: Authentication,
-                    > tonic::server::UnaryService<super::SignUpRequest>
-                    for SignUpSvc<T> {
+                    > tonic::server::UnaryService<super::RegisterRequest>
+                    for RegisterSvc<T> {
                         type Response = super::TokenResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -588,11 +588,11 @@ pub mod authentication_server {
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::SignUpRequest>,
+                            request: tonic::Request<super::RegisterRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Authentication>::sign_up(&inner, request).await
+                                <T as Authentication>::register(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -603,7 +603,7 @@ pub mod authentication_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = SignUpSvc(inner);
+                        let method = RegisterSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -1176,23 +1176,15 @@ pub struct CreateUserRequest {
     #[prost(string, tag = "1")]
     pub email: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub user_name: ::prost::alloc::string::String,
+    pub name: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub password: ::prost::alloc::string::String,
-    #[prost(bool, tag = "4")]
+    #[prost(string, tag = "4")]
+    pub role: ::prost::alloc::string::String,
+    #[prost(bool, tag = "5")]
     pub is_active: bool,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateUserRequest {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub email: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub user_name: ::prost::alloc::string::String,
-    #[prost(bool, tag = "4")]
-    pub is_active: bool,
+    #[prost(bool, tag = "6")]
+    pub is_verified: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1202,10 +1194,46 @@ pub struct UserResponse {
     #[prost(string, tag = "2")]
     pub email: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
-    pub user_name: ::prost::alloc::string::String,
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub role: ::prost::alloc::string::String,
+    #[prost(bool, tag = "5")]
+    pub is_active: bool,
+    #[prost(bool, tag = "6")]
+    pub is_verified: bool,
+    #[prost(string, tag = "7")]
+    pub created_on: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateUserRequest {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub email: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub role: ::prost::alloc::string::String,
+    #[prost(bool, tag = "5")]
+    pub is_active: bool,
+    #[prost(bool, tag = "6")]
+    pub is_verified: bool,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ReadUserRequest {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub email: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub name: ::prost::alloc::string::String,
     #[prost(bool, tag = "4")]
     pub is_active: bool,
-    #[prost(string, tag = "5")]
+    #[prost(bool, tag = "5")]
+    pub is_verified: bool,
+    #[prost(string, tag = "6")]
     pub created_on: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1340,7 +1368,7 @@ pub mod users_client {
         }
         pub async fn read_user(
             &mut self,
-            request: impl tonic::IntoRequest<super::UserRequest>,
+            request: impl tonic::IntoRequest<super::ReadUserRequest>,
         ) -> std::result::Result<tonic::Response<super::UserResponse>, tonic::Status> {
             self.inner
                 .ready()
@@ -1435,7 +1463,7 @@ pub mod users_server {
         ) -> std::result::Result<tonic::Response<super::UserResponse>, tonic::Status>;
         async fn read_user(
             &self,
-            request: tonic::Request<super::UserRequest>,
+            request: tonic::Request<super::ReadUserRequest>,
         ) -> std::result::Result<tonic::Response<super::UserResponse>, tonic::Status>;
         async fn index_users(
             &self,
@@ -1578,7 +1606,7 @@ pub mod users_server {
                 "/ledger.Users/ReadUser" => {
                     #[allow(non_camel_case_types)]
                     struct ReadUserSvc<T: Users>(pub Arc<T>);
-                    impl<T: Users> tonic::server::UnaryService<super::UserRequest>
+                    impl<T: Users> tonic::server::UnaryService<super::ReadUserRequest>
                     for ReadUserSvc<T> {
                         type Response = super::UserResponse;
                         type Future = BoxFuture<
@@ -1587,7 +1615,7 @@ pub mod users_server {
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::UserRequest>,
+                            request: tonic::Request<super::ReadUserRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {

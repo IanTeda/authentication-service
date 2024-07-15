@@ -12,18 +12,16 @@
 
 // #![allow(unused)] // For beginning only.
 
-use fake::{faker::internet::en::SafeEmail, Fake};
-use personal_ledger_backend::{
-    domains,
-    rpc::ledger::{
-        authentication_client::AuthenticationClient, LoginRequest,
-        RefreshRequest,
-    },
-};
+use fake::{Fake, faker::internet::en::SafeEmail};
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
 use tonic::Code;
 use uuid::Uuid;
+
+use personal_ledger_backend::{database, domain, rpc::ledger::{
+    authentication_client::AuthenticationClient, LoginRequest,
+    RefreshRequest,
+}};
 
 use crate::helpers::{self, mocks};
 
@@ -37,8 +35,8 @@ async fn login_returns_access_refresh_tokens(
     //-- Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password = mocks::password()?;
-    let random_test_user = mocks::user_model(&random_password)?;
-    let _database_record = random_test_user.insert(&database).await?;
+    let random_user = database::Users::mock_data_with_password(random_password.clone())?;
+    let _database_record = random_user.insert(&database).await?;
 
     // Spawn Tonic test server
     let tonic_server = helpers::TonicServer::spawn_server(database).await?;
@@ -56,7 +54,7 @@ async fn login_returns_access_refresh_tokens(
     //-- Execute Test (Act)
     // Build tonic request
     let request = tonic::Request::new(LoginRequest {
-        email: random_test_user.email.to_string(),
+        email: random_user.email.to_string(),
         password: random_password.to_string(),
     });
 
@@ -70,20 +68,20 @@ async fn login_returns_access_refresh_tokens(
     //-- Checks (Assertions)
     // Build Token Claims from token responses
     let access_token_claim =
-        domains::TokenClaim::from_token(&response.access_token, &token_secret)
+        domain::TokenClaim::from_token(&response.access_token, &token_secret)
             .await?;
     let refresh_token_claim =
-        domains::TokenClaim::from_token(&response.refresh_token, &token_secret)
+        domain::TokenClaim::from_token(&response.refresh_token, &token_secret)
             .await?;
 
-    // Confirm User Id (uuids) are the same
+    // Confirm User IDs (uuids) are the same
     assert_eq!(
         Uuid::parse_str(&access_token_claim.sub)?,
-        random_test_user.id
+        random_user.id
     );
     assert_eq!(
         Uuid::parse_str(&refresh_token_claim.sub)?,
-        random_test_user.id
+        random_user.id
     );
 
     // Confirm Token Claims
@@ -102,8 +100,8 @@ async fn incorrect_password_returns_error(database: Pool<Postgres>) -> Result<()
     //-- Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password = mocks::password()?;
-    let random_test_user = mocks::user_model(&random_password)?;
-    let _database_record = random_test_user.insert(&database).await?;
+    let random_user = database::Users::mock_data_with_password(random_password)?;
+    let _database_record = random_user.insert(&database).await?;
 
     // Generate an incorrect password
     let incorrect_password = String::from("incorrect-password-string");
@@ -120,7 +118,7 @@ async fn incorrect_password_returns_error(database: Pool<Postgres>) -> Result<()
     //-- Execute Test (Act)
     // Build tonic request
     let request = tonic::Request::new(LoginRequest {
-        email: random_test_user.email.to_string(),
+        email: random_user.email.to_string(),
         password: incorrect_password,
     });
 
@@ -146,8 +144,8 @@ async fn incorrect_email_returns_error(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password = mocks::password()?;
-    let random_test_user = mocks::user_model(&random_password)?;
-    let _database_record = random_test_user.insert(&database).await?;
+    let random_user = database::Users::mock_data_with_password(random_password.clone())?;
+    let _database_record = random_user.insert(&database).await?;
 
     // Spawn Tonic test server
     let tonic_server = helpers::TonicServer::spawn_server(database).await?;
@@ -190,8 +188,8 @@ async fn refresh_access(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password = mocks::password()?;
-    let random_test_user = mocks::user_model(&random_password)?;
-    let _database_record = random_test_user.insert(&database).await?;
+    let random_user = database::Users::mock_data_with_password(random_password.clone())?;
+    let _database_record = random_user.insert(&database).await?;
 
     // Spawn Tonic test server
     let tonic_server = helpers::TonicServer::spawn_server(database).await?;
@@ -206,7 +204,7 @@ async fn refresh_access(database: Pool<Postgres>) -> Result<()> {
 
     // Build tonic request
     let request = tonic::Request::new(LoginRequest {
-        email: random_test_user.email.to_string(),
+        email: random_user.email.to_string(),
         password: random_password.to_string(),
     });
 
@@ -232,27 +230,27 @@ async fn refresh_access(database: Pool<Postgres>) -> Result<()> {
 
     // Build Token Claims
     let access_token_claim =
-        domains::TokenClaim::from_token(&response.access_token, &token_secret)
+        domain::TokenClaim::from_token(&response.access_token, &token_secret)
             .await?;
     let refresh_token_claim =
-        domains::TokenClaim::from_token(&response.refresh_token, &token_secret)
+        domain::TokenClaim::from_token(&response.refresh_token, &token_secret)
             .await?;
 
-    // Confirm User Id (uuids) are the same
+    // Confirm User IDs (uuids) are the same
     assert_eq!(
         Uuid::parse_str(&access_token_claim.sub)?,
-        random_test_user.id
+        random_user.id
     );
     assert_eq!(
         Uuid::parse_str(&refresh_token_claim.sub)?,
-        random_test_user.id
+        random_user.id
     );
 
     // Confirm Token Claims
     assert_eq!(&access_token_claim.jty, "Access");
     assert_eq!(&refresh_token_claim.jty, "Refresh");
 
-	//TODO: Check database revokes all others
+    //TODO: Check database revokes all others
 
     Ok(())
 }

@@ -22,12 +22,23 @@ path = "src/lib.rs"
 name = "personal_ledger_backend"
 path = "src/main.rs"
 
+# [[test]]
+# name = "integration"
+# path = "tests/api/main.rs"
+# harness = false
+
 [dependencies]
 config = { version = "0.14.0", default-features = false, features = ["yaml"] }
 chrono = { version = "0.4.22", default-features = false, features = [
     "clock",
     "serde",
 ] }
+fake = { version = "2.9.2", features = [
+    "derive",
+    "chrono-tz",
+    "uuid",
+    "chrono",
+], optional = true }
 prost = "0.13"
 secrecy = { version = "0.8.0", features = ["serde"] }
 serde = { version = "1.0.198", features = ["derive"] }
@@ -70,6 +81,9 @@ time = "0.3.36"
 
 [build-dependencies]
 tonic-build = { version = "0.12", features = ["prost"] }
+
+[features]
+mocks = ["dep:fake"]
 
 [dev-dependencies]
 claims = "0.7.0"
