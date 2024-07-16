@@ -11,7 +11,7 @@ use tonic::{
 	Status, transport::{Channel, Uri},
 };
 
-use personal_ledger_backend::{configuration::Configuration, database, domain, startup, telemetry};
+use personal_ledger_backend::{configuration::Configuration, domain, startup, telemetry};
 use personal_ledger_backend::configuration::{Environment, LogLevels};
 
 use super::mocks;
@@ -64,7 +64,7 @@ impl TonicServer {
 
         // Generate random user data for testing and insert in test database
         let random_password = mocks::password()?; // In case we need it in the future
-        let random_user = database::Users::mock_data_with_password(random_password)?;
+        let random_user = mocks::user_model(&random_password)?;
         let _database_record = random_user.insert(&database).await?;
 
         // Build Tonic server using startup

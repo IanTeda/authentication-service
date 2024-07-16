@@ -194,7 +194,6 @@ pub mod tests {
     pub type Result<T> = core::result::Result<T, Error>;
     pub type Error = Box<dyn std::error::Error>;
 
-    #[cfg(feature = "mocks")]
     #[sqlx::test]
     async fn update_refresh_token(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
@@ -237,7 +236,6 @@ pub mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "mocks")]
     #[sqlx::test]
     async fn revoke_refresh_token(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
@@ -272,7 +270,6 @@ pub mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "mocks")]
     #[sqlx::test]
     async fn revoke_all_user_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)

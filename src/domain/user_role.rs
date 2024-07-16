@@ -37,7 +37,7 @@ impl UserRole {
     }
 
     /// Mock user role, by picking a random role
-    #[cfg(feature = "mocks")]
+    #[cfg(test)]
     pub fn mock_data() -> Self {
         let random_role: UserRole = rand::random();
         random_role

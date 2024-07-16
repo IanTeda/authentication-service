@@ -135,7 +135,7 @@ impl PasswordHash {
         Ok(verified)
     }
 
-    #[cfg(feature = "mocks")]
+    #[cfg(test)]
     pub fn mock_data() -> Result<Self, BackendError> {
         use fake::Fake;
 

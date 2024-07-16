@@ -67,7 +67,7 @@ impl UserName {
         }
     }
 
-    #[cfg(feature = "mocks")]
+    #[cfg(test)]
     pub fn mock_data() -> Result<Self, BackendError> {
         use fake::faker::name::en::Name;
         use fake::Fake;

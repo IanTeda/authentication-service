@@ -72,7 +72,6 @@ pub mod tests {
     pub type Error = Box<dyn std::error::Error>;
 
     // Test inserting into database
-    #[cfg(feature = "mocks")]
     #[sqlx::test]
     async fn create_database_record(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)

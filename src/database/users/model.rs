@@ -5,11 +5,10 @@
 
 // #![allow(unused)] // For development only
 
-use chrono::{DateTime, SubsecRound, Utc};
-use secrecy::Secret;
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-use crate::{domain, prelude::*, utils};
+use crate::domain;
 
 #[derive(Debug, sqlx::FromRow, serde::Deserialize, serde::Serialize, PartialEq)]
 #[allow(non_snake_case)]
@@ -25,12 +24,15 @@ pub struct Users {
 }
 
 impl Users {
-    //TODO: Rationalise with the below code
-    #[cfg(feature = "mocks")]
-    pub fn mock_data() -> Result<Self, BackendError> {
+    #[cfg(test)]
+    pub fn mock_data() -> Result<Self, crate::prelude::BackendError> {
         use fake::faker::boolean::en::Boolean;
         use fake::faker::chrono::en::DateTime;
         use fake::Fake;
+        use chrono::SubsecRound;
+
+        use crate::utils;
+
         let random_id = utils::mock_uuid();
         let random_email = domain::EmailAddress::mock_data()?;
         let random_name = domain::UserName::mock_data()?;
@@ -54,32 +56,37 @@ impl Users {
         })
     }
 
-    #[cfg(feature = "mocks")]
-    pub fn mock_data_with_password(password: String) -> Result<Self, BackendError> {
-        use fake::faker::boolean::en::Boolean;
-        use fake::faker::chrono::en::DateTime;
-        use fake::Fake;
-        let random_id = utils::mock_uuid();
-        let random_email = domain::EmailAddress::mock_data()?;
-        let random_name = domain::UserName::mock_data()?;
-        // let random_password_hash = domain::PasswordHash::mock_data()?;
-        let password_hash = domain::PasswordHash::parse(Secret::new(password))?;
-        let random_user_role = domain::UserRole::mock_data();
-        let random_is_active: bool = Boolean(4).fake();
-        let random_is_verified: bool = Boolean(4).fake();
-        let random_created_on: DateTime<Utc> = DateTime().fake();
-        // Round sub seconds to be consistent with Postgres accuracy
-        let random_created_on = random_created_on.round_subsecs(0);
+    // #[cfg(test)]
+    // pub fn mock_data_with_password(password: String) -> Result<Self, crate::prelude::BackendError> {
+    //     use chrono::SubsecRound;
+    //     use fake::faker::boolean::en::Boolean;
+    //     use fake::faker::chrono::en::DateTime;
+    //     use fake::Fake;
+    //     use secrecy::Secret;
 
-        Ok(Users {
-            id: random_id,
-            email: random_email,
-            name: random_name,
-            password_hash,
-            role: random_user_role,
-            is_active: random_is_active,
-            is_verified: random_is_verified,
-            created_on: random_created_on,
-        })
-    }
+    //     use crate::utils;
+
+    //     let random_id = utils::mock_uuid();
+    //     let random_email = domain::EmailAddress::mock_data()?;
+    //     let random_name = domain::UserName::mock_data()?;
+    //     // let random_password_hash = domain::PasswordHash::mock_data()?;
+    //     let password_hash = domain::PasswordHash::parse(Secret::new(password))?;
+    //     let random_user_role = domain::UserRole::mock_data();
+    //     let random_is_active: bool = Boolean(4).fake();
+    //     let random_is_verified: bool = Boolean(4).fake();
+    //     let random_created_on: DateTime<Utc> = DateTime().fake();
+    //     // Round sub seconds to be consistent with Postgres accuracy
+    //     let random_created_on = random_created_on.round_subsecs(0);
+
+    //     Ok(Users {
+    //         id: random_id,
+    //         email: random_email,
+    //         name: random_name,
+    //         password_hash,
+    //         role: random_user_role,
+    //         is_active: random_is_active,
+    //         is_verified: random_is_verified,
+    //         created_on: random_created_on,
+    //     })
+    // }
 }

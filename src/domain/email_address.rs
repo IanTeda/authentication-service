@@ -34,7 +34,7 @@ impl EmailAddress {
         }
     }
 
-    #[cfg(feature = "mocks")]
+    #[cfg(test)]
     pub fn mock_data() -> Result<Self, BackendError> {
         use fake::faker::internet::en::SafeEmail;
         use fake::Fake;

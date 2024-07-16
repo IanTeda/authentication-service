@@ -133,7 +133,6 @@ pub mod tests {
     pub type Error = Box<dyn std::error::Error>;
 
     // Test getting user from database using unique UUID
-    #[cfg(feature = "mocks")]
     #[sqlx::test]
     async fn get_user_record_by_id(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
@@ -156,7 +155,6 @@ pub mod tests {
     }
 
     // Test getting user from database using unique email
-    #[cfg(feature = "mocks")]
     #[sqlx::test]
     async fn get_user_record_by_email(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
@@ -180,7 +178,6 @@ pub mod tests {
     }
 
     // Test thing query
-    #[cfg(feature = "mocks")]
     #[sqlx::test]
     async fn get_users_in_database(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)

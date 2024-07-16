@@ -60,7 +60,6 @@ pub mod tests {
     pub type Error = Box<dyn std::error::Error>;
 
     // Test getting user from database using unique UUID
-    #[cfg(feature = "mocks")]
     #[sqlx::test]
     async fn delete_user_record(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
@@ -82,7 +81,6 @@ pub mod tests {
     }
 
     // Test getting user from database using unique UUID
-    #[cfg(feature = "mocks")]
     #[sqlx::test]
     async fn delete_user_false(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)

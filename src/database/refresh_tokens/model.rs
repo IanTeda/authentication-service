@@ -8,7 +8,7 @@
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-use crate::{domain, utils};
+use crate::domain;
 
 #[derive(Debug, serde::Deserialize, sqlx::FromRow, Clone, PartialEq)]
 pub struct RefreshTokens {
@@ -43,7 +43,6 @@ impl RefreshTokens {
         }
     }
 
-    #[cfg(feature = "mocks")]
     #[cfg(test)]
     pub async fn mock_data(
         user_id: &Uuid,
@@ -54,6 +53,8 @@ impl RefreshTokens {
         use rand::distributions::DistString;
         use secrecy::Secret;
         use chrono::SubsecRound;
+
+        use crate::utils;
 
         let random_id = utils::mock_uuid();
         let user_id = user_id.to_owned();

@@ -3,8 +3,8 @@
 //! Utility modules that don't fit into other places
 //!
 //! https://www.reddit.com/r/rust/comments/ny6k3f/cfgtest_doesnt_take_affect_when_running/
- #![allow(unused)]
-#[cfg(feature = "mocks")]
+
+#[cfg(test)]
 pub fn mock_uuid() -> uuid::Uuid {
     use chrono::{DateTime, Utc};
     use fake::faker::chrono::en::DateTimeAfter;

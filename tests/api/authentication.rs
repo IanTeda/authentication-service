@@ -18,7 +18,7 @@ use sqlx::{Pool, Postgres};
 use tonic::Code;
 use uuid::Uuid;
 
-use personal_ledger_backend::{database, domain, rpc::ledger::{
+use personal_ledger_backend::{domain, rpc::ledger::{
     authentication_client::AuthenticationClient, LoginRequest,
     RefreshRequest,
 }};
@@ -35,7 +35,7 @@ async fn login_returns_access_refresh_tokens(
     //-- Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password = mocks::password()?;
-    let random_user = database::Users::mock_data_with_password(random_password.clone())?;
+    let random_user = mocks::user_model(&random_password)?;
     let _database_record = random_user.insert(&database).await?;
 
     // Spawn Tonic test server
@@ -100,7 +100,7 @@ async fn incorrect_password_returns_error(database: Pool<Postgres>) -> Result<()
     //-- Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password = mocks::password()?;
-    let random_user = database::Users::mock_data_with_password(random_password)?;
+    let random_user = mocks::user_model(&random_password)?;
     let _database_record = random_user.insert(&database).await?;
 
     // Generate an incorrect password
@@ -144,7 +144,7 @@ async fn incorrect_email_returns_error(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password = mocks::password()?;
-    let random_user = database::Users::mock_data_with_password(random_password.clone())?;
+    let random_user = mocks::user_model(&random_password)?;
     let _database_record = random_user.insert(&database).await?;
 
     // Spawn Tonic test server
@@ -188,7 +188,7 @@ async fn refresh_access(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password = mocks::password()?;
-    let random_user = database::Users::mock_data_with_password(random_password.clone())?;
+    let random_user = mocks::user_model(&random_password)?;
     let _database_record = random_user.insert(&database).await?;
 
     // Spawn Tonic test server

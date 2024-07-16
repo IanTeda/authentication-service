@@ -89,7 +89,6 @@ mod tests {
     pub type Result<T> = core::result::Result<T, Error>;
     pub type Error = Box<dyn std::error::Error>;
 
-    #[cfg(feature = "mocks")]
     #[tokio::test]
     async fn generate_new_access_token() -> Result<()> {
         // Generate random secret string

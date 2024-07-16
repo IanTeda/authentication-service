@@ -188,7 +188,6 @@ pub mod tests {
     pub type Error = Box<dyn std::error::Error>;
 
     // Test getting Refresh Token from database using unique UUID
-    #[cfg(feature = "mocks")]
     #[sqlx::test]
     async fn get_refresh_token_record_by_id(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
@@ -219,7 +218,6 @@ pub mod tests {
     }
 
     // Test getting Refresh Token from database using unique UUID
-    #[cfg(feature = "mocks")]
     #[sqlx::test]
     async fn get_refresh_token_record_by_token(
         database: Pool<Postgres>,
@@ -255,7 +253,6 @@ pub mod tests {
     }
 
     // Test getting user from database using unique UUID
-    #[cfg(feature = "mocks")]
     #[sqlx::test]
     async fn count_index_from_user_id(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
@@ -308,7 +305,6 @@ pub mod tests {
 
     // Test getting user from database using unique UUID
     #[sqlx::test]
-    #[cfg(feature = "mocks")]
     async fn count_index(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
         // Generate random user for testing
