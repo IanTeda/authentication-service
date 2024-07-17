@@ -1,7 +1,7 @@
 {
     "recommendations": [
         "rust-lang.rust-analyzer", // Rust language server
-        "serayuzgur.crates", // Simplify Rust crate management
+        // "serayuzgur.crates", // Simplify Rust crate management
         "tamasfe.even-better-toml", // Syntax highlighting for TOML documents
         "usernamehw.errorlens", // Improve language diagnostic features 
         "vadimcn.vscode-lldb", // Debugger

@@ -24,9 +24,8 @@ async fn ping_returns_pong(database: Pool<Postgres>) -> Result<()> {
 	let tonic_server = helpers::TonicServer::spawn_server(database).await?;
 
 	// Build Tonic user client, with authentication intercept
-	let mut tonic_utilities_client = UtilitiesClient::with_interceptor(
-		tonic_server.client_channel().await?,
-		helpers::authentication_intercept,
+	let mut tonic_utilities_client = UtilitiesClient::new(
+		tonic_server.client_channel().await?
 	);
 
 	//-- Execute Test (Act)

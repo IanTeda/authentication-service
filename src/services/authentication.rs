@@ -49,8 +49,8 @@ impl AuthenticationService {
 #[tonic::async_trait]
 impl Authentication for AuthenticationService {
     #[tracing::instrument(
-        name = "Authenticate request"
-        skip(self, request)
+        name = "Authenticate Request: ",
+        skip(self, request),
     // fields(
     // 	user_email = &request.into_inner().email,
     // )
@@ -136,8 +136,8 @@ impl Authentication for AuthenticationService {
 
     /// Get a new Access Token using the Refresh Token that has a longer life
     #[tracing::instrument(
-        name = "Refresh Access Token Request"
-        skip(self, request)
+        name = "Refresh Access Token Request: ",
+        skip(self, request),
     // fields(
     // 	user_email = &request.into_inner().email,
     // )
@@ -231,31 +231,157 @@ impl Authentication for AuthenticationService {
         //
     }
 
+    #[tracing::instrument(
+        name = "Update Password Request: ",
+        skip(self, request),
+    // fields(
+    // 	user_email = &request.into_inner().email,
+    // )
+    )]
     async fn update_password(
         &self,
         request: Request<UpdatePasswordRequest>,
     ) -> Result<Response<TokenResponse>, Status> {
-        todo!()
+        // Get the parts of the request
+        let (metadata, extensions, message) = request.into_parts();
+
+        //-- 1. Get access token and verify
+        // Get Access Token from the request
+        let access_token = metadata
+            .get("access-token")
+            .ok_or(BackendError::AuthenticationError(
+                "Authentication Failed!".to_string(),
+            ))?
+            .to_str()
+            .map_err(|_| {
+                tracing::error!("Unable to parse access token from header!");
+                BackendError::AuthenticationError(
+                    "Authentication Failed!".to_string(),
+                )
+            })?;
+        tracing::debug!("Using Access Token: {}", access_token);
+
+        // TODO: Refactor token secret
+        // Get the Token Secret from config and wrap it in a Secret to help limit leaks
+        let token_secret = &self.config_ref().application.token_secret;
+        let token_secret = Secret::new(token_secret.to_owned());
+
+        // Using the Token Secret decode the Access Token into a Token Claim. This also
+        // validates the token expiration, not before and Issuer.
+        let access_token_claim =
+            domain::TokenClaim::from_token(&access_token, &token_secret)
+                .await
+                .map_err(|_| {
+                    tracing::error!("Access Token is invalid!");
+                    return BackendError::AuthenticationError(
+                        "Authentication Failed!".to_string(),
+                    );
+                })?;
+        // tracing::debug!("Decoded Access Token Claim: {}", access_token_claim);
+
+        //-- 2. Verify user in the database
+        // We can only change our own password so use the user_id in the access token
+        // Parse token claim user_id string into a UUID
+        let user_id: Uuid = access_token_claim.sub.parse().map_err(|_| {
+            tracing::error!("Unable to parse user id to UUID!");
+            return BackendError::AuthenticationError(
+                "Authentication Failed!".to_string(),
+            );
+        })?;
+
+        // Get the user from the database using the token claim user_id, so we
+        // can verify password hash
+        let mut user = database::Users::from_user_id(&user_id, &self.database_ref())
+            .await
+            .map_err(|_| {
+                tracing::error!("User id not found in database: {}", user_id);
+                return BackendError::AuthenticationError(
+                    "Authentication Failed!".to_string(),
+                );
+            })?;
+
+        // Check user is active
+        if user.is_active == false {
+            tracing::error!("User is not active: {}", user_id);
+            return Err(Status::unauthenticated("Authentication Failed!"));
+        }
+        tracing::debug!("User is active in the database: {}", user.id);
+
+        // Check user email is verified
+        if user.is_verified == false {
+            tracing::error!("User email is not verified: {}", user_id);
+            return Err(Status::unauthenticated("Authentication Failed!"));
+        }
+        tracing::debug!("User is verified in the database: {}", user.id);
+
+        //-- 4. Verify existing/original password
+        let original_password = Secret::new(message.password_original);
+        if user.password_hash.verify_password(&original_password)? == false {
+            tracing::error!("Original password is incorrect");
+            return Err(Status::unauthenticated("Authentication Failed!"));
+        }
+        tracing::debug!("Users original password is verified: {}", user.id);
+
+        //-- 5. Update the users password in the database
+        let new_password = Secret::new(message.password_new);
+        let new_password_hash = domain::PasswordHash::parse(new_password)?;
+        user.password_hash = new_password_hash;
+        user.update(&self.database_ref());
+
+        tracing::debug!("Users password is updated in the database: {}", user.id);
+
+        // Build an Access Token
+        let access_token = domain::AccessToken::new(&token_secret, &user.id).await?;
+
+        tracing::debug!("Using Access Token: {}", access_token);
+
+        // Build a Refresh Token
+        let refresh_token =
+            domain::RefreshToken::new(&token_secret, &user.id).await?;
+
+        // Build a new Refresh Token database instance
+        let refresh_token_model =
+            database::RefreshTokens::new(&user.id, &refresh_token);
+
+        // Revoke all other tokens
+        let _rows_affected = refresh_token_model
+            .revoke_all_associated(&self.database_ref())
+            .await?;
+
+        // Add Refresh Token to database
+        let _database_record =
+            refresh_token_model.insert(&self.database_ref()).await?;
+
+        tracing::debug!("Using Refresh Token: {}", refresh_token);
+
+        // Build Authenticate Response with the token
+        let response = TokenResponse {
+            access_token: access_token.to_string(),
+            refresh_token: refresh_token.to_string(),
+        };
+
+        // Send Response
+        Ok(Response::new(response))
     }
 
     async fn reset_password(
         &self,
         request: Request<ResetPasswordRequest>,
     ) -> Result<Response<ResetPasswordResponse>, Status> {
-        todo!()
+        unimplemented!()
     }
 
     async fn register(
         &self,
         request: Request<RegisterRequest>,
     ) -> Result<Response<TokenResponse>, Status> {
-        todo!()
+        unimplemented!()
     }
 
     async fn logout(
         &self,
         request: Request<LogoutRequest>,
     ) -> Result<Response<Empty>, Status> {
-        todo!()
+        unimplemented!()
     }
 }

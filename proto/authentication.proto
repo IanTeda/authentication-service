@@ -31,8 +31,8 @@ message RefreshRequest {
 
 message UpdatePasswordRequest {
     string email = 1;
-    string original_password = 2;
-    string new_password = 3;
+    string password_original = 2;
+    string password_new = 3;
 }
 
 message ResetPasswordRequest {

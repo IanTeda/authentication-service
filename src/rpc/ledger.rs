@@ -31,9 +31,9 @@ pub struct UpdatePasswordRequest {
     #[prost(string, tag = "1")]
     pub email: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub original_password: ::prost::alloc::string::String,
+    pub password_original: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
-    pub new_password: ::prost::alloc::string::String,
+    pub password_new: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

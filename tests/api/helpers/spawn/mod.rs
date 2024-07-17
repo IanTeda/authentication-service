@@ -1,4 +1,4 @@
-// #![allow(unused)] // For beginning only.
+#![allow(unused)] // For beginning only.
 
 use std::sync::Arc;
 
@@ -15,6 +15,8 @@ use personal_ledger_backend::{configuration::Configuration, domain, startup, tel
 use personal_ledger_backend::configuration::{Environment, LogLevels};
 
 use super::mocks;
+mod client;
+pub use client::TonicClient;
 
 pub type Error = Box<dyn std::error::Error>;
 
@@ -113,8 +115,9 @@ impl TonicServer {
 /// This function will get called on each outbound request. Returning a
 /// `Status` here will cancel the request and have that status returned to
 /// the caller.
-pub fn authentication_intercept(mut req: Request<()>) -> Result<Request<()>, Status> {
-    let token: MetadataValue<_> = "Bearer some-auth-token".parse().unwrap();
+pub fn authentication_intercept(mut req: Request<()>, token: String) -> Result<Request<()>, Status> {
+    println!("Intercepting request: {:?}", req);
+    let token: MetadataValue<_> = token.parse().unwrap();
     req.metadata_mut().insert("authorization", token.clone());
     Ok(req)
 }
