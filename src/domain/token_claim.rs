@@ -142,7 +142,7 @@ impl TokenClaim {
     /// * `token` [String]: The Token string to be decoded into a Token Claim.
     /// * `secret`: Secret<String> containing the token encryption secret
     /// ---
-    pub async fn from_token(
+    pub fn from_token(
         token: &str,
         secret: &Secret<String>,
     ) -> Result<Self, BackendError> {

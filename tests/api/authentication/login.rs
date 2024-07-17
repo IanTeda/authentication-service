@@ -38,7 +38,7 @@ async fn returns_access_refresh_tokens(
     let _database_record = random_user.insert(&database).await?;
 
     // Spawn Tonic test server
-    let tonic_server = helpers::TonicServer::spawn_server(database).await?;
+    let tonic_server = helpers::TonicServer::spawn_server(&database).await?;
 
     // Get Token Claim Secret before Tonic Client takes ownership of the server instance
     let token_secret = &tonic_server.clone().config.application.token_secret;
@@ -66,11 +66,10 @@ async fn returns_access_refresh_tokens(
     //-- Checks (Assertions)
     // Build Token Claims from token responses
     let access_token_claim =
-        domain::TokenClaim::from_token(&response.access_token, &token_secret)
-            .await?;
+        domain::TokenClaim::from_token(&response.access_token, &token_secret)?;
+        
     let refresh_token_claim =
-        domain::TokenClaim::from_token(&response.refresh_token, &token_secret)
-            .await?;
+        domain::TokenClaim::from_token(&response.refresh_token, &token_secret)?;
 
     // Confirm User IDs (uuids) are the same
     assert_eq!(
@@ -105,7 +104,7 @@ async fn incorrect_password_returns_error(database: Pool<Postgres>) -> Result<()
     let incorrect_password = String::from("incorrect-password-string");
 
     // Spawn Tonic test server
-    let tonic_server = helpers::TonicServer::spawn_server(database).await?;
+    let tonic_server = helpers::TonicServer::spawn_server(&database).await?;
 
     // Build Tonic user client, with authentication intercept
     let mut authentication_client = AuthenticationClient::new(
@@ -145,7 +144,7 @@ async fn incorrect_email_returns_error(database: Pool<Postgres>) -> Result<()> {
     let _database_record = random_user.insert(&database).await?;
 
     // Spawn Tonic test server
-    let tonic_server = helpers::TonicServer::spawn_server(database).await?;
+    let tonic_server = helpers::TonicServer::spawn_server(&database).await?;
 
     // Build Tonic user client, with authentication intercept
     let mut authentication_client = AuthenticationClient::new(

@@ -101,7 +101,7 @@ mod tests {
         let access_token = AccessToken::new(&secret, &random_user.id).await?;
 
         let token_claim =
-            TokenClaim::from_token(access_token.as_ref(), &secret).await?;
+            TokenClaim::from_token(access_token.as_ref(), &secret)?;
         // println!("{token_claim:#?}");
 
         assert_eq!(token_claim.iss, TOKEN_ISSUER);

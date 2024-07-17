@@ -4,5 +4,5 @@
 
 mod authentication;
 pub mod helpers;
-// mod users;
+mod users;
 mod utilities;

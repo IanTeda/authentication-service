@@ -48,6 +48,7 @@ impl AuthenticationService {
 
 #[tonic::async_trait]
 impl Authentication for AuthenticationService {
+    
     #[tracing::instrument(
         name = "Authenticate Request: ",
         skip(self, request),
@@ -160,7 +161,6 @@ impl Authentication for AuthenticationService {
         // This also validates the token expiration, not before and Issuer
         let refresh_token_claim =
             domain::TokenClaim::from_token(&refresh_token, &token_secret)
-                .await
                 .map_err(|_| {
                     tracing::error!("Refresh Token is invalid!");
                     BackendError::AuthenticationError(
@@ -248,7 +248,7 @@ impl Authentication for AuthenticationService {
         //-- 1. Get access token and verify
         // Get Access Token from the request
         let access_token = metadata
-            .get("access-token")
+            .get("access_token")
             .ok_or(BackendError::AuthenticationError(
                 "Authentication Failed!".to_string(),
             ))?
@@ -270,7 +270,6 @@ impl Authentication for AuthenticationService {
         // validates the token expiration, not before and Issuer.
         let access_token_claim =
             domain::TokenClaim::from_token(&access_token, &token_secret)
-                .await
                 .map_err(|_| {
                     tracing::error!("Access Token is invalid!");
                     return BackendError::AuthenticationError(

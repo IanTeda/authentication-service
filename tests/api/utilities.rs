@@ -21,7 +21,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 async fn ping_returns_pong(database: Pool<Postgres>) -> Result<()> {
 	//-- Setup and Fixtures (Arrange)
 	// Spawn Tonic test server
-	let tonic_server = helpers::TonicServer::spawn_server(database).await?;
+	let tonic_server = helpers::TonicServer::spawn_server(&database).await?;
 
 	// Build Tonic user client, with authentication intercept
 	let mut tonic_utilities_client = UtilitiesClient::new(

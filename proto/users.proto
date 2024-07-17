@@ -11,7 +11,7 @@ service Users {
   rpc ReadUser (ReadUserRequest) returns (UserResponse);
   rpc IndexUsers (UserIndexRequest) returns (UserIndexResponse);
   rpc UpdateUser (UpdateUserRequest) returns (UserResponse);
-  rpc DeleteUser (UserRequest) returns (DeleteUserResponse);
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
 }
 
 message CreateUserRequest {
@@ -33,6 +33,11 @@ message UserResponse {
   string created_on = 7;
 }
 
+message ReadUserRequest {
+  optional string id = 1;
+  optional string email = 2;
+}
+
 message UpdateUserRequest {
   string id = 1;
   string email = 2;
@@ -42,21 +47,12 @@ message UpdateUserRequest {
   bool is_verified = 6;
 }
 
-message ReadUserRequest {
-  string id = 1;
-  string email = 2;
-  string name = 3;
-  bool is_active = 4;
-  bool is_verified = 5;
-  string created_on = 6;
-}
-
 message UserIndexRequest {
   int64 limit = 1;
   int64 offset = 2;
 }
 
-message UserRequest {
+message DeleteUserRequest {
   string id = 1;
 }
 

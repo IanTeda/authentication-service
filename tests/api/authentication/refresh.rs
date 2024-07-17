@@ -17,7 +17,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     let _database_record = random_user.insert(&database).await?;
 
     // Spawn Tonic test server
-    let tonic_server = helpers::TonicServer::spawn_server(database).await?;
+    let tonic_server = helpers::TonicServer::spawn_server(&database).await?;
 
     let token_secret = &tonic_server.clone().config.application.token_secret;
 
@@ -54,11 +54,10 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
 
     // Build Token Claims
     let access_token_claim =
-        domain::TokenClaim::from_token(&response.access_token, &token_secret)
-            .await?;
+        domain::TokenClaim::from_token(&response.access_token, &token_secret)?;
+
     let refresh_token_claim =
-        domain::TokenClaim::from_token(&response.refresh_token, &token_secret)
-            .await?;
+        domain::TokenClaim::from_token(&response.refresh_token, &token_secret)?;
 
     // Confirm User IDs (uuids) are the same
     assert_eq!(

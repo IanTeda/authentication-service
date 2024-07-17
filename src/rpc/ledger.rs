@@ -1206,6 +1206,14 @@ pub struct UserResponse {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ReadUserRequest {
+    #[prost(string, optional, tag = "1")]
+    pub id: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag = "2")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateUserRequest {
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
@@ -1221,22 +1229,6 @@ pub struct UpdateUserRequest {
     pub is_verified: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ReadUserRequest {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub email: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(bool, tag = "4")]
-    pub is_active: bool,
-    #[prost(bool, tag = "5")]
-    pub is_verified: bool,
-    #[prost(string, tag = "6")]
-    pub created_on: ::prost::alloc::string::String,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct UserIndexRequest {
     #[prost(int64, tag = "1")]
@@ -1246,7 +1238,7 @@ pub struct UserIndexRequest {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UserRequest {
+pub struct DeleteUserRequest {
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
 }
@@ -1428,7 +1420,7 @@ pub mod users_client {
         }
         pub async fn delete_user(
             &mut self,
-            request: impl tonic::IntoRequest<super::UserRequest>,
+            request: impl tonic::IntoRequest<super::DeleteUserRequest>,
         ) -> std::result::Result<
             tonic::Response<super::DeleteUserResponse>,
             tonic::Status,
@@ -1478,7 +1470,7 @@ pub mod users_server {
         ) -> std::result::Result<tonic::Response<super::UserResponse>, tonic::Status>;
         async fn delete_user(
             &self,
-            request: tonic::Request<super::UserRequest>,
+            request: tonic::Request<super::DeleteUserRequest>,
         ) -> std::result::Result<
             tonic::Response<super::DeleteUserResponse>,
             tonic::Status,
@@ -1735,7 +1727,7 @@ pub mod users_server {
                 "/ledger.Users/DeleteUser" => {
                     #[allow(non_camel_case_types)]
                     struct DeleteUserSvc<T: Users>(pub Arc<T>);
-                    impl<T: Users> tonic::server::UnaryService<super::UserRequest>
+                    impl<T: Users> tonic::server::UnaryService<super::DeleteUserRequest>
                     for DeleteUserSvc<T> {
                         type Response = super::DeleteUserResponse;
                         type Future = BoxFuture<
@@ -1744,7 +1736,7 @@ pub mod users_server {
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::UserRequest>,
+                            request: tonic::Request<super::DeleteUserRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {

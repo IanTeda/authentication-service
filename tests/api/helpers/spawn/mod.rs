@@ -6,17 +6,18 @@ use once_cell::sync::Lazy;
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
 use tonic::{
-	metadata::MetadataValue,
-	Request,
-	Status, transport::{Channel, Uri},
+    metadata::MetadataValue,
+    Request,
+    Status, transport::{Channel, Uri},
 };
 
+pub use client::TonicClient;
 use personal_ledger_backend::{configuration::Configuration, domain, startup, telemetry};
 use personal_ledger_backend::configuration::{Environment, LogLevels};
 
 use super::mocks;
+
 mod client;
-pub use client::TonicClient;
 
 pub type Error = Box<dyn std::error::Error>;
 
@@ -52,7 +53,7 @@ pub struct TonicServer {
 }
 
 impl TonicServer {
-    pub async fn spawn_server(database: Pool<Postgres>) -> Result<Self, Error> {
+    pub async fn spawn_server(database: &Pool<Postgres>) -> Result<Self, Error> {
         // Initiate tracing in integration testing
         Lazy::force(&TRACING);
 
@@ -67,10 +68,10 @@ impl TonicServer {
         // Generate random user data for testing and insert in test database
         let random_password = mocks::password()?; // In case we need it in the future
         let random_user = mocks::user_model(&random_password)?;
-        let _database_record = random_user.insert(&database).await?;
+        let random_user = random_user.insert(&database).await?;
 
-        // Build Tonic server using startup
-        let tonic_server = startup::TonicServer::build(config.clone(), database).await?;
+        // Build Tonic server using main crate startup
+        let tonic_server = startup::TonicServer::build(config.clone(), database.clone()).await?;
 
         // Set tonic server address as the port is randomly selected by the TCP Listener (in startup)
         // when config sets the port to 0
@@ -105,7 +106,6 @@ impl TonicServer {
         let endpoint = Channel::builder(uri);
         let channel = endpoint.connect().await?;
 
-        // unimplemented!()
         Ok(channel)
     }
 

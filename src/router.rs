@@ -9,6 +9,7 @@
 
 use std::sync::Arc;
 
+use secrecy::Secret;
 use sqlx::Pool;
 use sqlx::Postgres;
 use tonic::transport::{server::Router, Server};
@@ -35,6 +36,9 @@ pub fn get_router(
     // Wrap config in an Atomic Reference Counted (ARC) pointer.
     let config = Arc::new(config);
 
+    let token_secret = Secret::new(config.application.token_secret.clone());
+    let access_token_interceptor = middleware::AccessTokenInterceptor { token_secret };
+
     // Build Authentication server
     let auth_server = AuthenticationServer::new(AuthenticationService::new(
         Arc::clone(&database),
@@ -48,7 +52,7 @@ pub fn get_router(
     // Build Users server
     let users_server = UsersServer::with_interceptor(
         UsersService::new(Arc::clone(&database), Arc::clone(&config)),
-        middleware::authentication::check_authentication,
+        access_token_interceptor,
     );
 
     // Build reflections server

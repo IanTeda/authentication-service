@@ -30,6 +30,11 @@ pub enum AuthError {
 //     }
 // }
 
+/// Intercept server request and check authentication
+#[tracing::instrument(
+    name = "Check server request authentication.",
+    skip(request),
+)]
 pub fn check_authentication(request: Request<()>) -> Result<Request<()>, Status> {
     let token: MetadataValue<_> = "Bearer some-auth-token".parse().unwrap();
 
