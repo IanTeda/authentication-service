@@ -9,7 +9,6 @@ use crate::helpers;
 pub type Error = Box<dyn std::error::Error>;
 pub type Result<T> = core::result::Result<T, Error>;
 
-
 #[sqlx::test]
 async fn returns_created_user(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)

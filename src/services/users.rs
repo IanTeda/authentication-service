@@ -143,7 +143,17 @@ impl Users for UsersService {
         let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
-        unimplemented!()
+        let id = Uuid::parse_str(&request_message.id).map_err(|_| {
+            tracing::error!("Unable to parse user id to UUID!");
+            return BackendError::Generic("Unable to parse user id to UUID!".to_string());
+        })?;
+        
+        let database_record = database::Users::from_user_id(&id, self.database_ref()).await?;
+        
+        // Convert database user record into a user response message
+        let response_message: UserResponse = database_record.into();
+
+        Ok(Response::new(response_message))
     }
 
     /// Handle rpc requests to get a user index of the database

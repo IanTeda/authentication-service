@@ -78,7 +78,7 @@ impl TokenClaim {
     /// ---
     pub fn new(
         secret: &Secret<String>,
-        subject: &str,
+        user_id: &str,
         token_type: &TokenType,
     ) -> Self {
         // Secret used to encode and decode tokens
@@ -87,7 +87,7 @@ impl TokenClaim {
         // Set JWT issuer
         let issuer = TOKEN_ISSUER.to_owned();
 
-        let subject = subject.to_string();
+        let user_id = user_id.to_string();
 
         // System Time now
         let now = SystemTime::now();
@@ -125,7 +125,7 @@ impl TokenClaim {
 
         Self {
             iss: issuer,
-            sub: subject,
+            sub: user_id,
             // aud,
             exp: expiration_timestamp,
             nbf: not_before_timestamp,

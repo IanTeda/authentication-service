@@ -34,8 +34,7 @@ message UserResponse {
 }
 
 message ReadUserRequest {
-  optional string id = 1;
-  optional string email = 2;
+  string id = 1;
 }
 
 message UpdateUserRequest {

@@ -31,7 +31,7 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
 
                 // Using the Token Secret decode the Access Token into a Token Claim. This also
                 // validates the token expiration, not before and Issuer.
-                let _access_token_claim =
+                let access_token_claim =
                     domain::TokenClaim::from_token(access_token, &self.token_secret)
                         .map_err(|_| {
                             tracing::error!("Access Token is invalid!");
@@ -41,7 +41,7 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
                             )
                         })?;
 
-                tracing::info!("Access Token authenticated");
+                tracing::info!("Access Token authenticated for user: {}", access_token_claim.sub);
 
                 Ok(request)
             }
