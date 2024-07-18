@@ -199,7 +199,7 @@ pub mod tests {
 
         // Generate refresh token
         let refresh_token =
-            database::RefreshTokens::mock_data(&random_user.id).await?;
+            database::RefreshTokens::mock_data(&random_user).await?;
 
         // Insert refresh token into database for reading later
         refresh_token.insert(&database).await?;
@@ -231,7 +231,7 @@ pub mod tests {
 
         // Generate refresh token
         let refresh_token =
-            database::RefreshTokens::mock_data(&random_user.id).await?;
+            database::RefreshTokens::mock_data(&random_user).await?;
 
         // Insert refresh token into database for reading later
         refresh_token.insert(&database).await?;
@@ -266,7 +266,7 @@ pub mod tests {
         for _count in 0..random_count {
             // Generate refresh token
             let refresh_token =
-                database::RefreshTokens::mock_data(&random_user.id).await?;
+                database::RefreshTokens::mock_data(&random_user).await?;
 
             // Insert refresh token in the database for deleting
             refresh_token.insert(&database).await?;
@@ -317,7 +317,7 @@ pub mod tests {
         for _count in 0..random_count {
             // Generate refresh token
             let refresh_token =
-                database::RefreshTokens::mock_data(&random_user.id).await?;
+                database::RefreshTokens::mock_data(&random_user).await?;
 
             // Insert refresh token in the database for deleting
             refresh_token.insert(&database).await?;

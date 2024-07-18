@@ -1,40 +1,37 @@
-#![allow(unused)] // For beginning only.
+//-- ./tests/api/helpers/spawn/client.rs
 
-// https://github.com/Kixunil/tonic_lnd/blob/master/src/lib.rs
+// #![allow(unused)] // For beginning only.
 
-/// This is part of public interface so it's re-exported.
-// pub extern crate tonic;
-// use tonic::transport::Channel;
+/// Spawn a Tonic Client for testing server endpoints
+///
+/// #### Reference
+///
+/// * [Tonic LND client](https://github.com/Kixunil/tonic_lnd/blob/master/src/lib.rs)
+/// ---
 
 /// This is part of public interface so it's re-exported.
 pub extern crate tonic;
-// use personal_ledger_backend::rpc::ledger::authentication_client::AuthenticationClient;
 
 use tonic::codegen::InterceptedService;
 use tonic::metadata::MetadataValue;
 use tonic::transport::Channel;
-
-// pub type Error = Box<dyn std::error::Error>;
-// pub type Result<T> = core::result::Result<T, Error>;
 
 /// Convenience type alias for authentication client.
 pub type AuthenticationClient = personal_ledger_backend::rpc::ledger::authentication_client::AuthenticationClient<Channel>;
 
 /// Convenience type alias for refresh token client
 pub type RefreshTokenClient =
-personal_ledger_backend::rpc::ledger::refresh_tokens_client::RefreshTokensClient<
-    InterceptedService<Channel, AccessTokenInterceptor>,
->;
+    personal_ledger_backend::rpc::ledger::refresh_tokens_client::RefreshTokensClient<
+        InterceptedService<Channel, AccessTokenInterceptor>,
+    >;
 
 // Convenience type alias for users client
 pub type UsersClient =
-personal_ledger_backend::rpc::ledger::users_client::UsersClient<
-    InterceptedService<Channel, AccessTokenInterceptor>,
->;
+    personal_ledger_backend::rpc::ledger::users_client::UsersClient<
+        InterceptedService<Channel, AccessTokenInterceptor>,
+    >;
 
-/// The client returned by `connect` function
-///
-/// This is a convenience type which you most likely want to use instead of raw client.
+/// Tonic Client
 #[derive(Clone)]
 pub struct TonicClient {
     authentication: AuthenticationClient,
@@ -100,9 +97,7 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
         let token: MetadataValue<_> = self.access_token.parse().unwrap();
         // println!("access_token: {token:#?}");
 
-        request
-            .metadata_mut()
-            .append("access_token", token.clone());
+        request.metadata_mut().append("access_token", token.clone());
 
         Ok(request)
     }

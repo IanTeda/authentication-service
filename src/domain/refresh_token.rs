@@ -13,7 +13,7 @@ use secrecy::{ExposeSecret, Secret};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::{domain::token_claim::TokenType, prelude::*};
+use crate::{database, domain::token_claim::TokenType, prelude::*};
 
 use super::TokenClaim;
 
@@ -65,13 +65,10 @@ impl RefreshToken {
     )]
     pub async fn new(
         secret: &Secret<String>,
-        user_id: &Uuid,
+        user: &database::Users,
     ) -> Result<Self, BackendError> {
-        // Convert Uuid into a String
-        let user_id = user_id.to_string();
-
         // Build the Access Token Claim
-        let token_claim = TokenClaim::new(&secret, &user_id, &TokenType::Refresh);
+        let token_claim = TokenClaim::new(&secret, user, &TokenType::Refresh);
 
         // Encode the Token Claim into a URL-safe hash encryption
         let token = encode(
@@ -83,44 +80,3 @@ impl RefreshToken {
         Ok(Self(token))
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-
-// 	// Bring module into test scope
-// 	use super::*;
-
-// 	use crate::{database::UserModel, error::BackendError::JsonWebToken};
-// 	use claims::assert_err;
-// 	use rand::distributions::{Alphanumeric, DistString};
-
-// 	// Override with more flexible error
-// 	pub type Result<T> = core::result::Result<T, Error>;
-// 	pub type Error = Box<dyn std::error::Error>;
-
-// 	#[tokio::test]
-// 	async fn generate_new_refresh_token() -> Result<()> {
-// 		// Generate random secret string
-// 		let secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
-// 		let secret = Secret::new(secret);
-
-// 		// Get a random user_id for subject
-// 		let random_user = UserModel::mock_data().await?;
-// 		let user_id = random_user.id;
-
-// 		let refresh_tokens = RefreshToken::new(&secret, &user_id).await?;
-
-// 		let token_claim =
-// 			TokenClaim::from_token(refresh_tokens.as_ref(), &secret).await?;
-// 		// println!("{token_claim:#?}");
-
-// 		let user_id = user_id.to_string();
-// 		let token_type = TokenType::Refresh.to_string();
-
-// 		assert_eq!(token_claim.iss, TOKEN_ISSUER);
-// 		assert_eq!(token_claim.sub, user_id);
-// 		assert_eq!(token_claim.jty, token_type);
-
-// 		Ok(())
-// 	}
-// }

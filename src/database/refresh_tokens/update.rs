@@ -205,7 +205,7 @@ pub mod tests {
 
         // Generate refresh token
         let mut refresh_token =
-            database::RefreshTokens::mock_data(&random_user.id).await?;
+            database::RefreshTokens::mock_data(&random_user).await?;
 
         // Insert refresh token in the database for deleting
         refresh_token.insert(&database).await?;
@@ -218,7 +218,7 @@ pub mod tests {
 
         // Generate refresh token updates
         let refresh_token_update =
-            database::RefreshTokens::mock_data(&random_user_update.id).await?;
+            database::RefreshTokens::mock_data(&random_user_update).await?;
 
         // Update Refresh Token data
         refresh_token.user_id = refresh_token_update.user_id;
@@ -247,7 +247,7 @@ pub mod tests {
 
         // Generate refresh token
         let mut refresh_token =
-            database::RefreshTokens::mock_data(&random_user.id).await?;
+            database::RefreshTokens::mock_data(&random_user).await?;
 
         // Set Refresh Token active to true
         refresh_token.is_active = true;
@@ -284,7 +284,7 @@ pub mod tests {
         for _count in 0..random_count {
             // Generate refresh token
             let mut refresh_token =
-                database::RefreshTokens::mock_data(&random_user.id).await?;
+                database::RefreshTokens::mock_data(&random_user).await?;
 
             // Set Refresh Token active to true
             refresh_token.is_active = true;

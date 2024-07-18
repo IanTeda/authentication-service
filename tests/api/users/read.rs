@@ -76,6 +76,7 @@ async fn index_returns_users(pool: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
     // Get a random number between 10 and 30
     let random_count: i64 = (10..30).fake::<i64>();
+    // println!("{random_count:#?}");
 
     // Initiate vector to store users for assertion
     let mut test_vec: Vec<database::Users> = Vec::new();
@@ -106,6 +107,7 @@ async fn index_returns_users(pool: Pool<Postgres>) -> Result<()> {
         limit: random_limit,
         offset: random_offset,
     };
+    // println!("{request_message:#?}");
 
     // Send request to tonic server and get a response message
     let response_message = tonic_client

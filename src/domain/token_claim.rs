@@ -22,6 +22,7 @@ use std::time::SystemTime;
 use strum::Display;
 use uuid::Uuid;
 
+use crate::database;
 use crate::prelude::*;
 
 pub static TOKEN_ISSUER: &str = "Personal Ledger Backend";
@@ -63,6 +64,7 @@ pub struct TokenClaim {
     pub iat: u64, // Optional. Identifies the time at which the JWT was issued. This can be used to establish the age of the JWT or the exact time the token was generated.
     pub jti: String, // (JWT ID): Unique identifier; this can be used to prevent the JWT from being used more than once.
     pub jty: String, // Custom. Identify the token as access or refresh
+    pub jur: String, // Custom: Add user role (authorisation)
 }
 
 impl TokenClaim {
@@ -82,7 +84,7 @@ impl TokenClaim {
     /// ---
     pub fn new(
         secret: &Secret<String>,
-        user_id: &str,
+        user: &database::Users,
         token_type: &TokenType,
     ) -> Self {
         // Secret used to encode and decode tokens
@@ -91,7 +93,7 @@ impl TokenClaim {
         // Set JWT issuer
         let issuer = TOKEN_ISSUER.to_owned();
 
-        let user_id = user_id.to_string();
+        let user_id = user.id.to_string();
 
         // System Time now
         let now = SystemTime::now();
@@ -127,6 +129,8 @@ impl TokenClaim {
 
         let token_type = token_type.to_string();
 
+        let user_role = user.role.to_string();
+
         Self {
             iss: issuer,
             sub: user_id,
@@ -136,6 +140,7 @@ impl TokenClaim {
             iat: issued_at_timestamp,
             jti: token_id,
             jty: token_type,
+            jur: user_role,
         }
     }
 

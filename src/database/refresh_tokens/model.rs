@@ -45,7 +45,7 @@ impl RefreshTokens {
 
     #[cfg(test)]
     pub async fn mock_data(
-        user_id: &Uuid,
+        user: &crate::database::Users,
     ) -> Result<Self, crate::error::BackendError> {
         use fake::faker::boolean::en::Boolean;
         use fake::faker::chrono::en::DateTime;
@@ -57,13 +57,13 @@ impl RefreshTokens {
         use crate::utils;
 
         let random_id = utils::mock_uuid();
-        let user_id = user_id.to_owned();
+        let user_id = user.id.to_owned();
         let random_secret = rand::distributions::Alphanumeric
             .sample_string(&mut rand::thread_rng(), 60);
         let random_secret = Secret::new(random_secret);
 
         let random_token =
-            domain::RefreshToken::new(&random_secret, &user_id).await?;
+            domain::RefreshToken::new(&random_secret, user).await?;
 
         // Generate random boolean value
         let random_is_active: bool = Boolean(4).fake();

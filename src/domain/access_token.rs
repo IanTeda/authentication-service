@@ -12,7 +12,7 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use secrecy::{ExposeSecret, Secret};
 use uuid::Uuid;
 
-use crate::{domain::token_claim::TokenType, prelude::*};
+use crate::{database, domain::token_claim::TokenType, prelude::*};
 
 use super::TokenClaim;
 
@@ -58,13 +58,10 @@ impl AccessToken {
     )]
     pub async fn new(
         secret: &Secret<String>,
-        user_id: &Uuid,
+        user: &database::Users,
     ) -> Result<Self, BackendError> {
-        // Convert Uuid into a String
-        let user_id = user_id.to_string();
-
         // Build the Access Token Claim
-        let token_claim = TokenClaim::new(&secret, &user_id, &TokenType::Access);
+        let token_claim = TokenClaim::new(secret, user, &TokenType::Access);
 
         // Encode the Token Claim into a URL-safe hash encryption
         let token = encode(
@@ -100,7 +97,7 @@ mod tests {
         // Get a random user_id for subject
         let random_user = database::Users::mock_data()?;
 
-        let access_token = AccessToken::new(&secret, &random_user.id).await?;
+        let access_token = AccessToken::new(&secret, &random_user).await?;
 
         let token_claim =
             TokenClaim::from_token(access_token.as_ref(), &secret)?;

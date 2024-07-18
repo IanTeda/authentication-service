@@ -48,7 +48,6 @@ impl AuthenticationService {
 
 #[tonic::async_trait]
 impl Authentication for AuthenticationService {
-    
     #[tracing::instrument(
         name = "Authenticate Request: ",
         skip(self, request),
@@ -102,13 +101,13 @@ impl Authentication for AuthenticationService {
 
                 // Build an Access Token
                 let access_token =
-                    domain::AccessToken::new(&token_secret, &user.id).await?;
+                    domain::AccessToken::new(&token_secret, &user).await?;
 
                 tracing::debug!("Using Access Token: {}", access_token);
 
                 // Build a Refresh Token
                 let refresh_token =
-                    domain::RefreshToken::new(&token_secret, &user.id).await?;
+                    domain::RefreshToken::new(&token_secret, &user).await?;
 
                 // Build a new Refresh Token database instance
                 let refresh_token_model =
@@ -159,14 +158,14 @@ impl Authentication for AuthenticationService {
 
         // Using the Token Secret decode the token into a Token Claim
         // This also validates the token expiration, not before and Issuer
-        let refresh_token_claim =
-            domain::TokenClaim::from_token(&refresh_token, &token_secret)
-                .map_err(|_| {
-                    tracing::error!("Refresh Token is invalid!");
-                    BackendError::AuthenticationError(
-                        "Authentication Failed!".to_string(),
-                    )
-                })?;
+        let refresh_token_claim = domain::TokenClaim::from_token(
+            &refresh_token,
+            &token_secret,
+        )
+        .map_err(|_| {
+            tracing::error!("Refresh Token is invalid!");
+            BackendError::AuthenticationError("Authentication Failed!".to_string())
+        })?;
 
         //-- 3. Check Refresh Token status in database
         let database_record = database::RefreshTokens::from_token(
@@ -192,16 +191,20 @@ impl Authentication for AuthenticationService {
                         )
                     })?;
 
+                let user =
+                    database::Users::from_user_id(&user_id, &self.database_ref())
+                        .await?;
+
                 //-- 5. Generate new Access and Refresh Tokens
                 // Build an Access Token
                 let access_token =
-                    domain::AccessToken::new(&token_secret, &user_id).await?;
+                    domain::AccessToken::new(&token_secret, &user).await?;
 
                 tracing::debug!("Using Access Token: {}", access_token);
 
                 // Build a Refresh Token
                 let refresh_token =
-                    domain::RefreshToken::new(&token_secret, &user_id).await?;
+                    domain::RefreshToken::new(&token_secret, &user).await?;
 
                 // Build a new Refresh Token database instance
                 let refresh_token_model =
@@ -269,13 +272,14 @@ impl Authentication for AuthenticationService {
         // Using the Token Secret decode the Access Token into a Token Claim. This also
         // validates the token expiration, not before and Issuer.
         let access_token_claim =
-            domain::TokenClaim::from_token(&access_token, &token_secret)
-                .map_err(|_| {
+            domain::TokenClaim::from_token(&access_token, &token_secret).map_err(
+                |_| {
                     tracing::error!("Access Token is invalid!");
                     return BackendError::AuthenticationError(
                         "Authentication Failed!".to_string(),
                     );
-                })?;
+                },
+            )?;
         // tracing::debug!("Decoded Access Token Claim: {}", access_token_claim);
 
         //-- 2. Verify user in the database
@@ -330,13 +334,12 @@ impl Authentication for AuthenticationService {
         tracing::debug!("Users password is updated in the database: {}", user.id);
 
         // Build an Access Token
-        let access_token = domain::AccessToken::new(&token_secret, &user.id).await?;
+        let access_token = domain::AccessToken::new(&token_secret, &user).await?;
 
         tracing::debug!("Using Access Token: {}", access_token);
 
         // Build a Refresh Token
-        let refresh_token =
-            domain::RefreshToken::new(&token_secret, &user.id).await?;
+        let refresh_token = domain::RefreshToken::new(&token_secret, &user).await?;
 
         // Build a new Refresh Token database instance
         let refresh_token_model =

@@ -83,7 +83,7 @@ pub mod tests {
 
         // Generate refresh token
         let random_refresh_token =
-            database::RefreshTokens::mock_data(&random_user.id).await?;
+            database::RefreshTokens::mock_data(&random_user).await?;
 
         //-- Execute Function (Act)
         // Insert refresh token into database

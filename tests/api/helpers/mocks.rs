@@ -83,12 +83,12 @@ pub fn user_model(
 }
 
 pub async fn access_token(
-    user_id: &Uuid,
+    user: &database::Users,
     token_secret: &Secret<String>
 ) -> Result<domain::AccessToken, error::BackendError> {
     // Build an Access Token
     let access_token =
-        domain::AccessToken::new(token_secret, user_id).await?;
+        domain::AccessToken::new(token_secret, user).await?;
 
     Ok(access_token)
 }
