@@ -19,6 +19,8 @@ use super::TokenClaim;
 pub static ACCESS_TOKEN_DURATION: u64 = 5 * 60; // 15 minutes as seconds
 
 /// Access Token for authorising endpoint requests
+/// #[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct AccessToken(String);
 
 /// Get string reference of the Access Token

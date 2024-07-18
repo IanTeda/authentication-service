@@ -1249,8 +1249,8 @@ pub struct UserIndexResponse {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct DeleteUserResponse {
-    #[prost(bool, tag = "1")]
-    pub is_deleted: bool,
+    #[prost(int64, tag = "1")]
+    pub rows_affected: i64,
 }
 /// Generated client implementations.
 pub mod users_client {

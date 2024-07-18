@@ -17,7 +17,8 @@ use crate::configuration::Configuration;
 use crate::prelude::BackendError;
 use crate::rpc::ledger::users_server::Users;
 use crate::rpc::ledger::{
-    CreateUserRequest, DeleteUserRequest, DeleteUserResponse, ReadUserRequest, UpdateUserRequest, UserIndexRequest, UserIndexResponse, UserResponse
+    CreateUserRequest, DeleteUserRequest, DeleteUserResponse, ReadUserRequest,
+    UpdateUserRequest, UserIndexRequest, UserIndexResponse, UserResponse,
 };
 use crate::{database, domain};
 
@@ -58,6 +59,37 @@ impl TryFrom<CreateUserRequest> for database::Users {
         let role = domain::UserRole::from_str(&value.role)?;
         let is_active = value.is_active;
         let is_verified = value.is_verified;
+        let created_on = Utc::now();
+
+        Ok(Self {
+            id,
+            email,
+            name,
+            password_hash,
+            role,
+            is_active,
+            is_verified,
+            created_on,
+        })
+    }
+}
+
+/// Convert a User Request message into a database::Users
+impl TryFrom<UpdateUserRequest> for database::Users {
+    type Error = BackendError;
+
+    fn try_from(value: UpdateUserRequest) -> Result<Self, Self::Error> {
+        let id = Uuid::parse_str(value.id.as_str())?;
+        let email = domain::EmailAddress::parse(value.email)?;
+        // Password does not get updated
+        let name = domain::UserName::parse(value.name)?;
+        let password =
+            Secret::new("this-does-not-matter!-I-do-not-update3".to_string());
+        let password_hash = domain::PasswordHash::parse(password)?;
+        let role = domain::UserRole::from_str(&value.role)?;
+        let is_active = value.is_active;
+        let is_verified = value.is_verified;
+        // I do not get updated
         let created_on = Utc::now();
 
         Ok(Self {
@@ -145,11 +177,14 @@ impl Users for UsersService {
 
         let id = Uuid::parse_str(&request_message.id).map_err(|_| {
             tracing::error!("Unable to parse user id to UUID!");
-            return BackendError::Generic("Unable to parse user id to UUID!".to_string());
+            return BackendError::Generic(
+                "Unable to parse user id to UUID!".to_string(),
+            );
         })?;
-        
-        let database_record = database::Users::from_user_id(&id, self.database_ref()).await?;
-        
+
+        let database_record =
+            database::Users::from_user_id(&id, self.database_ref()).await?;
+
         // Convert database user record into a user response message
         let response_message: UserResponse = database_record.into();
 
@@ -172,7 +207,28 @@ impl Users for UsersService {
         let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
-        unimplemented!()
+        // Offset, where to start the records from
+        let offset = request_message.offset;
+
+        // The number of users to be returned
+        let limit = request_message.limit;
+
+        // Query the database
+        let database_records =
+            database::Users::index(&limit, &offset, self.database_ref()).await?;
+
+        // Convert database::Users into User Response within the vector
+        let users_response: Vec<UserResponse> = database_records
+            .into_iter()
+            .map(|user| user.into())
+            .collect();
+
+        // Build tonic response from UserResponse vector
+        let response = UserIndexResponse {
+            users: users_response,
+        };
+
+        Ok(Response::new(response))
     }
 
     /// Handle rpc requests to update a user in the database
@@ -191,7 +247,16 @@ impl Users for UsersService {
         let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
-        unimplemented!()
+        // Convert create user request message into a user instance
+        let user: database::Users = request_message.try_into()?;
+
+        // Insert user into the database
+        let database_record = user.update(self.database_ref()).await?;
+
+        // Convert database user record into a user response message
+        let response_message: UserResponse = database_record.into();
+
+        Ok(Response::new(response_message))
     }
 
     /// Handle rpc requests to delete a user in the database
@@ -210,6 +275,23 @@ impl Users for UsersService {
         let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
-        unimplemented!()
+        let id = Uuid::parse_str(&request_message.id).map_err(|_| {
+            tracing::error!("Unable to parse user id to UUID!");
+            return BackendError::Generic(
+                "Unable to parse user id to UUID!".to_string(),
+            );
+        })?;
+
+        let database_record =
+            database::Users::from_user_id(&id, self.database_ref()).await?;
+
+        let rows_affected = database_record.delete(self.database_ref()).await? as i64;
+
+        // Convert database user record into a user response message
+        let response_message = DeleteUserResponse { 
+            rows_affected
+        };
+
+        Ok(Response::new(response_message))
     }
 }

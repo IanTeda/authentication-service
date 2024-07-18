@@ -20,3 +20,17 @@ CREATE TABLE IF NOT EXISTS users (
 -- Create an index's for quicker find
 -- https://www.slingacademy.com/article/postgresql-how-to-set-index-on-a-table-column/
 CREATE UNIQUE INDEX idx_unique_email ON users (email);
+
+-- Password: Personal-L3dger-password!
+INSERT INTO users (
+    id, email, name, password_hash, role, is_active, is_verified, created_on
+) VALUES (
+    '019071c5-a31c-7a0e-befa-594702122e75',
+    'ledger@teda.id.au',
+    'Admin',
+    '$argon2id$v=19$m=15000,t=2,p=1$VPNpCs5rz4G3W97dnTBU6A$slVdSjMeQIRBBzz8srnGgOobKupeOM+z9oX41QlqxZQ',
+    'admin',
+    'true',
+    'true',
+    '2019-10-17T00:00:00.000000Z'
+)

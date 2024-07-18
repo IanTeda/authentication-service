@@ -26,8 +26,11 @@ use crate::prelude::*;
 
 pub static TOKEN_ISSUER: &str = "Personal Ledger Backend";
 
-#[derive(Display, PartialEq)]
+/// Token Types
+//TODO: Impellent own Display trait
+#[derive(Debug, Clone, Default, PartialEq, Display)]
 pub enum TokenType {
+    #[default]
     Access,
     Refresh,
 }
@@ -49,7 +52,8 @@ impl rand::distributions::Distribution<TokenType> for rand::distributions::Stand
 ///
 /// * [IANA JWT](https://www.iana.org/assignments/jwt/jwt.xhtml)
 /// ---
-#[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+// #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, serde::Deserialize, serde::Serialize)]
 pub struct TokenClaim {
     pub iss: String, // Optional.  Issuer of the JWT.
     pub sub: String, // Optional. Subject (whom token refers to)

@@ -7,12 +7,16 @@
 //! Define the user roles within the application.
 //! ---
 
+use std::default;
+
 use crate::prelude::*;
 
+// #[derive(Debug, Clone, Default, PartialEq)]
 /// Allowable user roles
 #[derive(
-    Clone,
     Debug,
+    Clone,
+    Default,
     PartialEq,
     PartialOrd,
     sqlx::Type,
@@ -22,6 +26,7 @@ use crate::prelude::*;
 #[sqlx(type_name = "user_role", rename_all = "lowercase")]
 pub enum UserRole {
     Admin,
+    #[default]
     User,
     Guest,
 }

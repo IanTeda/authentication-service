@@ -17,10 +17,11 @@ use crate::{domain::token_claim::TokenType, prelude::*};
 
 use super::TokenClaim;
 
-pub static REFRESH_TOKEN_DURATION: u64 = 2 * 60 * 60; // 2 hour as seconds
+pub static REFRESH_TOKEN_DURATION: u64 = 2 * 60 * 60; // 2 hours as seconds
 
 /// Refresh Token for authorising a new Access Token
-#[derive(serde::Deserialize, Debug, Clone, PartialEq)]
+// #[derive(serde::Deserialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq, serde::Deserialize)]
 pub struct RefreshToken(String);
 
 /// Get string reference of the Refresh Token

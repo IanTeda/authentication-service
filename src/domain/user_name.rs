@@ -13,9 +13,11 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::prelude::*;
 
-#[derive(
-    Debug, Clone, PartialEq, Serialize, Deserialize, Decode, derive_more::From,
-)]
+// #[derive(
+//     Debug, Clone, PartialEq, Serialize, Deserialize, Decode, derive_more::From,
+// )]
+//TODO: Impellent own From trait
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, derive_more::From)]
 pub struct UserName(String);
 
 /// Implementation of the default Thing for creating a new thing.

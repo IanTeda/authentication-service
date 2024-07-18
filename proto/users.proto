@@ -60,5 +60,5 @@ message UserIndexResponse {
 }
 
 message DeleteUserResponse {
-  bool is_deleted = 1;
+  int64 rows_affected = 1;
 }

@@ -22,7 +22,8 @@ use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, PasswordVerifier, Version};
 use secrecy::{ExposeSecret, Secret};
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
+// TODO: rationalise serde derives
+#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct PasswordHash(String);
 
 impl PasswordHash {
@@ -179,8 +180,8 @@ mod tests {
     pub type Result<T> = core::result::Result<T, Error>;
     pub type Error = Box<dyn std::error::Error>;
 
-    #[tokio::test]
-    async fn less_than_twelve_fails() -> Result<()> {
+    #[test]
+    fn less_than_twelve_fails() -> Result<()> {
         let password = "aB1%".to_string();
         let password = Secret::new(password);
         assert_err!(domain::PasswordHash::parse(password));
@@ -188,8 +189,8 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn more_than_twelve_fails() -> Result<()> {
+    #[test]
+    fn more_than_twelve_fails() -> Result<()> {
         let random_count = (256..300).fake::<i64>() as usize;
         let password = "aB1%".repeat(random_count);
         let password = Secret::new(password);
@@ -198,8 +199,8 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn no_uppercase_characters_fails() -> Result<()> {
+    #[test]
+    fn no_uppercase_characters_fails() -> Result<()> {
         let random_count = (5..30).fake::<i64>() as usize;
         let password = "ab1%".repeat(random_count);
         let password = Secret::new(password);
@@ -208,8 +209,8 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn no_number_characters_fails() -> Result<()> {
+    #[test]
+    fn no_number_characters_fails() -> Result<()> {
         let random_count = (5..30).fake::<i64>() as usize;
         let password = "aBc%".repeat(random_count);
         let password = Secret::new(password);
@@ -218,8 +219,8 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn no_special_characters_fails() -> Result<()> {
+    #[test]
+    fn no_special_characters_fails() -> Result<()> {
         let random_count = (5..30).fake::<i64>() as usize;
         let password = "aB15".repeat(random_count);
         let password = Secret::new(password);
@@ -228,8 +229,8 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn password_passes() -> Result<()> {
+    #[test]
+    fn password_passes() -> Result<()> {
         let random_count = (5..30).fake::<i64>() as usize;
         let password = "aB1%".repeat(random_count);
         let password = Secret::new(password);
@@ -238,8 +239,8 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn parse_hash_correctly() -> Result<()> {
+    #[test]
+    fn parse_hash_correctly() -> Result<()> {
         //-- Setup and Fixtures (Arrange)
         // Generate a password that meets the minimum requirements in parse
         let random_count = (5..30).fake::<i64>() as usize;
@@ -248,7 +249,7 @@ mod tests {
         //-- Execute Function (Act)
         // Parse a password hash from the domain
         let password_hash = domain::PasswordHash::parse(password_secret.clone())?;
-        println!("{password_hash:#?}");
+        // println!("{password_hash:#?}");
 
         //-- Checks (Assertions)
         assert_ok!(password_hash.verify_password(&password_secret));
