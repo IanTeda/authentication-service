@@ -1,4 +1,4 @@
-use personal_ledger_backend::{domain, rpc::ledger::{authentication_client::AuthenticationClient, LoginRequest, RefreshRequest}};
+use personal_ledger_backend::{domain, rpc::ledger::{LoginRequest, RefreshRequest}};
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
@@ -19,12 +19,8 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     // Spawn Tonic test server
     let tonic_server = helpers::TonicServer::spawn_server(&database).await?;
 
-    let token_secret = &tonic_server.clone().config.application.token_secret;
-
-    // Build Tonic user client, with authentication intercept
-    let mut authentication_client = AuthenticationClient::new(
-        tonic_server.client_channel().await?
-    );
+    // Spawn Tonic test client
+    let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     // Build tonic request
     let request = tonic::Request::new(LoginRequest {
@@ -33,7 +29,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     });
 
     // Send tonic client request to server
-    let response = authentication_client
+    let response = tonic_client.authentication()
         .login(request)
         .await?
         .into_inner();
@@ -45,11 +41,12 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     });
 
     // Send tonic client request to server
-    let response = authentication_client.refresh(request).await?.into_inner();
+    let response = tonic_client.authentication().refresh(request).await?.into_inner();
     // println!("{response:#?}");
 
     //-- Checks (Assertions)
-    // Get Token Claim Secret
+    // Get token secret
+    let token_secret = &tonic_server.config.application.token_secret;
     let token_secret = Secret::new(token_secret.to_owned());
 
     // Build Token Claims

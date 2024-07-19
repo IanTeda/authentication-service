@@ -12,7 +12,7 @@ service Authentication {
     rpc UpdatePassword (UpdatePasswordRequest) returns (TokenResponse);
     rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse);
     rpc Register (RegisterRequest) returns (TokenResponse);
-    rpc Logout (LogoutRequest) returns (Empty);
+    rpc Logout (LogoutRequest) returns (LogoutResponse);
 }
 
 message LoginRequest {
@@ -49,5 +49,9 @@ message RegisterRequest {
 }
 
 message LogoutRequest {
-    string id = 1;
+    string refresh_token = 1;
+} 
+
+message LogoutResponse {
+    int64 rows_affected = 1;
 } 

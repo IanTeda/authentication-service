@@ -56,7 +56,7 @@ impl AccessToken {
     // 	created_on = %self.created_on,
     // )
     )]
-    pub async fn new(
+    pub fn new(
         secret: &Secret<String>,
         user: &database::Users,
     ) -> Result<Self, BackendError> {
@@ -97,7 +97,7 @@ mod tests {
         // Get a random user_id for subject
         let random_user = database::Users::mock_data()?;
 
-        let access_token = AccessToken::new(&secret, &random_user).await?;
+        let access_token = AccessToken::new(&secret, &random_user)?;
 
         let token_claim =
             TokenClaim::from_token(access_token.as_ref(), &secret)?;

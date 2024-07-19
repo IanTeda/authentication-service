@@ -94,8 +94,7 @@ impl TonicServer {
         let token_secret = &config.application.token_secret;
         let token_secret = Secret::new(token_secret.to_owned());
         let access_token_string =
-            domain::AccessToken::new(&token_secret, &random_user)
-                .await?
+            domain::AccessToken::new(&token_secret, &random_user)?
                 .to_string();
         // let access_token = mocks::access_token(&random_user.id, &token_secret).await?.to_string();
 

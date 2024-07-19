@@ -3,9 +3,10 @@
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
 
-use personal_ledger_backend::{domain, rpc::ledger::{
-    authentication_client::AuthenticationClient, LoginRequest, UpdatePasswordRequest,
-}};
+use personal_ledger_backend::{
+    domain,
+    rpc::ledger::{LoginRequest, UpdatePasswordRequest},
+};
 use uuid::Uuid;
 
 use crate::helpers;
@@ -26,42 +27,48 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     // Spawn Tonic test server
     let tonic_server = helpers::TonicServer::spawn_server(&database).await?;
 
-    // Build Tonic Authentication Client
-    let mut authentication_client =
-        AuthenticationClient::new(tonic_server.clone().client_channel().await?);
+    // Spawn Tonic test client
+    let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     // Build tonic login request
-    let login_request = tonic::Request::new(LoginRequest {
+    let login_request_message = LoginRequest {
         email: random_user.email.to_string(),
         password: random_password_original.to_string(),
-    });
+    };
+    // println!("{request_message:#?}");
+
+    let login_request = tonic::Request::new(login_request_message);
 
     // Send tonic client login request to server
-    let response = authentication_client
+    let login_response_message = tonic_client
+        .authentication()
         .login(login_request)
         .await?
         .into_inner();
-    // println!("Response: {}", response.access_token);
+    // println!("{login_response_message:#?}");
 
     //-- Execute Test (Act)
     // Generate a new random password
     let random_password_update = helpers::mocks::password()?;
 
-    // Build Update Password Request
-    let mut request = tonic::Request::new(UpdatePasswordRequest {
+    let update_password_request_message = UpdatePasswordRequest {
         email: random_user.email.to_string(),
         password_original: random_password_original.to_string(),
         password_new: random_password_update.to_string(),
-    });
+    };
 
-    // Append access token to request
-    request
+    // Build Update Password Request
+    let mut update_password_request = tonic::Request::new(update_password_request_message);
+
+    // Append access token from login to request
+    update_password_request
         .metadata_mut()
-        .append("access_token", response.access_token.parse().unwrap());
+        .append("access_token", login_response_message.access_token.parse().unwrap());
 
     // Send update password request to server
-    let response = authentication_client
-        .update_password(request)
+    let response = tonic_client
+        .authentication()
+        .update_password(update_password_request)
         .await?
         .into_inner();
 
@@ -78,14 +85,8 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
         domain::TokenClaim::from_token(&response.refresh_token, &token_secret)?;
 
     // Confirm User IDs (uuids) are the same
-    assert_eq!(
-        Uuid::parse_str(&access_token_claim.sub)?,
-        random_user.id
-    );
-    assert_eq!(
-        Uuid::parse_str(&refresh_token_claim.sub)?,
-        random_user.id
-    );
+    assert_eq!(Uuid::parse_str(&access_token_claim.sub)?, random_user.id);
+    assert_eq!(Uuid::parse_str(&refresh_token_claim.sub)?, random_user.id);
 
     // Confirm Token Claims
     assert_eq!(&access_token_claim.jty, "Access");

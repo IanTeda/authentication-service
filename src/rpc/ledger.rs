@@ -59,7 +59,13 @@ pub struct RegisterRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LogoutRequest {
     #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
+    pub refresh_token: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct LogoutResponse {
+    #[prost(int64, tag = "1")]
+    pub rows_affected: i64,
 }
 /// Generated client implementations.
 pub mod authentication_client {
@@ -262,7 +268,7 @@ pub mod authentication_client {
         pub async fn logout(
             &mut self,
             request: impl tonic::IntoRequest<super::LogoutRequest>,
-        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+        ) -> std::result::Result<tonic::Response<super::LogoutResponse>, tonic::Status> {
             self.inner
                 .ready()
                 .await
@@ -316,7 +322,7 @@ pub mod authentication_server {
         async fn logout(
             &self,
             request: tonic::Request<super::LogoutRequest>,
-        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        ) -> std::result::Result<tonic::Response<super::LogoutResponse>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct AuthenticationServer<T: Authentication> {
@@ -626,7 +632,7 @@ pub mod authentication_server {
                         T: Authentication,
                     > tonic::server::UnaryService<super::LogoutRequest>
                     for LogoutSvc<T> {
-                        type Response = super::Empty;
+                        type Response = super::LogoutResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,

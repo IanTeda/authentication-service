@@ -6,9 +6,10 @@
 // #![allow(unused)] // For development only
 
 use chrono::{DateTime, Utc};
+use secrecy::Secret;
 use uuid::Uuid;
 
-use crate::domain;
+use crate::{database, domain, prelude::BackendError};
 
 #[derive(Debug, serde::Deserialize, sqlx::FromRow, Clone, PartialEq)]
 pub struct RefreshTokens {
@@ -22,25 +23,22 @@ pub struct RefreshTokens {
 impl RefreshTokens {
     #[tracing::instrument(
         name = "Create new database Refresh Token Model instance for: ",
-        skip(refresh_token),
-    // fields(
-    // 	user_email = %email.as_ref(),
-    // )
+        skip(user, token_secret),
     )]
-    pub fn new(user_id: &Uuid, refresh_token: &domain::RefreshToken) -> Self {
+    pub fn new(user: &database::Users, token_secret: &Secret<String>) -> Result<Self, BackendError> {
         let id = Uuid::now_v7();
-        let user_id = user_id.to_owned();
-        let token = refresh_token.to_owned();
+        let user_id = user.id.to_owned();
+        let token = domain::RefreshToken::new(token_secret, user)?;
         let is_active = true;
         let created_on = Utc::now();
 
-        Self {
+        Ok (Self {
             id,
             user_id,
             token,
             is_active,
             created_on,
-        }
+        })
     }
 
     #[cfg(test)]
@@ -63,7 +61,7 @@ impl RefreshTokens {
         let random_secret = Secret::new(random_secret);
 
         let random_token =
-            domain::RefreshToken::new(&random_secret, user).await?;
+            domain::RefreshToken::new(&random_secret, user)?;
 
         // Generate random boolean value
         let random_is_active: bool = Boolean(4).fake();

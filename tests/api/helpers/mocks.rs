@@ -88,7 +88,7 @@ pub async fn access_token(
 ) -> Result<domain::AccessToken, error::BackendError> {
     // Build an Access Token
     let access_token =
-        domain::AccessToken::new(token_secret, user).await?;
+        domain::AccessToken::new(token_secret, user)?;
 
     Ok(access_token)
 }

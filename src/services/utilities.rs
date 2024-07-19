@@ -29,19 +29,16 @@ impl Utilities for UtilitiesService {
     #[tracing::instrument(
 		name = "Ping endpoint",
 		skip(self),
-		// fields(
-		// 	Request = %_request
-		// ),
 	)]
     async fn ping(
         &self,
         _request: Request<Empty>,
     ) -> Result<Response<PingResponse>, Status> {
-        let reply = PingResponse {
+        let response_message = PingResponse {
             message: "Pong...".to_string(),
         };
 
         // Send back our ping response.
-        Ok(Response::new(reply))
+        Ok(Response::new(response_message))
     }
 }

@@ -45,7 +45,7 @@ impl From<String> for RefreshToken {
 }
 
 impl RefreshToken {
-    /// Parse a new Access Token, returning a Result with an AccessToken or BackEnd error
+    /// Generate a new Access Token, returning a Result with an AccessToken or BackEnd error
     ///
     /// ## Parameters
     ///
@@ -55,20 +55,13 @@ impl RefreshToken {
     #[tracing::instrument(
         name = "Generate a new Refresh Token for: "
         skip(secret)
-    // fields(
-    // 	db_id = %self.id,
-    // 	user_id = %self.user_id,
-    // 	refresh_tokens = %self.refresh_tokens.as_ref(),
-    // 	is_active = %self.is_active,
-    // 	created_on = %self.created_on,
-    // )
     )]
-    pub async fn new(
+    pub fn new(
         secret: &Secret<String>,
         user: &database::Users,
     ) -> Result<Self, BackendError> {
         // Build the Access Token Claim
-        let token_claim = TokenClaim::new(&secret, user, &TokenType::Refresh);
+        let token_claim = TokenClaim::new(secret, user, &TokenType::Refresh);
 
         // Encode the Token Claim into a URL-safe hash encryption
         let token = encode(
