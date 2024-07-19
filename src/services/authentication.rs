@@ -294,7 +294,7 @@ impl Authentication for AuthenticationService {
             tracing::error!("User email is not verified: {}", user_id);
             return Err(Status::unauthenticated("Authentication Failed!"));
         }
-        tracing::debug!("User is verified in the database: {}", user.id);
+        tracing::debug!("User email is verified in the database: {}", user.id);
 
         //-- 4. Verify existing/original password
         let original_password = Secret::new(request_message.password_original);

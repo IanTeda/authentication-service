@@ -15,7 +15,7 @@ pub struct AccessTokenInterceptor {
 impl tonic::service::Interceptor for AccessTokenInterceptor {
     fn call(
         &mut self,
-        request: tonic::Request<()>,
+        mut request: tonic::Request<()>,
     ) -> Result<tonic::Request<()>, tonic::Status> {
         // Unwrap the .get() option
         match request.metadata().get("access_token") {
@@ -42,6 +42,14 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
                         })?;
 
                 tracing::info!("Access Token authenticated for user: {}", access_token_claim.sub);
+
+                // Add access token claim to request
+                // let (request_metadata, request_extensions, request_message) = request.into_parts();
+
+                // let access_token_claim = request_extensions.get::<domain::TokenClaim>().ok_or(
+                //     BackendError::Static("Token Claim not found in request extension."),
+                // )?;
+                request.extensions_mut().insert(access_token_claim);
 
                 Ok(request)
             }

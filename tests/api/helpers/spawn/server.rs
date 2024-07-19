@@ -67,7 +67,8 @@ impl TonicServer {
 
         // Generate random user data for testing and insert in test database
         let random_password = mocks::password()?; // In case we need it in the future
-        let random_user = mocks::user_model(&random_password)?;
+        let mut random_user = mocks::user_model(&random_password)?;
+        random_user.role = domain::UserRole::Admin;
         let random_user = random_user.insert(&database).await?;
 
         // Build Tonic server using main crate startup
