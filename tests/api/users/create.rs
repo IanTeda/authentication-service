@@ -26,7 +26,7 @@ async fn returns_created_user(database: Pool<Postgres>) -> Result<()> {
     let random_password = helpers::mocks::password()?;
 
     // Generate a random user for testing passing in the random password string
-    let random_user = helpers::mocks::user_model(&random_password)?;
+    let random_user = helpers::mocks::users(&random_password)?;
     // println!("{random_user:#?}");
 
     //-- Execute Test (Act)

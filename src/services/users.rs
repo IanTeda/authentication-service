@@ -1,6 +1,9 @@
 //-- ./src/rpc/users.rs
 
-//! Return a result containing a RPC Users service
+//! RPC service for users endpoint
+//! 
+//! Contains functions to managing the rpc service endpoints
+//! ---
 
 #![allow(unused)] // For development only
 

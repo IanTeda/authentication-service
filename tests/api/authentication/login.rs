@@ -33,7 +33,7 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     //-- 1. Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password = helpers::mocks::password()?;
-    let random_user = helpers::mocks::user_model(&random_password)?;
+    let random_user = helpers::mocks::users(&random_password)?;
     let _database_record = random_user.insert(&database).await?;
 
     // Spawn Tonic test server
@@ -88,7 +88,7 @@ async fn incorrect_password_returns_error(database: Pool<Postgres>) -> Result<()
     //-- 1. Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password = helpers::mocks::password()?;
-    let random_user = helpers::mocks::user_model(&random_password)?;
+    let random_user = helpers::mocks::users(&random_password)?;
     let _database_record = random_user.insert(&database).await?;
 
     // Generate an incorrect password
@@ -131,7 +131,7 @@ async fn incorrect_email_returns_error(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password = helpers::mocks::password()?;
-    let random_user = helpers::mocks::user_model(&random_password)?;
+    let random_user = helpers::mocks::users(&random_password)?;
     let _database_record = random_user.insert(&database).await?;
 
     // Generate an incorrect password

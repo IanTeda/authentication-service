@@ -13,7 +13,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password = helpers::mocks::password()?;
-    let random_user = helpers::mocks::user_model(&random_password)?;
+    let random_user = helpers::mocks::users(&random_password)?;
     let _database_record = random_user.insert(&database).await?;
 
     // Spawn Tonic test server

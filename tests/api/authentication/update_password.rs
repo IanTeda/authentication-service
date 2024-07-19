@@ -19,7 +19,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password_original = helpers::mocks::password()?;
-    let mut random_user = helpers::mocks::user_model(&random_password_original)?;
+    let mut random_user = helpers::mocks::users(&random_password_original)?;
     random_user.is_active = true;
     random_user.is_verified = true;
     let _database_record = random_user.insert(&database).await?;

@@ -21,7 +21,7 @@ async fn id_returns_user(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password_original = helpers::mocks::password()?;
-    let random_user = helpers::mocks::user_model(&random_password_original)?;
+    let random_user = helpers::mocks::users(&random_password_original)?;
     let database_record = random_user.insert(&database).await?;
 
     // Spawn Tonic test server
@@ -86,7 +86,7 @@ async fn index_returns_users(pool: Pool<Postgres>) -> Result<()> {
     for _count in 0..random_count {
         // Generate random user data and insert into database for testing
         let random_password_original = helpers::mocks::password()?;
-        let random_user = helpers::mocks::user_model(&random_password_original)?;
+        let random_user = helpers::mocks::users(&random_password_original)?;
         let database_record = random_user.insert(&pool).await?;
         test_vec.push(database_record);
     }

@@ -20,7 +20,7 @@ async fn user_returns_update(database: Pool<Postgres>) -> Result<()> {
 
     // Generate random user, passing in the password string
     let random_user_original =
-        helpers::mocks::user_model(&random_password_original)?;
+        helpers::mocks::users(&random_password_original)?;
 
     // Insert user into the database
     let _database_record = random_user_original.insert(&database).await?;
@@ -33,7 +33,7 @@ async fn user_returns_update(database: Pool<Postgres>) -> Result<()> {
 
     //-- Execute Test (Act)
     // Generate update data
-    let random_user_update = helpers::mocks::user_model(&random_password_original)?;
+    let random_user_update = helpers::mocks::users(&random_password_original)?;
 
     // Build rpc request message
     let request_message = UpdateUserRequest {

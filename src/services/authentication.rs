@@ -170,7 +170,7 @@ impl Authentication for AuthenticationService {
 
                 //-- 4. Void all Refresh Tokens for associated user ID
                 database_record
-                    .revoke_all_associated(self.database_ref())
+                    .revoke_associated(self.database_ref())
                     .await?;
 
                 let user_id =
@@ -321,7 +321,7 @@ impl Authentication for AuthenticationService {
         // Revoke refresh tokens associated with the user before adding new one to the database
         // TODO: When do we clean up (delete) the database
         let _rows_affected = refresh_token
-            .revoke_all_associated(self.database_ref())
+            .revoke_associated(self.database_ref())
             .await?;
 
         // Add new Refresh Token to the database
@@ -397,7 +397,7 @@ impl Authentication for AuthenticationService {
 
         // Revoke all Refresh Tokens associated with user_id
         let rows_affected = database_record
-            .revoke_all_associated(self.database_ref())
+            .revoke_associated(self.database_ref())
             .await? as i64;
 
         // Build Tonic response message

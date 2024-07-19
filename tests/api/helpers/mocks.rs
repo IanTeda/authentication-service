@@ -1,12 +1,12 @@
-#![allow(unused)] // For beginning only.
+// #![allow(unused)] // For beginning only.
 
 use chrono::{DateTime, SubsecRound, Utc};
 // use chrono::prelude::*;
 use fake::faker::boolean::en::Boolean;
 use fake::faker::chrono::en::DateTime;
+use fake::faker::chrono::en::DateTimeAfter;
 use fake::faker::name::en::Name;
 use fake::{faker::internet::en::SafeEmail, Fake};
-use fake::faker::chrono::en::DateTimeAfter;
 use secrecy::Secret;
 use uuid::Uuid;
 
@@ -36,9 +36,7 @@ pub fn password() -> Result<String, error::BackendError> {
     Ok(password)
 }
 
-pub fn user_model(
-    password: &String,
-) -> Result<database::Users, error::BackendError> {
+pub fn users(password: &String) -> Result<database::Users, error::BackendError> {
     //-- Generate a random id (Uuid V7) by first generating a random timestamp
     // Generate Uuid V7
     let random_id: Uuid = uuid_v7();
@@ -58,8 +56,6 @@ pub fn user_model(
     let random_role: domain::UserRole = rand::random();
 
     // Generate random boolean value
-    let is_active: bool = Boolean(4).fake();
-
     let random_is_active: bool = Boolean(4).fake();
 
     let random_is_verified: bool = Boolean(4).fake();
@@ -82,13 +78,38 @@ pub fn user_model(
     Ok(random_user)
 }
 
-pub async fn access_token(
+pub fn refresh_tokens(
     user: &database::Users,
-    token_secret: &Secret<String>
-) -> Result<domain::AccessToken, error::BackendError> {
-    // Build an Access Token
-    let access_token =
-        domain::AccessToken::new(token_secret, user)?;
+) -> Result<database::RefreshTokens, error::BackendError> {
+    use chrono::SubsecRound;
+    use fake::faker::boolean::en::Boolean;
+    use fake::faker::chrono::en::DateTime;
+    use fake::Fake;
+    use rand::distributions::DistString;
+    use secrecy::Secret;
 
-    Ok(access_token)
+    let random_id = uuid_v7();
+    let user_id = user.id.to_owned();
+    let random_secret =
+        rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
+    let random_secret = Secret::new(random_secret);
+
+    let random_token = domain::RefreshToken::new(&random_secret, &user)?;
+
+    // Generate random boolean value
+    let random_is_active: bool = Boolean(4).fake();
+
+    // Generate random DateTime
+    let random_created_on: DateTime<Utc> = DateTime().fake();
+    let random_created_on = random_created_on.round_subsecs(0);
+
+    let random_refresh_token = database::RefreshTokens {
+        id: random_id,
+        user_id,
+        token: random_token,
+        is_active: random_is_active,
+        created_on: random_created_on,
+    };
+
+    Ok(random_refresh_token)
 }

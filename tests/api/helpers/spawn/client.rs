@@ -9,7 +9,7 @@
 /// * [Tonic LND client](https://github.com/Kixunil/tonic_lnd/blob/master/src/lib.rs)
 /// ---
 
-/// This is part of public interface so it's re-exported.
+/// This is part of public interface, so it's re-exported.
 pub extern crate tonic;
 
 use tonic::codegen::InterceptedService;
@@ -17,25 +17,26 @@ use tonic::metadata::MetadataValue;
 use tonic::transport::Channel;
 
 /// Convenience type alias for authentication client.
-pub type AuthenticationClient = personal_ledger_backend::rpc::ledger::authentication_client::AuthenticationClient<Channel>;
+pub type AuthenticationClient =
+personal_ledger_backend::rpc::ledger::authentication_client::AuthenticationClient<Channel>;
 
 /// Convenience type alias for refresh token client
-pub type RefreshTokenClient =
-    personal_ledger_backend::rpc::ledger::refresh_tokens_client::RefreshTokensClient<
-        InterceptedService<Channel, AccessTokenInterceptor>,
-    >;
+pub type RefreshTokensClient =
+personal_ledger_backend::rpc::ledger::refresh_tokens_client::RefreshTokensClient<
+    InterceptedService<Channel, AccessTokenInterceptor>,
+>;
 
 // Convenience type alias for users client
 pub type UsersClient =
-    personal_ledger_backend::rpc::ledger::users_client::UsersClient<
-        InterceptedService<Channel, AccessTokenInterceptor>,
-    >;
+personal_ledger_backend::rpc::ledger::users_client::UsersClient<
+    InterceptedService<Channel, AccessTokenInterceptor>,
+>;
 
 /// Tonic Client
 #[derive(Clone)]
 pub struct TonicClient {
     authentication: AuthenticationClient,
-    refresh_tokens: RefreshTokenClient,
+    refresh_tokens: RefreshTokensClient,
     users: UsersClient,
 }
 
@@ -45,12 +46,12 @@ impl TonicClient {
         &mut self.authentication
     }
 
-    /// Returns the lightning client.
-    pub fn refresh_tokens(&mut self) -> &mut RefreshTokenClient {
+    /// Returns the refresh tokens client.
+    pub fn refresh_tokens(&mut self) -> &mut RefreshTokensClient {
         &mut self.refresh_tokens
     }
 
-    /// Returns the lightning client.
+    /// Returns the users client.
     pub fn users(&mut self) -> &mut UsersClient {
         &mut self.users
     }
@@ -59,17 +60,22 @@ impl TonicClient {
     pub async fn spawn_client(
         server: &super::TonicServer,
     ) -> Result<Self, Box<dyn std::error::Error>> {
+        // Build Tonic Client channel
         let uri: tonic::transport::Uri = server.address.parse()?;
         let endpoint = Channel::builder(uri);
         let inner: Channel = endpoint.connect().await?;
-        let access_token = server.clone().access_token;
 
+        // Build client interceptor that adds the access-token to the request
+        let access_token = server.clone().access_token;
         let interceptor = AccessTokenInterceptor { access_token };
 
+        // Build Authentication client request
         let authentication = AuthenticationClient::new(inner.clone());
 
+        // Build Refresh Tokens client request
         let refresh_tokens = personal_ledger_backend::rpc::ledger::refresh_tokens_client::RefreshTokensClient::with_interceptor(inner.clone(), interceptor.clone());
 
+        // Build Users client request
         let users = personal_ledger_backend::rpc::ledger::users_client::UsersClient::with_interceptor(inner.clone(), interceptor.clone());
 
         let client = TonicClient {
@@ -98,6 +104,7 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
         // println!("access_token: {token:#?}");
 
         request.metadata_mut().append("access_token", token.clone());
+        println!("Access token appended");
 
         Ok(request)
     }
