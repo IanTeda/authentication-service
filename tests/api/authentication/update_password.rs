@@ -2,12 +2,10 @@
 
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
-
-use personal_ledger_backend::{
-    domain,
-    rpc::ledger::{LoginRequest, UpdatePasswordRequest},
-};
 use uuid::Uuid;
+
+use authentication_microservice::domain;
+use authentication_microservice::rpc::proto::{LoginRequest, UpdatePasswordRequest};
 
 use crate::helpers;
 

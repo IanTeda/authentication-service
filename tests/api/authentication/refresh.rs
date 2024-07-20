@@ -1,7 +1,9 @@
-use personal_ledger_backend::{domain, rpc::ledger::{LoginRequest, RefreshRequest}};
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
+
+use authentication_microservice::domain;
+use authentication_microservice::rpc::proto::{LoginRequest, RefreshRequest};
 
 use crate::helpers;
 

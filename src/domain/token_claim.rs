@@ -25,7 +25,8 @@ use uuid::Uuid;
 use crate::database;
 use crate::prelude::*;
 
-pub static TOKEN_ISSUER: &str = "Personal Ledger Backend";
+// TODO: Add to config
+pub static TOKEN_ISSUER: &str = "Authentication Microservice";
 
 /// Token Types
 //TODO: Impellent own Display trait

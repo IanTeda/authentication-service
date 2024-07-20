@@ -8,7 +8,7 @@
 
 // #![allow(unused)] // For beginning only.
 
-use personal_ledger_backend::rpc::ledger::{utilities_client::UtilitiesClient, Empty};
+use authentication_microservice::rpc::proto::{utilities_client::UtilitiesClient, Empty};
 
 use sqlx::{Pool, Postgres};
 

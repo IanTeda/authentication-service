@@ -9,13 +9,14 @@ mod domain;
 mod error;
 mod middleware;
 mod prelude;
-mod reflections;
 mod router;
 mod rpc;
 mod services;
 mod startup;
 mod telemetry;
 mod utils;
+
+// use configuration::Configuration;
 
 use configuration::Configuration;
 
@@ -29,7 +30,7 @@ async fn main() -> Result<(), BackendError> {
 
     // Build tracing subscriber
     let tracing_subscriber = telemetry::get_tracing_subscriber(
-        "personal_ledger_server".into(),
+        "authentication".into(),
         std::io::stdout,
         config.application.runtime_environment,
         config.application.log_level,

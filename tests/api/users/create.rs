@@ -4,7 +4,7 @@
 
 use sqlx::{Pool, Postgres};
 
-use personal_ledger_backend::rpc::ledger::CreateUserRequest;
+use authentication_microservice::rpc::proto::CreateUserRequest;
 
 use crate::helpers;
 

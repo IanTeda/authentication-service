@@ -2,8 +2,9 @@
 
 // #![allow(unused)] // For beginning only.
 
-use personal_ledger_backend::rpc::ledger::UpdateUserRequest;
 use sqlx::{Pool, Postgres};
+
+use authentication_microservice::rpc::proto::UpdateUserRequest;
 
 use crate::helpers;
 
@@ -63,7 +64,7 @@ async fn user_returns_update(database: Pool<Postgres>) -> Result<()> {
     // User email should be equal
     assert_eq!(random_user_update.email.as_ref(), response_message.email);
 
-    // User name should be equal
+    // Username should be equal
     assert_eq!(random_user_update.name.as_ref(), response_message.name);
 
     // User role should be equal

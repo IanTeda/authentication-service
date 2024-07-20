@@ -1,16 +1,16 @@
 //-- ./src/rpc/utilities.rs
 
-//! Return a result containing a RPC Utilities server
+//! Return a result containing an RPC Utilities server
 
 // #![allow(unused)] // For beginning only.
 
 use std::sync::Arc;
 
-use crate::configuration::Configuration;
 use tonic::{Request, Response, Status};
 
-use crate::rpc::ledger::utilities_server::Utilities;
-use crate::rpc::ledger::{Empty, PingResponse};
+use crate::configuration::Configuration;
+use crate::rpc::proto::{Empty, PingResponse};
+use crate::rpc::proto::utilities_server::Utilities;
 
 // #[derive(Debug, Default)]
 pub struct UtilitiesService {
@@ -27,9 +27,9 @@ impl UtilitiesService {
 #[tonic::async_trait]
 impl Utilities for UtilitiesService {
     #[tracing::instrument(
-		name = "Ping endpoint",
-		skip(self),
-	)]
+        name = "Ping endpoint",
+        skip(self),
+    )]
     async fn ping(
         &self,
         _request: Request<Empty>,

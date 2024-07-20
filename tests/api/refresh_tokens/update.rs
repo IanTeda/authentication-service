@@ -5,7 +5,7 @@
 use fake::Fake;
 use sqlx::{Pool, Postgres};
 
-use personal_ledger_backend::rpc::ledger::{Empty, RevokeRefreshTokenRequest, RevokeUserRefreshTokensRequest};
+use authentication_microservice::rpc::proto::{Empty, RevokeRefreshTokenRequest, RevokeUserRefreshTokensRequest};
 
 use crate::helpers;
 

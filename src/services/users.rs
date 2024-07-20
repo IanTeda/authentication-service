@@ -1,7 +1,7 @@
 //-- ./src/rpc/users.rs
 
 //! RPC service for users endpoint
-//! 
+//!
 //! Contains functions to managing the rpc service endpoints
 //! ---
 
@@ -18,8 +18,8 @@ use uuid::Uuid;
 
 use crate::configuration::Configuration;
 use crate::prelude::BackendError;
-use crate::rpc::ledger::users_server::Users;
-use crate::rpc::ledger::{
+use crate::rpc::proto::users_server::Users;
+use crate::rpc::proto::{
     CreateUserRequest, DeleteUserRequest, DeleteUserResponse, ReadUserRequest,
     UpdateUserRequest, UserIndexRequest, UserIndexResponse, UserResponse,
 };
@@ -134,11 +134,8 @@ impl From<database::Users> for UserResponse {
 #[tonic::async_trait]
 impl Users for UsersService {
     /// Handle rpc requests to create a user in the database
-    #[tracing::instrument(
-        name = "Create User Request: ",
-        skip(self, request),
-    )]
-    async fn create_user(
+    #[tracing::instrument(name = "Create User Request: ", skip(self, request))]
+    async fn create(
         &self,
         request: Request<CreateUserRequest>,
     ) -> Result<Response<UserResponse>, Status> {
@@ -148,16 +145,20 @@ impl Users for UsersService {
 
         //-- 1. Check the token claim user role is admin
         // Get access token claim from request extension
-        let access_token_claim = request_extensions.get::<domain::TokenClaim>().ok_or(
-            BackendError::Static("Token Claim not found in request extension."),
-        )?;
+        let access_token_claim =
+            request_extensions.get::<domain::TokenClaim>().ok_or(
+                BackendError::Static("Token Claim not found in request extension."),
+            )?;
 
         // Parse Token Claim user role into domain type
         let requester_role = domain::UserRole::from_str(&access_token_claim.jur)?;
 
         // If the User Role in the Token Claim is not Admin return early with Tonic Status error
         if requester_role != domain::UserRole::Admin {
-            tracing::error!("User request admin endpoint: {}", &access_token_claim.sub);
+            tracing::error!(
+                "User request admin endpoint: {}",
+                &access_token_claim.sub
+            );
             return Err(Status::unauthenticated("Admin access required!"));
         }
 
@@ -181,7 +182,7 @@ impl Users for UsersService {
     // 	user_email = &request.into_inner().email,
     // )
     )]
-    async fn read_user(
+    async fn read(
         &self,
         request: Request<ReadUserRequest>,
     ) -> Result<Response<UserResponse>, Status> {
@@ -191,16 +192,20 @@ impl Users for UsersService {
 
         //-- 1. Check the token claim user role is admin
         // Get access token claim from request extension
-        let access_token_claim = request_extensions.get::<domain::TokenClaim>().ok_or(
-            BackendError::Static("Token Claim not found in request extension."),
-        )?;
+        let access_token_claim =
+            request_extensions.get::<domain::TokenClaim>().ok_or(
+                BackendError::Static("Token Claim not found in request extension."),
+            )?;
 
         // Parse Token Claim user role into domain type
         let requester_role = domain::UserRole::from_str(&access_token_claim.jur)?;
 
         // If the User Role in the Token Claim is not Admin return early with Tonic Status error
         if requester_role != domain::UserRole::Admin {
-            tracing::error!("User request admin endpoint: {}", &access_token_claim.sub);
+            tracing::error!(
+                "User request admin endpoint: {}",
+                &access_token_claim.sub
+            );
             return Err(Status::unauthenticated("Admin access required!"));
         }
 
@@ -228,7 +233,7 @@ impl Users for UsersService {
     // 	user_email = &request.into_inner().email,
     // )
     )]
-    async fn index_users(
+    async fn index(
         &self,
         request: Request<UserIndexRequest>,
     ) -> Result<Response<UserIndexResponse>, Status> {
@@ -238,16 +243,20 @@ impl Users for UsersService {
 
         //-- 1. Check the token claim user role is admin
         // Get access token claim from request extension
-        let access_token_claim = request_extensions.get::<domain::TokenClaim>().ok_or(
-            BackendError::Static("Token Claim not found in request extension."),
-        )?;
+        let access_token_claim =
+            request_extensions.get::<domain::TokenClaim>().ok_or(
+                BackendError::Static("Token Claim not found in request extension."),
+            )?;
 
         // Parse Token Claim user role into domain type
         let requester_role = domain::UserRole::from_str(&access_token_claim.jur)?;
 
         // If the User Role in the Token Claim is not Admin return early with Tonic Status error
         if requester_role != domain::UserRole::Admin {
-            tracing::error!("User request admin endpoint: {}", &access_token_claim.sub);
+            tracing::error!(
+                "User request admin endpoint: {}",
+                &access_token_claim.sub
+            );
             return Err(Status::unauthenticated("Admin access required!"));
         }
 
@@ -283,7 +292,7 @@ impl Users for UsersService {
     // 	user_email = &request.into_inner().email,
     // )
     )]
-    async fn update_user(
+    async fn update(
         &self,
         request: Request<UpdateUserRequest>,
     ) -> Result<Response<UserResponse>, Status> {
@@ -293,16 +302,20 @@ impl Users for UsersService {
 
         //-- 1. Check the token claim user role is admin
         // Get access token claim from request extension
-        let access_token_claim = request_extensions.get::<domain::TokenClaim>().ok_or(
-            BackendError::Static("Token Claim not found in request extension."),
-        )?;
+        let access_token_claim =
+            request_extensions.get::<domain::TokenClaim>().ok_or(
+                BackendError::Static("Token Claim not found in request extension."),
+            )?;
 
         // Parse Token Claim user role into domain type
         let requester_role = domain::UserRole::from_str(&access_token_claim.jur)?;
 
         // If the User Role in the Token Claim is not Admin return early with Tonic Status error
         if requester_role != domain::UserRole::Admin {
-            tracing::error!("User request admin endpoint: {}", &access_token_claim.sub);
+            tracing::error!(
+                "User request admin endpoint: {}",
+                &access_token_claim.sub
+            );
             return Err(Status::unauthenticated("Admin access required!"));
         }
 
@@ -326,7 +339,7 @@ impl Users for UsersService {
     // 	user_email = &request.into_inner().email,
     // )
     )]
-    async fn delete_user(
+    async fn delete(
         &self,
         request: Request<DeleteUserRequest>,
     ) -> Result<Response<DeleteUserResponse>, Status> {
@@ -336,16 +349,20 @@ impl Users for UsersService {
 
         //-- 1. Check the token claim user role is admin
         // Get access token claim from request extension
-        let access_token_claim = request_extensions.get::<domain::TokenClaim>().ok_or(
-            BackendError::Static("Token Claim not found in request extension."),
-        )?;
+        let access_token_claim =
+            request_extensions.get::<domain::TokenClaim>().ok_or(
+                BackendError::Static("Token Claim not found in request extension."),
+            )?;
 
         // Parse Token Claim user role into domain type
         let requester_role = domain::UserRole::from_str(&access_token_claim.jur)?;
 
         // If the User Role in the Token Claim is not Admin return early with Tonic Status error
         if requester_role != domain::UserRole::Admin {
-            tracing::error!("User request admin endpoint: {}", &access_token_claim.sub);
+            tracing::error!(
+                "User request admin endpoint: {}",
+                &access_token_claim.sub
+            );
             return Err(Status::unauthenticated("Admin access required!"));
         }
 
@@ -359,12 +376,11 @@ impl Users for UsersService {
         let database_record =
             database::Users::from_user_id(&id, self.database_ref()).await?;
 
-        let rows_affected = database_record.delete(self.database_ref()).await? as i64;
+        let rows_affected =
+            database_record.delete(self.database_ref()).await? as i64;
 
         // Convert database user record into a user response message
-        let response_message = DeleteUserResponse { 
-            rows_affected
-        };
+        let response_message = DeleteUserResponse { rows_affected };
 
         Ok(Response::new(response_message))
     }

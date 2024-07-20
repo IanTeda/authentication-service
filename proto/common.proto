@@ -2,7 +2,7 @@
 
 syntax = "proto3";
 
-package ledger;
+package authentication;
 
 // Empty message.
 message Empty {}

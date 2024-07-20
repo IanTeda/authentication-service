@@ -11,15 +11,14 @@ use sqlx::{Pool, Postgres};
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
+use crate::{database, domain};
 use crate::configuration::Configuration;
 use crate::prelude::*;
-use crate::rpc::ledger::authentication_server::Authentication;
-use crate::rpc::ledger::{
-    Empty, LoginRequest, LogoutRequest, LogoutResponse, RefreshRequest,
-    RegisterRequest, ResetPasswordRequest, ResetPasswordResponse, TokenResponse,
-    UpdatePasswordRequest,
-};
-use crate::{database, domain};
+use crate::rpc::proto::{LoginRequest, LogoutRequest, LogoutResponse, RefreshRequest, RegisterRequest, ResetPasswordRequest, ResetPasswordResponse, TokenResponse, UpdatePasswordRequest};
+use crate::rpc::proto::authentication_server::Authentication;
+
+// use crate::rpc::proto::authentication_server::Authentication;
+// use crate::rpc::proto::LoginRequest;
 
 /// Authentication service containing a database pool
 pub struct AuthenticationService {
@@ -154,10 +153,10 @@ impl Authentication for AuthenticationService {
             &refresh_token,
             &token_secret,
         )
-        .map_err(|_| {
-            tracing::error!("Refresh Token is invalid!");
-            BackendError::AuthenticationError("Authentication Failed!".to_string())
-        })?;
+            .map_err(|_| {
+                tracing::error!("Refresh Token is invalid!");
+                BackendError::AuthenticationError("Authentication Failed!".to_string())
+            })?;
 
         //-- 3. Check Refresh Token status in database
         let database_record =
@@ -385,10 +384,10 @@ impl Authentication for AuthenticationService {
             &refresh_token,
             &token_secret,
         )
-        .map_err(|_| {
-            tracing::error!("Refresh Token is invalid!");
-            BackendError::AuthenticationError("Authentication Failed!".to_string())
-        })?;
+            .map_err(|_| {
+                tracing::error!("Refresh Token is invalid!");
+                BackendError::AuthenticationError("Authentication Failed!".to_string())
+            })?;
 
         //-- 3. Get Refresh Token from database
         let database_record =

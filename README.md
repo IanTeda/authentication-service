@@ -54,7 +54,6 @@
 
 
 <!-- ABOUT THE PROJECT -->
-
 ## About The Project
 
 This repository aims to provide a reusable authentication microservice for building other applications along side. The application is built on top of [gRPC](https://grpc.io/).
@@ -67,7 +66,6 @@ This repository started as the basis for a [Personal Ledger](https://github.com/
 
 
 <!-- PROJECT IS BUILT WITH -->
-
 ### Built With
 
 The following technology stack has been used in building this microservice:
@@ -78,12 +76,9 @@ The following technology stack has been used in building this microservice:
 * [JSON Web Tokens](https://jwt.io/) - An open, industry standard RFC 7519 method for representing claims securely between two parties.
 * [Sqlx](https://github.com/launchbadge/sqlx) - SQLx is an async, pure Rust† SQL crate featuring compile-time checked queries without a DSL.
 
-
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- PROJECT FEATURES CURRENT AND FUTURE -->
-
 ### Features
 
 This microservice has the following features, with a future road map of features un-ticked below:
@@ -103,9 +98,7 @@ This microservice has the following features, with a future road map of features
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
 <!-- GETTING STARTED -->
-
 ## Getting Started
 
 The **Getting Started** section contains prerequisites, installation and usage.
@@ -123,9 +116,7 @@ This microservice is intended to be used within a docker container
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
 <!-- USAGE -->
-
 ## Usage
 
 The microservice can be used by accessing it through the configured IP and port, utilising the defined proto files.
@@ -151,7 +142,6 @@ grpcui -import-path . -proto ./proto/ledger.proto -plaintext 127.0.0.1:8091
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- CONTRIBUTING -->
-
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
@@ -169,7 +159,6 @@ Don't forget to give the project a star! Thanks again!
 
 
 <!-- LICENSE -->
-
 ## License
 
 Distributed under the GPL-3.0 License. See `LICENSE.txt` for more information.
@@ -178,17 +167,15 @@ Distributed under the GPL-3.0 License. See `LICENSE.txt` for more information.
 
 
 <!-- CONTACT -->
-
 ## Contact
 
 Ian Teda - [@ian_teda](https://twitter.com/ian_teda) - [ian@teda.id.au](mailto:ian@teda.id.au)
 
-Project Link: [https://github.com/IanTeda/personal_ledger](https://github.com/IanTeda/authentication_microservice)
+Project Link: [https://github.com/IanTeda/authentication_microservice](https://github.com/IanTeda/authentication_microservice)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- REFERENCES -->
-
 ## References  Similar Projects
 
 * [YouTube Video](https://www.youtube.com/watch?v=oxx7MmN4Ib0&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)

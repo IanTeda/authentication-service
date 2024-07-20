@@ -1,8 +1,11 @@
-//-- ./proto/users.proto
+//-- ./proto/authentication.proto
+
+/// Authentication Service definitions
+/// ---
 
 syntax = "proto3";
 
-package ledger;
+package authentication;
 
 import "common.proto";
 

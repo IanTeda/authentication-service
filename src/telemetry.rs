@@ -50,8 +50,8 @@ use tracing_subscriber::{
 ///
 /// * `name` - Name to append to all span and event formatted records.
 /// * `sink` - Write formatted records to the sink.
-/// * `env` - Takes a personal_ledger_server::configuration::Env enum value
-/// * `log_level` - Takes a Takes a personal_ledger_server::configuration::LogLevels enum value
+/// * `env` - Takes a authentication_microservice::configuration::Env enum value
+/// * `log_level` - Takes a Takes a authentication_microservice::configuration::LogLevels enum value
 ///
 pub fn get_tracing_subscriber<Sink>(
     name: String,

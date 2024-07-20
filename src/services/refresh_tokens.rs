@@ -14,16 +14,15 @@ use sqlx::{Pool, Postgres};
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
+use crate::{database, domain};
 use crate::configuration::Configuration;
 use crate::prelude::BackendError;
-
-use crate::rpc::ledger::refresh_tokens_server::RefreshTokens;
-use crate::rpc::ledger::{
+use crate::rpc::proto::{
     DeleteRefreshTokenRequest, DeleteUserRefreshTokensRequest, Empty,
     RefreshTokensResponse, RevokeRefreshTokenRequest,
     RevokeUserRefreshTokensRequest,
 };
-use crate::{database, domain};
+use crate::rpc::proto::refresh_tokens_server::RefreshTokens;
 
 /// User service containing a database pool
 // #[derive(Debug)]
@@ -289,7 +288,7 @@ impl RefreshTokens for RefreshTokensService {
             &user_id,
             self.database_ref(),
         )
-        .await? as i64;
+            .await? as i64;
 
         // Build Refresh Token Response message
         let response_message = RefreshTokensResponse { rows_affected };

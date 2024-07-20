@@ -12,16 +12,14 @@
 //! * `reset_password`: Reset my forgotten password
 //! * `logout`: Log me out
 
-use fake::{faker::internet::en::SafeEmail, Fake};
+use fake::{Fake, faker::internet::en::SafeEmail};
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
 use tonic::Code;
 use uuid::Uuid;
 
-use personal_ledger_backend::{
-    domain,
-    rpc::ledger::LoginRequest,
-};
+use authentication_microservice::domain;
+use authentication_microservice::rpc::proto::LoginRequest;
 
 use crate::helpers;
 

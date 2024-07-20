@@ -18,17 +18,17 @@ use tonic::transport::Channel;
 
 /// Convenience type alias for authentication client.
 pub type AuthenticationClient =
-personal_ledger_backend::rpc::ledger::authentication_client::AuthenticationClient<Channel>;
+authentication_microservice::rpc::proto::authentication_client::AuthenticationClient<Channel>;
 
 /// Convenience type alias for refresh token client
 pub type RefreshTokensClient =
-personal_ledger_backend::rpc::ledger::refresh_tokens_client::RefreshTokensClient<
+authentication_microservice::rpc::proto::refresh_tokens_client::RefreshTokensClient<
     InterceptedService<Channel, AccessTokenInterceptor>,
 >;
 
 // Convenience type alias for users client
 pub type UsersClient =
-personal_ledger_backend::rpc::ledger::users_client::UsersClient<
+authentication_microservice::rpc::proto::users_client::UsersClient<
     InterceptedService<Channel, AccessTokenInterceptor>,
 >;
 
@@ -73,10 +73,10 @@ impl TonicClient {
         let authentication = AuthenticationClient::new(inner.clone());
 
         // Build Refresh Tokens client request
-        let refresh_tokens = personal_ledger_backend::rpc::ledger::refresh_tokens_client::RefreshTokensClient::with_interceptor(inner.clone(), interceptor.clone());
+        let refresh_tokens = authentication_microservice::rpc::proto::refresh_tokens_client::RefreshTokensClient::with_interceptor(inner.clone(), interceptor.clone());
 
         // Build Users client request
-        let users = personal_ledger_backend::rpc::ledger::users_client::UsersClient::with_interceptor(inner.clone(), interceptor.clone());
+        let users = authentication_microservice::rpc::proto::users_client::UsersClient::with_interceptor(inner.clone(), interceptor.clone());
 
         let client = TonicClient {
             authentication,

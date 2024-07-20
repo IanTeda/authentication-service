@@ -10,7 +10,7 @@ use fake::{faker::internet::en::SafeEmail, Fake};
 use secrecy::Secret;
 use uuid::Uuid;
 
-use personal_ledger_backend::{database, domain, error};
+use authentication_microservice::{database, domain, error};
 
 pub fn uuid_v7() -> Uuid {
     // Generate random DateTime after UNIX time epoch (00:00:00 UTC on 1 January 1970)

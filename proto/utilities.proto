@@ -1,8 +1,8 @@
-//-- ./proto/ledger.proto
+//-- ./proto/utilities.proto
 
 syntax = "proto3";
 
-package ledger;
+package authentication;
 
 import "common.proto";
 

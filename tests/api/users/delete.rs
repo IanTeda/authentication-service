@@ -2,8 +2,9 @@
 
 // #![allow(unused)] // For beginning only.
 
-use personal_ledger_backend::rpc::ledger::DeleteUserRequest;
 use sqlx::{Pool, Postgres};
+
+use authentication_microservice::rpc::proto::DeleteUserRequest;
 
 use crate::helpers;
 

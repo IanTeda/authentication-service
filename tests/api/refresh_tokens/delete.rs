@@ -3,8 +3,9 @@
 // #![allow(unused)] // For beginning only.
 
 use fake::Fake;
-use personal_ledger_backend::rpc::ledger::{DeleteRefreshTokenRequest, DeleteUserRefreshTokensRequest, Empty};
 use sqlx::{Pool, Postgres};
+
+use authentication_microservice::rpc::proto::{DeleteRefreshTokenRequest, DeleteUserRefreshTokensRequest, Empty};
 
 use crate::helpers;
 

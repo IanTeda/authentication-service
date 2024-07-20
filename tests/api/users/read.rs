@@ -3,11 +3,12 @@
 // #![allow(unused)] // For beginning only.
 
 use fake::Fake;
-use personal_ledger_backend::{
-    database,
-    rpc::ledger::{ReadUserRequest, UserIndexRequest},
-};
 use sqlx::{Pool, Postgres};
+
+use authentication_microservice::{
+    database,
+    rpc::proto::{ReadUserRequest, UserIndexRequest},
+};
 
 use crate::helpers;
 
@@ -50,7 +51,7 @@ async fn id_returns_user(database: Pool<Postgres>) -> Result<()> {
     // User email should be equal
     assert_eq!(database_record.email.as_ref(), response_message.email);
 
-    // User name should be equal
+    // Username should be equal
     assert_eq!(database_record.name.as_ref(), response_message.name);
 
     // User role should be equal
@@ -70,6 +71,7 @@ async fn id_returns_user(database: Pool<Postgres>) -> Result<()> {
     Ok(())
 }
 
+//TODO: Fix edge case tests that fail
 /// Check the read user index returns a collection of users
 #[sqlx::test]
 async fn index_returns_users(pool: Pool<Postgres>) -> Result<()> {

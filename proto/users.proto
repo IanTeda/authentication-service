@@ -2,16 +2,14 @@
 
 syntax = "proto3";
 
-package ledger;
-
-import "common.proto";
+package authentication;
 
 service Users {
-  rpc CreateUser (CreateUserRequest) returns (UserResponse);
-  rpc ReadUser (ReadUserRequest) returns (UserResponse);
-  rpc IndexUsers (UserIndexRequest) returns (UserIndexResponse);
-  rpc UpdateUser (UpdateUserRequest) returns (UserResponse);
-  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+  rpc Create (CreateUserRequest) returns (UserResponse);
+  rpc Read (ReadUserRequest) returns (UserResponse);
+  rpc Index (UserIndexRequest) returns (UserIndexResponse);
+  rpc Update (UpdateUserRequest) returns (UserResponse);
+  rpc Delete (DeleteUserRequest) returns (DeleteUserResponse);
 }
 
 message CreateUserRequest {

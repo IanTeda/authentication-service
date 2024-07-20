@@ -10,7 +10,7 @@
 use std::sync::Arc;
 
 use once_cell::sync::Lazy;
-use personal_ledger_backend::{
+use authentication_microservice::{
     configuration::{Configuration, Environment, LogLevels},
     domain, startup, telemetry,
 };

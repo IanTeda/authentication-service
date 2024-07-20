@@ -10,5 +10,5 @@ database:
   port: 5432
   username: "postgres"
   password: "postgres"
-  database_name: "personal_ledger"
+  database_name: "authentication"
   require_ssl: false

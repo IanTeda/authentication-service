@@ -284,6 +284,44 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
+name = "authentication_microservice"
+version = "0.1.0"
+dependencies = [
+ "argon2",
+ "chrono",
+ "claims",
+ "config",
+ "derive_more",
+ "fake",
+ "jsonwebtoken",
+ "once_cell",
+ "prost",
+ "rand",
+ "secrecy",
+ "serde",
+ "serde-aux",
+ "serde_json",
+ "sqlx",
+ "strum",
+ "telemetry",
+ "thiserror",
+ "time",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-build",
+ "tonic-reflection",
+ "tracing",
+ "tracing-actix-web",
+ "tracing-bunyan-formatter",
+ "tracing-log 0.2.0",
+ "tracing-subscriber",
+ "unicode-segmentation",
+ "uuid",
+ "validator",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1548,44 +1586,6 @@ name = "percent-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
-
-[[package]]
-name = "personal_ledger_backend"
-version = "0.1.0"
-dependencies = [
- "argon2",
- "chrono",
- "claims",
- "config",
- "derive_more",
- "fake",
- "jsonwebtoken",
- "once_cell",
- "prost",
- "rand",
- "secrecy",
- "serde",
- "serde-aux",
- "serde_json",
- "sqlx",
- "strum",
- "telemetry",
- "thiserror",
- "time",
- "tokio",
- "tokio-stream",
- "tonic",
- "tonic-build",
- "tonic-reflection",
- "tracing",
- "tracing-actix-web",
- "tracing-bunyan-formatter",
- "tracing-log 0.2.0",
- "tracing-subscriber",
- "unicode-segmentation",
- "uuid",
- "validator",
-]
 
 [[package]]
 name = "petgraph"

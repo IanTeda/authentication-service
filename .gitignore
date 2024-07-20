@@ -4,6 +4,7 @@
 !.github
 !.devcontainer
 !.vscode
+!.sqlx
 
 # By default
 _*

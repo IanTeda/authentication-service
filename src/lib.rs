@@ -8,7 +8,6 @@ pub mod domain;
 pub mod error;
 pub mod middleware;
 pub mod prelude;
-pub mod reflections;
 pub mod router;
 pub mod rpc;
 pub mod services;

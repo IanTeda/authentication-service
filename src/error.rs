@@ -53,9 +53,7 @@ pub enum BackendError {
     // Config errors
     #[error(transparent)]
     Config(#[from] config::ConfigError),
-    // Tonic Reflections errors
-    #[error(transparent)]
-    TonicReflection(#[from] tonic_reflection::server::Error),
+
     // Tonic transport errors
     #[error(transparent)]
     TonicTransport(#[from] tonic::transport::Error),
@@ -87,6 +85,11 @@ pub enum BackendError {
 
     #[error("json web token: {0}")]
     JsonWebToken(#[from] jsonwebtoken::errors::Error),
+
+    // Tonic Reflections errors
+    #[error(transparent)]
+    TonicReflection(#[from] tonic_reflection::server::Error),
+
 }
 
 impl From<BackendError> for tonic::Status {
