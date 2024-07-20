@@ -245,6 +245,7 @@ mod tests {
         // Generate a password that meets the minimum requirements in parse
         let random_count = (5..30).fake::<i64>() as usize;
         let password_secret = Secret::new("aB1%".repeat(random_count));
+        // let password_secret = Secret::new("S3cret-Admin-Pas$word!".to_string());
 
         //-- Execute Function (Act)
         // Parse a password hash from the domain
