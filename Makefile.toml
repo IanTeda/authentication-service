@@ -62,14 +62,18 @@ install_crate = "cargo"
 command = "test"
 args = ["--features", "mock"]
 
-# $ cargo make docker_image
-# docker build --network host --tag personal_ledger_server --file Dockerfile .
-[tasks.docker_image]
+[tasks.sqlx_offline]
+install_crate = "sqlx-cli"
+command = "cargo"
+args = ["sqlx", "prepare", "--", "--bin", "authentication_microservice"]
+
+[tasks.docker_build]
 command = "docker"
 args = [
-    "build", 
-    "--network", "host", 
-    "--tag", "personal_ledger_server", 
-    "--file", "Dockerfile", 
-    "."
+    "build",
+    "--tag", "authentication:latest",
+    "--file", "Dockerfile", ".", 
 ]
+
+[tasks.docker_image]
+dependencies = ["sqlx_offline", "docker_build"]

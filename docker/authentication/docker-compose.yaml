@@ -1,0 +1,54 @@
+# This docker-compose file is used to test the Dockerfile build with a Postgres
+# container
+---
+volumes:
+  authentication:
+    
+networks:
+  default: # this docker-compose network
+    name: authentication
+    driver: bridge
+
+services:
+   # https://hub.docker.com/_/postgres/tags
+  postgres:
+    image: postgres:${POSTGRES_VERSION:-latest}
+    container_name: authentication_postgres
+    restart: unless-stopped
+    # Port does not need to be mapped, consider commenting out when running
+    ports:
+      - 5433:5432
+    volumes:
+      - authentication:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=authentication
+      - POSTGRES_PASSWORD=authentication
+      - POSTGRES_DB=authentication
+      - POSTGRES_HOSTNAME=postgres
+    healthcheck:
+      test: pg_isready -U postgres -h 127.0.0.1
+      interval: 5s
+
+  # https://hub.docker.com/_/postgres/tags
+  adminer:
+    image: adminer:${ADMINER_VERSION:-latest}
+    container_name: authentication_adminer
+    restart: unless-stopped
+    ports:
+      - 8083:8080
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres:5432
+      - ADMINER_DESIGN=galkaev
+    depends_on:
+      - postgres
+
+  authentication:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    image: authentication:latest
+    container_name: authentication
+    depends_on:
+      - postgres
+    ports:
+      - 8082:8081

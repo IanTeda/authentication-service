@@ -40,7 +40,7 @@ async fn delete_returns_rows_deleted(database: Pool<Postgres>) -> Result<()> {
     // Send request to the server with a response message being sent back
     let response_message = tonic_client
         .users()
-        .delete_user(request_message)
+        .delete(request_message)
         .await?
         .into_inner();
 

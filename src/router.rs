@@ -74,11 +74,11 @@ pub fn get_router(
     // Build RPC server router
     let router = Server::builder()
         .trace_fn(|_| tracing::info_span!("Tonic"))
+        .add_service(reflections_server)
         .add_service(utilities_server)
         .add_service(authentication_server)
         .add_service(users_server)
-        .add_service(refresh_tokens_server)
-        .add_service(reflections_server);
+        .add_service(refresh_tokens_server);
 
     Ok(router)
 }

@@ -41,7 +41,7 @@ async fn id_returns_user(database: Pool<Postgres>) -> Result<()> {
 
     // Send request to tonic server and get a response message
     let response_message =
-        tonic_client.users().read_user(request).await?.into_inner();
+        tonic_client.users().read(request).await?.into_inner();
     // println!("{response_message:#?}");
 
     //-- Checks (Assertions)
@@ -114,7 +114,7 @@ async fn index_returns_users(pool: Pool<Postgres>) -> Result<()> {
     // Send request to tonic server and get a response message
     let response_message = tonic_client
         .users()
-        .index_users(request_message)
+        .index(request_message)
         .await?
         .into_inner();
     // println!("{response:#?}");

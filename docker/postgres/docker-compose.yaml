@@ -3,7 +3,7 @@
 ---
 
 volumes:
-  personal_ledger_dev:
+  authentication_dev:
     
 networks:
   default: # this docker-compose network
@@ -19,7 +19,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - personal_ledger_dev:/var/lib/postgresql/data
+      - authentication_dev:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

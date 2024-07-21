@@ -52,7 +52,7 @@ async fn user_returns_update(database: Pool<Postgres>) -> Result<()> {
     // Send request to tonic server and get response message
     let response_message = tonic_client
         .users()
-        .update_user(request)
+        .update(request)
         .await?
         .into_inner();
     // println!("{response_message:#?}");

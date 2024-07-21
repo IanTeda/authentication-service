@@ -13,6 +13,7 @@
     ],
     "cSpell.words": [
         "analyzer",
+        "Buildx",
         "codegen",
         "customizations",
         "Decrusting",
@@ -35,6 +36,7 @@
         "protoc",
         "protos",
         "quickcheck",
+        "RUSTTARGET",
         "rustup",
         "serayuzgur",
         "Subsec",

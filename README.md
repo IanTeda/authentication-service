@@ -56,7 +56,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-This repository aims to provide a reusable authentication microservice for building other applications along side. The application is built on top of [gRPC](https://grpc.io/).
+This repository aims to provide a reusable authentication microservice for building other applications along side.
 
 Following initial authentication of a user through a unique email and password, [tokens](https://jwt.io/) are used to verify the authenticity of a request and maintain sessions. A token secret (phrase) is used to encode the token, which can be used by other microservices to decode access tokens to confirm authenticity of a request.
 
@@ -92,6 +92,7 @@ This microservice has the following features, with a future road map of features
 - [ ] Rate limitations
 - [ ] Two factor authentication
 - [ ] User sign up (registration)
+- [ ] Verify email address
 - [ ] Forgotten password email recovery
 - [ ] OAuth integration
 - [ ] Support other database types
@@ -136,7 +137,7 @@ grpcui -import-path . -proto ./proto/ledger.proto -plaintext 127.0.0.1:8091
 ```
 
 ```zsh
-grpcui -import-path . -proto ./proto/ledger.proto -plaintext 127.0.0.1:8091
+grpcui -plaintext 127.0.0.1:8091
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

@@ -1,0 +1,46 @@
+# ./.github/workflows/binaries.yaml
+
+# A Github action that builds and pushes binaries to the Github Release that triggered it
+# Read/Write permission needs  to be set in Repository Workflow Permissions
+---
+name: Build and Publish Binaries to Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+    name: release ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # What architectures should it compile to
+          - target: x86_64-pc-windows-gnu
+            archive: zip
+          - target: x86_64-unknown-linux-musl
+            archive: tar.gz
+          - target: x86_64-apple-darwin
+            archive: zip
+
+    steps:
+      # 1. Checkout repo for the workflow
+      # A Github Action for checking out a repo for the workflow
+      # https://github.com/actions/checkout
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2 . Build and upload artifact
+      # https://github.com/rust-build/rust-build.action
+      - name: Compile binaries and upload to release
+        uses: rust-build/rust-build.action@v1.4.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          RUSTTARGET: ${{ matrix.target }}
+          ARCHIVE_TYPES: ${{ matrix.archive }}
+          ARCHIVE_NAME: "authentication"
+          PRE_BUILD: "./.github/workflows/pre-build.sh" # I need to be executable (chmod +x)
+          MINIFY: "yes"

@@ -46,7 +46,7 @@ async fn returns_created_user(database: Pool<Postgres>) -> Result<()> {
     // Send request to tonic server and get response message
     let response_message = tonic_client
         .users()
-        .create_user(request)
+        .create(request)
         .await?
         .into_inner();
     // println!("{response_message:#?}");

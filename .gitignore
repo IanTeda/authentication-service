@@ -10,7 +10,7 @@
 _*
 
 # Reference books and stuff
-reference/
+references/
 
 # --- Rust
 target/
