@@ -40,8 +40,8 @@ impl Logins {
             "#,
             id
         )
-        .fetch_one(database)
-        .await?;
+            .fetch_one(database)
+            .await?;
 
         tracing::debug!("Login database record retrieved: {database_record:#?}");
 
@@ -82,8 +82,8 @@ impl Logins {
             limit,
             offset,
         )
-        .fetch_all(database)
-        .await?;
+            .fetch_all(database)
+            .await?;
 
         tracing::debug!("Login database records retrieved: {database_records:#?}");
 
@@ -118,8 +118,8 @@ impl Logins {
             limit,
             offset,
         )
-        .fetch_all(database)
-        .await?;
+            .fetch_all(database)
+            .await?;
 
         tracing::debug!("Login database records retrieved: {database_records:#?}");
 
@@ -153,7 +153,7 @@ mod tests {
 
         //-- Execute Function (Act)
         let database_record =
-            database::Logins::from_id(&random_login.id, &database).await?;
+            Logins::from_id(&random_login.id, &database).await?;
         // println!("{database_record:#?}");
 
         //-- Checks (Assertions)
@@ -183,13 +183,13 @@ mod tests {
 
         // Get a random offset from the count
         let random_offset = (1..random_count).fake::<i64>();
-        let database_records = database::Logins::index_user(
+        let database_records = Logins::index_user(
             &random_user.id,
             &random_limit,
             &random_offset,
             &database,
         )
-        .await?;
+            .await?;
         // println!("{database_record:#?}");
 
         //-- Checks (Assertions)
@@ -223,12 +223,12 @@ mod tests {
         let random_limit = (1..random_count).fake::<i64>();
         // Get a random offset from the count
         let random_offset = (1..random_count).fake::<i64>();
-        let database_records = database::Logins::index(
+        let database_records = Logins::index(
             &random_limit,
             &random_offset,
             &database,
         )
-        .await?;
+            .await?;
         // println!("{database_record:#?}");
 
         //-- Checks (Assertions)

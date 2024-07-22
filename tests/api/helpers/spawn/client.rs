@@ -56,6 +56,8 @@ impl TonicClient {
         &mut self.users
     }
 
+    //noinspection RsUnnecessaryQualifications
+    //noinspection RsUnnecessaryQualifications
     /// Spawn a new tonic client based on the tonic server
     pub async fn spawn_client(
         server: &super::TonicServer,

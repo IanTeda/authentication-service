@@ -185,7 +185,7 @@ mod tests {
         let random_login = random_login.insert(&database).await?;
 
         //-- Execute Function (Act)
-        let rows_affected = database::Logins::delete_by_id(&random_login.id, &database).await?;
+        let rows_affected = Logins::delete_by_id(&random_login.id, &database).await?;
         // println!("{database_record:#?}");
 
         //-- Checks (Assertions)
@@ -211,7 +211,7 @@ mod tests {
 
         //-- Execute Function (Act)
         let rows_affected =
-            database::Logins::delete_all_user_id(&random_user.id, &database).await?;
+            Logins::delete_all_user_id(&random_user.id, &database).await?;
         // println!("{database_record:#?}");
 
         //-- Checks (Assertions)
@@ -221,6 +221,7 @@ mod tests {
         Ok(())
     }
 
+    //noinspection DuplicatedCode
     #[sqlx::test]
     async fn delete_all(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
@@ -235,7 +236,7 @@ mod tests {
         }
 
         //-- Execute Function (Act)
-        let rows_affected = database::Logins::delete_all(&database).await?;
+        let rows_affected = Logins::delete_all(&database).await?;
         // println!("{database_record:#?}");
 
         //-- Checks (Assertions)

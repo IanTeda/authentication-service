@@ -32,7 +32,7 @@ impl RefreshTokens {
         let is_active = true;
         let created_on = Utc::now();
 
-        Ok (Self {
+        Ok(Self {
             id,
             user_id,
             token,
@@ -43,8 +43,8 @@ impl RefreshTokens {
 
     #[cfg(test)]
     pub async fn mock_data(
-        user: &crate::database::Users,
-    ) -> Result<Self, crate::error::BackendError> {
+        user: &database::Users,
+    ) -> Result<Self, BackendError> {
         use fake::faker::boolean::en::Boolean;
         use fake::faker::chrono::en::DateTime;
         use fake::Fake;
