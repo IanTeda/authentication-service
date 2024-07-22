@@ -1,6 +1,6 @@
 //-- ./src/database/users/model.rs
 
-//! The Users model
+//! The Users database model
 //! ---
 
 // #![allow(unused)] // For development only

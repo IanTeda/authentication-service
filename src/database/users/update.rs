@@ -5,8 +5,8 @@
 
 // #![allow(unused)] // For development only
 
-use crate::database::Users;
 use crate::{domain, prelude::*};
+use crate::database::Users;
 
 impl Users {
     /// Update a `User` into the database, returning result with a UserModel instance.
@@ -18,7 +18,7 @@ impl Users {
     /// ---
     #[tracing::instrument(
         name = "Update a User in the database: ",
-        skip(self, database)
+        skip(database)
     )]
     pub async fn update(
         &self,
