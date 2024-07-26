@@ -6,3 +6,4 @@
 
 echo "Installing build dependencies"
 apk add protoc protobuf-dev
+# cargo clean
