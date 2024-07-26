@@ -82,9 +82,9 @@ pub fn users(password: &String) -> Result<database::Users, BackendError> {
     Ok(random_user)
 }
 
-pub fn refresh_tokens(
+pub fn sessions(
     user: &database::Users,
-) -> Result<database::RefreshTokens, BackendError> {
+) -> Result<database::Sessions, BackendError> {
     use chrono::SubsecRound;
     use fake::faker::boolean::en::Boolean;
     use fake::faker::chrono::en::DateTime;
@@ -107,10 +107,10 @@ pub fn refresh_tokens(
     let random_created_on: DateTime<Utc> = DateTime().fake();
     let random_created_on = random_created_on.round_subsecs(0);
 
-    let random_refresh_token = database::RefreshTokens {
+    let random_refresh_token = database::Sessions {
         id: random_id,
         user_id,
-        token: random_token,
+        refresh_token: random_token,
         is_active: random_is_active,
         created_on: random_created_on,
     };

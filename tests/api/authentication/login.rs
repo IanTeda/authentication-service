@@ -78,9 +78,9 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     let logins = database::Logins::index_user(&random_user.id, &10, &0, &database).await?;
     assert_eq!(random_user.id, logins[0].user_id);
 
-    // Confirm Refresh Token is in the database
-    let refresh_tokens = database::RefreshTokens::index_from_user_id(&random_user.id, &10, &0, &database).await?;
-    assert_eq!(random_user.id, refresh_tokens[0].user_id);
+    // Confirm Session is in the database
+    let sessions = database::Sessions::index_from_user_id(&random_user.id, &10, &0, &database).await?;
+    assert_eq!(random_user.id, sessions[0].user_id);
     
     //-- 4. Return
     Ok(())
@@ -145,9 +145,9 @@ async fn default_user_login(database: Pool<Postgres>) -> Result<()> {
     let logins = database::Logins::index_user(&default_user.id, &10, &0, &database).await?;
     assert_eq!(default_user.id, logins[0].user_id);
 
-    // Confirm Refresh Token is in the database
-    let refresh_tokens = database::RefreshTokens::index_from_user_id(&default_user.id, &10, &0, &database).await?;
-    assert_eq!(default_user.id, refresh_tokens[0].user_id);
+    // Confirm Session is in the database
+    let sessions = database::Sessions::index_from_user_id(&default_user.id, &10, &0, &database).await?;
+    assert_eq!(default_user.id, sessions[0].user_id);
     
     //-- 4. Return
     Ok(())

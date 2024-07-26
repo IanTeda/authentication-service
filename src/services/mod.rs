@@ -6,13 +6,13 @@
 pub use authentication::AuthenticationService;
 pub use logins::LoginsService;
 pub use reflections::ReflectionsService;
-pub use refresh_tokens::RefreshTokensService;
+pub use sessions::SessionsService;
 pub use users::UsersService;
 pub use utilities::UtilitiesService;
 
 mod authentication;
 mod logins;
 mod reflections;
-mod refresh_tokens;
+mod sessions;
 mod users;
 mod utilities;

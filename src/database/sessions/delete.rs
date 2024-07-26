@@ -1,14 +1,7 @@
-//-- ./src/database/refresh_tokens/delete.rs
+//-- ./src/database/sessions/delete.rs
 
-//! Delete RefreshToken in the database, returning a Result with an u64 of the number
+//! Delete Session in the database, returning a Result with an u64 of the number
 //! of rows affected.
-//!
-//! This module adds two impl methods to RefreshTokenModel:
-//!
-//! 1. `delete`: Delete a Refresh Token instance in the database, returning the number of rows affected.
-//! 2. `delete_by_id`: Delete a Refresh Token by row PK (id)
-//! 3. `delete_all_user_id`: Delete all Refresh Token instances for a given user_id, returning the number of rows affected
-//! 4. `delete_all`: Delete all Refresh Tokens in the database, returning the number of rows deleted
 //! ---
 
 // #![allow(unused)] // For development only
@@ -16,28 +9,21 @@
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
-use crate::database::RefreshTokens;
+use crate::database::Sessions;
 use crate::prelude::*;
 
-impl RefreshTokens {
-    /// Delete a Refresh Token from the database, returning a Result with the number 
+impl Sessions {
+    /// Delete a Sessions from the database, returning a Result with the number
     /// of rows deleted or a sqlx error.
     ///
     /// # Parameters
     ///
-    /// * `self` - The Refresh Token instance to be deleted.
+    /// * `self` - The Sessions instance to be deleted.
     /// * `database` - An sqlx database pool that the thing will be searched in.
     /// ---
     #[tracing::instrument(
-        name = "Delete a Refresh Token from the database using it self: ",
-        skip(self, database),
-        fields(
-            db_id = % self.id,
-            user_id = % self.user_id,
-            refresh_token = % self.token.as_ref(),
-            is_active = % self.is_active,
-            created_on = % self.created_on,
-        ),
+        name = "Delete Sessions instance from the database: ",
+        skip(database)
     )]
     pub async fn delete(
         &self,
@@ -46,7 +32,7 @@ impl RefreshTokens {
         let rows_affected = sqlx::query!(
             r#"
                     Delete
-                    FROM refresh_tokens
+                    FROM sessions
                     WHERE id = $1
                 "#,
             self.id
@@ -55,27 +41,22 @@ impl RefreshTokens {
         .await?
         .rows_affected();
 
-        tracing::debug!(
-            "Refresh Token database records deleted: {rows_affected:#?}"
-        );
+        tracing::debug!("Sessions rows database records deleted: {rows_affected:#?}");
 
         Ok(rows_affected)
     }
 
-    /// Delete a Refresh Token from the database by querying the Refresh Token uuid, 
+    /// Delete a Sessions from the database by querying the Sessions uuid,
     /// returning a Result with the number of rows deleted or a sqlx error.
     ///
     /// # Parameters
     ///
-    /// * `id` - Uuid: The Refresh Token instance to be deleted.
+    /// * `id` - Uuid: The Sessions id to be deleted.
     /// * `database` - An sqlx database pool that the thing will be searched in.
     /// ---
     #[tracing::instrument(
-        name = "Delete a Refresh Token from the database using its id (uuid): ",
-        skip(id, database),
-        fields(
-            db_id = %id,
-        ),
+        name = "Delete Sessions from the database: ",
+        skip(database)
     )]
     pub async fn delete_by_id(
         id: &Uuid,
@@ -84,7 +65,7 @@ impl RefreshTokens {
         let rows_affected = sqlx::query!(
             r#"
                     Delete
-                    FROM refresh_tokens
+                    FROM sessions
                     WHERE id = $1
                 "#,
             id
@@ -93,36 +74,31 @@ impl RefreshTokens {
         .await?
         .rows_affected();
 
-        tracing::debug!(
-            "Refresh Token database records deleted: {rows_affected:#?}"
-        );
+        tracing::debug!("Sessions row database deleted: {rows_affected:#?}");
 
         Ok(rows_affected)
     }
 
-    /// Delete all Refresh Tokens from the database associated with a user_id, 
+    /// Delete all Sessions from the database associated with a user_id,
     /// returning a Result with the number of rows deleted or a sqlx error.
     ///
     /// # Parameters
     ///
-    /// * `user_id` - Uuid: The user_id for the Refresh Tokens to be deleted
+    /// * `user_id` - Uuid: The user_id for the Sessions to be deleted
     /// * `database` - An sqlx database pool that the thing will be searched in.
     /// ---
     #[tracing::instrument(
-        name = "Delete all Refresh Token from the database associated with user_id (uuid): ",
-        skip(user_id, database),
-        fields(
-            user_id = % user_id,
-        ),
+        name = "Delete all Users Sessions from the database: ",
+        skip(database)
     )]
-    pub async fn delete_all_user_id(
+    pub async fn delete_all_user(
         user_id: &Uuid,
         database: &Pool<Postgres>,
     ) -> Result<u64, BackendError> {
         let rows_affected = sqlx::query!(
             r#"
                     Delete
-                    FROM refresh_tokens
+                    FROM sessions
                     WHERE user_id = $1
                 "#,
             user_id
@@ -131,43 +107,35 @@ impl RefreshTokens {
         .await?
         .rows_affected();
 
-        tracing::debug!(
-            "Refresh Token database records deleted: {rows_affected:#?}"
-        );
+        tracing::debug!("Sessions database records deleted: {rows_affected:#?}");
 
         Ok(rows_affected)
     }
 
-    /// Delete all Refresh Tokens from the database, returning a Result
-    /// with the u64 number of rows deleted or a sqlx error.
+    /// Delete all Sessions from the database, returning a Result with the u64 
+    /// number of rows deleted or a sqlx error.
     ///
     /// # Parameters
     ///
-    /// * `user_id` - The user_id for the Refresh Tokens to be deleted
     /// * `database` - An sqlx database pool that the thing will be searched in.
     /// ---
     #[tracing::instrument(
-        name = "Delete all Refresh Token from the database: ",
-        skip(database),
+        name = "Delete all Sessions from the database: ",
+        skip(database)
     )]
-    pub async fn delete_all(
-        database: &Pool<Postgres>,
-    ) -> Result<u64, BackendError> {
+    pub async fn delete_all(database: &Pool<Postgres>) -> Result<u64, BackendError> {
         let rows_affected = sqlx::query!(
             r#"
                 Delete
-                FROM refresh_tokens
+                FROM sessions
 
             "#,
-
         )
         .execute(database)
         .await?
         .rows_affected();
 
-        tracing::debug!(
-            "Refresh Token database records deleted: {rows_affected:#?}"
-        );
+        tracing::debug!("Sessions rows deleted from the database: {rows_affected:#?}");
 
         Ok(rows_affected)
     }
@@ -189,7 +157,6 @@ pub mod tests {
     pub type Result<T> = core::result::Result<T, Error>;
     pub type Error = Box<dyn std::error::Error>;
 
-    // Test getting user from database using unique UUID
     #[sqlx::test]
     async fn delete_self(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
@@ -197,18 +164,17 @@ pub mod tests {
         let random_user = database::Users::mock_data()?;
 
         // Insert user in the database
-        random_user.insert(&database).await?;
+        let random_user = random_user.insert(&database).await?;
 
-        // Generate refresh token
-        let refresh_token =
-            database::RefreshTokens::mock_data(&random_user).await?;
+        // Generate sessions
+        let session = database::Sessions::mock_data(&random_user).await?;
 
-        // Insert refresh token in the database for deleting
-        refresh_token.insert(&database).await?;
+        // Insert session in the database for deleting
+        let _database_record = session.insert(&database).await?;
 
         //-- Execute Function (Act)
         // Delete self from the database
-        let rows_affected = refresh_token.delete(&database).await?;
+        let rows_affected = session.delete(&database).await?;
         // println!("{record:#?}");
 
         //-- Checks (Assertions)
@@ -218,7 +184,6 @@ pub mod tests {
         Ok(())
     }
 
-      // Test getting user from database using unique UUID
     #[sqlx::test]
     async fn delete_by_id(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
@@ -226,18 +191,18 @@ pub mod tests {
         let random_user = database::Users::mock_data()?;
 
         // Insert user in the database
-        random_user.insert(&database).await?;
+        let random_user = random_user.insert(&database).await?;
 
-        // Generate refresh token
-        let refresh_token =
-            database::RefreshTokens::mock_data(&random_user).await?;
+        // Generate session
+        let session = database::Sessions::mock_data(&random_user).await?;
 
-        // Insert refresh token in the database for deleting
-        refresh_token.insert(&database).await?;
+        // Insert session in the database for deleting
+        let session = session.insert(&database).await?;
 
         //-- Execute Function (Act)
         // Delete database row
-        let rows_affected = database::RefreshTokens::delete_by_id(&refresh_token.id, &database).await?;
+        let rows_affected =
+            database::Sessions::delete_by_id(&session.id, &database).await?;
         // println!("{record:#?}");
 
         //-- Checks (Assertions)
@@ -248,33 +213,29 @@ pub mod tests {
         Ok(())
     }
 
-    // Test getting user from database using unique UUID
     #[sqlx::test]
-    async fn delete_user_id_associated(
-        database: Pool<Postgres>,
-    ) -> Result<()> {
+    async fn delete_associated_to_user(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
         // Generate random user for testing
         let random_user = database::Users::mock_data()?;
 
         // Insert user in the database
-        random_user.insert(&database).await?;
+        let random_user = random_user.insert(&database).await?;
 
-        // Add a random number of refresh tokens for the given user
+        // Add a random number of sessions for the given user
         let random_count: i64 = (10..30).fake::<i64>();
         for _count in 0..random_count {
-            // Generate refresh token
-            let refresh_token =
-                database::RefreshTokens::mock_data(&random_user).await?;
+            // Generate session
+            let sessions = database::Sessions::mock_data(&random_user).await?;
 
-            // Insert refresh token in the database for deleting
-            refresh_token.insert(&database).await?;
+            // Insert session into the database for deleting
+            let sessions = sessions.insert(&database).await?;
         }
 
         //-- Execute Function (Act)
         // Delete all database entries for the random user id
         let rows_affected =
-            database::RefreshTokens::delete_all_user_id(&random_user.id, &database)
+            database::Sessions::delete_all_user(&random_user.id, &database)
                 .await?;
         // println!("{rows_affected:#?}");
 
@@ -286,34 +247,28 @@ pub mod tests {
         Ok(())
     }
 
-        // Test getting user from database using unique UUID
     #[sqlx::test]
-    async fn delete_all(
-        database: Pool<Postgres>,
-    ) -> Result<()> {
+    async fn delete_all(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
-        // Generate a random number of Refresh Tokens
+        // Generate a random number of session
         let random_count: i64 = (10..30).fake::<i64>();
         for _count in 0..random_count {
             // Generate random user for testing
             let random_user = database::Users::mock_data()?;
 
             // Insert user in the database
-            random_user.insert(&database).await?;
+            let random_user = random_user.insert(&database).await?;
 
-            // Generate refresh token
-            let refresh_token =
-                database::RefreshTokens::mock_data(&random_user).await?;
+            // Generate session
+            let sessions = database::Sessions::mock_data(&random_user).await?;
 
-            // Insert refresh token in the database for deleting
-            refresh_token.insert(&database).await?;
+            // Insert session in the database for deleting
+            let sessions = sessions.insert(&database).await?;
         }
 
         //-- Execute Function (Act)
         // Delete all rows in the database table
-        let rows_affected =
-            database::RefreshTokens::delete_all(&database)
-                .await?;
+        let rows_affected = database::Sessions::delete_all(&database).await?;
 
         //-- Checks (Assertions)
         // Rows affected should equal the number of random entries

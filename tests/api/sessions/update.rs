@@ -1,11 +1,11 @@
-//-- ./tests/api/refresh_tokens/delete.rs
+//-- ./tests/api/refresh_tokens/update.rs
 
 // #![allow(unused)] // For beginning only.
 
 use fake::Fake;
 use sqlx::{Pool, Postgres};
 
-use authentication_microservice::rpc::proto::{DeleteRefreshTokenRequest, DeleteUserRefreshTokensRequest, Empty};
+use authentication_microservice::rpc::proto::{Empty, SessionsRevokeRequest, SessionsRevokeUserRequest};
 
 use crate::helpers;
 
@@ -13,7 +13,7 @@ pub type Error = Box<dyn std::error::Error>;
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[sqlx::test]
-async fn delete_returns_int(database: Pool<Postgres>) -> Result<()> {
+async fn revoke_returns_int(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
     // Spawn Tonic test server
     let tonic_server = helpers::TonicServer::spawn_server(&database).await?;
@@ -27,26 +27,26 @@ async fn delete_returns_int(database: Pool<Postgres>) -> Result<()> {
     // Generate a random user for testing passing in the random password string
     let random_user = helpers::mocks::users(&random_password)?;
 
-    // Insert random user into database
-    let _database_record = random_user.insert(&database).await?;
+    // Insert random User into the database
+    let random_user = random_user.insert(&database).await?;
 
-    // Generate a random Refresh Token
-    let random_refresh_token = helpers::mocks::refresh_tokens(&random_user)?;
+    // Generate a random Session
+    let random_refresh_token = helpers::mocks::sessions(&random_user)?;
 
-    // Insert random Refresh Token into the database
+    // Insert random Session into the database
     let random_refresh_token = random_refresh_token.insert(&database).await?;
 
     //-- Execute Test (Act)
     // Build rpc request message
-    let request_message = DeleteRefreshTokenRequest {
+    let request_message = SessionsRevokeRequest {
         id: random_refresh_token.id.to_string(),
     };
     // println!("{request_message:#?}");
 
     // Send request to the server with a response message being sent back
     let response_message = tonic_client
-        .refresh_tokens()
-        .delete(request_message)
+        .sessions()
+        .revoke(request_message)
         .await?
         .into_inner();
     // println!("{response_message:#?}");
@@ -59,7 +59,7 @@ async fn delete_returns_int(database: Pool<Postgres>) -> Result<()> {
 }
 
 #[sqlx::test]
-async fn delete_users_returns_int(database: Pool<Postgres>) -> Result<()> {
+async fn revoke_users_returns_int(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
     // Spawn Tonic test server
     let tonic_server = helpers::TonicServer::spawn_server(&database).await?;
@@ -73,25 +73,25 @@ async fn delete_users_returns_int(database: Pool<Postgres>) -> Result<()> {
     // Generate a random user for testing passing in the random password string
     let random_user = helpers::mocks::users(&random_password)?;
 
-    // Insert random user into database
-    let _database_record = random_user.insert(&database).await?;
+    // Insert random User into the database
+    let random_user = random_user.insert(&database).await?;
 
-    // Generate a random Refresh Token
-    let random_refresh_token = helpers::mocks::refresh_tokens(&random_user)?;
+    // Generate a random Session
+    let random_refresh_token = helpers::mocks::sessions(&random_user)?;
 
-    // Insert random Refresh Token into the database
+    // Insert random Session into the database
     let _database_record = random_refresh_token.insert(&database).await?;
 
     //-- Execute Test (Act)
     // Build rpc request message
-    let request_message = DeleteUserRefreshTokensRequest {
+    let request_message = SessionsRevokeUserRequest {
         user_id: random_user.id.to_string(),
     };
 
     // Send request to the server with a response message being sent back
     let response_message = tonic_client
-        .refresh_tokens()
-        .delete_user(request_message)
+        .sessions()
+        .revoke_user(request_message)
         .await?
         .into_inner();
 
@@ -103,7 +103,7 @@ async fn delete_users_returns_int(database: Pool<Postgres>) -> Result<()> {
 }
 
 #[sqlx::test]
-async fn delete_all_returns_int(database: Pool<Postgres>) -> Result<()> {
+async fn revoke_all_returns_int(database: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
     // Spawn Tonic test server
     let tonic_server = helpers::TonicServer::spawn_server(&database).await?;
@@ -117,26 +117,27 @@ async fn delete_all_returns_int(database: Pool<Postgres>) -> Result<()> {
     // Generate a random user for testing passing in the random password string
     let random_user = helpers::mocks::users(&random_password)?;
 
-    // Insert random user into database
-    let _database_record = random_user.insert(&database).await?;
+    // Insert random User into the database
+    let random_user = random_user.insert(&database).await?;
 
-    // Generate and insert a random number of Refresh Tokens
+    // Generate and insert a random number of Sessions
     let random_count: i64 = (10..30).fake::<i64>();
     for _count in 0..random_count {
-        // Generate a random Refresh Token
-        let random_refresh_token = helpers::mocks::refresh_tokens(&random_user)?;
+        // Generate a random Session
+        let random_refresh_token = helpers::mocks::sessions(&random_user)?;
 
-        // Insert random Refresh Token into the database
+        // Insert random Session into the database
         let _random_refresh_token = random_refresh_token.insert(&database).await?;
     }
+
     //-- Execute Test (Act)
     // Build rpc request message
     let request_message = Empty {};
 
     // Send request to the server with a response message being sent back
     let response_message = tonic_client
-        .refresh_tokens()
-        .delete_all(request_message)
+        .sessions()
+        .revoke_all(request_message)
         .await?
         .into_inner();
 

@@ -1,7 +1,6 @@
-//-- ./src/database/refresh_tokens/insert.rs
+//-- ./src/database/sessions/insert.rs
 
-//! Create [insert] a Refresh Token into the database, returning a Result with a
-//! RefreshTokenModel instance
+//! Insert a Sessions into the database, returning a Result with a instance
 //! ---
 
 // #![allow(unused)] // For development only
@@ -10,42 +9,35 @@ use sqlx::{Pool, Postgres};
 
 use crate::prelude::*;
 
-use super::model::RefreshTokens;
+use super::Sessions;
 
-impl RefreshTokens {
-    /// Insert a Refresh Token into the database, returning the database record
-    /// as a RefreshTokenModel.
+impl Sessions {
+    /// Insert a Sessions into the database, returning sessions instance from the 
+    /// database.
     ///
     /// # Parameters
     ///
-    /// * `refresh_tokens` - A Refresh Token instance
+    /// * `self` - A sessions instance
     /// * `database` - An Sqlx database connection pool
     /// ---
     #[tracing::instrument(
-        name = "Insert a new Refresh Token into the database: ",
-        skip(self, database),
-        fields(
-            id = % self.id,
-            user_id = % self.user_id,
-            refresh_tokens = % self.token.as_ref(),
-            is_active = % self.is_active,
-            created_on = % self.created_on,
-        ),
+        name = "Insert a new Sessions into the database: ",
+        skip(database)
     )]
     pub async fn insert(
         &self,
         database: &Pool<Postgres>,
     ) -> Result<Self, BackendError> {
         let database_record = sqlx::query_as!(
-            RefreshTokens,
+            Sessions,
             r#"
-				INSERT INTO refresh_tokens (id, user_id, token, is_active, created_on)
+				INSERT INTO sessions (id, user_id, refresh_token, is_active, created_on)
 				VALUES ($1, $2, $3, $4, $5) 
 				RETURNING *
 			"#,
             self.id,
             self.user_id,
-            self.token.as_ref(),
+            self.refresh_token.as_ref(),
             self.is_active,
             self.created_on
         )
@@ -53,7 +45,7 @@ impl RefreshTokens {
         .await?;
 
         tracing::debug!(
-            "Refresh Token database records retrieved: {database_record:#?}"
+            "Sessions database records retrieved: {database_record:#?}"
         );
 
         Ok(database_record)
@@ -81,16 +73,16 @@ pub mod tests {
         // Insert user in the database
         random_user.insert(&database).await?;
 
-        // Generate refresh token
-        let random_refresh_token =
-            database::RefreshTokens::mock_data(&random_user).await?;
+        // Generate session
+        let random_session =
+            database::Sessions::mock_data(&random_user).await?;
 
         //-- Execute Function (Act)
-        // Insert refresh token into database
-        let database_record = random_refresh_token.insert(&database).await?;
+        // Insert session into database
+        let database_record = random_session.insert(&database).await?;
 
         //-- Checks (Assertions)
-        assert_eq!(database_record, random_refresh_token);
+        assert_eq!(database_record, random_session);
 
         // -- Return
         Ok(())

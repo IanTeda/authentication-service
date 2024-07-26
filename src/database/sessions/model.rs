@@ -1,6 +1,6 @@
-//-- ./src/database/refresh_tokens/model.rs
+//-- ./src/database/sessions/model.rs
 
-//! The Refresh Token data model
+//! The Sessions database model
 //! ---
 
 // #![allow(unused)] // For development only
@@ -12,30 +12,30 @@ use uuid::Uuid;
 use crate::{database, domain, prelude::BackendError};
 
 #[derive(Debug, serde::Deserialize, sqlx::FromRow, Clone, PartialEq)]
-pub struct RefreshTokens {
+pub struct Sessions {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub token: domain::RefreshToken,
+    pub refresh_token: domain::RefreshToken,
     pub is_active: bool,
     pub created_on: DateTime<Utc>,
 }
 
-impl RefreshTokens {
+impl Sessions {
     #[tracing::instrument(
-        name = "Create new database Refresh Token Model instance for: ",
-        skip(user, token_secret),
+        name = "Create new Sessions instance for: ",
+        skip_all,
     )]
     pub fn new(user: &database::Users, token_secret: &Secret<String>) -> Result<Self, BackendError> {
         let id = Uuid::now_v7();
         let user_id = user.id.to_owned();
-        let token = domain::RefreshToken::new(token_secret, user)?;
+        let refresh_token = domain::RefreshToken::new(token_secret, user)?;
         let is_active = true;
         let created_on = Utc::now();
 
         Ok(Self {
             id,
             user_id,
-            token,
+            refresh_token,
             is_active,
             created_on,
         })
@@ -73,7 +73,7 @@ impl RefreshTokens {
         Ok(Self {
             id: random_id,
             user_id,
-            token: random_token,
+            refresh_token: random_token,
             is_active: random_is_active,
             created_on: random_created_on,
         })

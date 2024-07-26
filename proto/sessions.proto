@@ -1,0 +1,63 @@
+//-- ./proto/sessions.proto
+
+syntax = "proto3";
+
+package authentication;
+
+import "common.proto";
+
+service Sessions {
+  rpc Read (SessionsReadRequest) returns (SessionsResponse);
+  rpc Index (SessionsIndexRequest) returns (SessionsIndexResponse);
+  rpc Revoke (SessionsRevokeRequest) returns (SessionsRevokeResponse);
+  rpc RevokeUser (SessionsRevokeUserRequest) returns (SessionsRevokeResponse);
+  rpc RevokeAll (Empty) returns (SessionsRevokeResponse);
+  rpc Delete (SessionsDeleteRequest) returns (SessionsDeleteResponse);
+  rpc DeleteUser (SessionsDeleteUserRequest) returns (SessionsDeleteResponse);
+  rpc DeleteAll (Empty) returns (SessionsDeleteResponse);
+}
+
+message SessionsReadRequest {
+  string id = 1;
+}
+
+message SessionsIndexRequest {
+  int64 limit = 1;
+  int64 offset = 2;
+}
+
+message SessionsRevokeRequest {
+  string id = 1;
+}
+
+message SessionsRevokeUserRequest {
+  string user_id = 1;
+}
+
+message SessionsDeleteRequest {
+  string id = 1;
+}
+
+message SessionsDeleteUserRequest {
+  string user_id = 1;
+}
+
+message SessionsResponse {
+  string id = 1;
+  string user_id = 2;
+  string refresh_token = 3;
+  bool is_active = 4;
+  string created_on =5;
+}
+
+message SessionsIndexResponse {
+  repeated SessionsResponse sessions = 1;
+}
+
+message SessionsRevokeResponse {
+  int64 rows_affected = 1;
+}
+
+message SessionsDeleteResponse {
+  int64 rows_affected = 1;
+}
