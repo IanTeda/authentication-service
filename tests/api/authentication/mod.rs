@@ -3,5 +3,6 @@
 mod login;
 mod refresh;
 mod update_password;
+mod logout;
 
 

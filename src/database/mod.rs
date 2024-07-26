@@ -2,18 +2,20 @@
 
 //! Wrapper around database tables
 
-// #![allow(unused)] // For development only
+#![allow(unused)] // For development only
 
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
+// Reexport for cleaner code
 pub use refresh_tokens::RefreshTokens;
 pub use users::Users;
+pub use logins::Logins;
 
 use crate::{configuration::DatabaseConfiguration, prelude::*};
 
-mod users;
-
+mod logins;
 mod refresh_tokens;
+mod users;
 
 pub async fn init_pool(
     database_configuration: &DatabaseConfiguration,

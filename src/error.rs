@@ -11,8 +11,6 @@
 //! * [How to Handle Errors in Rust: A Comprehensive Guide](https://dev.to/nathan20/how-to-handle-errors-in-rust-a-comprehensive-guide-1cco)
 //! * [Rust Error Types Explained: Building Robust Error Handling](https://marketsplash.com/rust-error-types/)
 
-use tonic::Status;
-
 /// Static errors types
 #[derive(thiserror::Error, Debug)]
 pub enum BackendError {
@@ -90,12 +88,15 @@ pub enum BackendError {
     #[error(transparent)]
     TonicReflection(#[from] tonic_reflection::server::Error),
 
+    #[error(transparent)]
+    Chrono(#[from] chrono::ParseError),
+
 }
 
 impl From<BackendError> for tonic::Status {
     fn from(backend_error: BackendError) -> tonic::Status {
         match backend_error {
-            BackendError::AuthenticationError(m) => Status::unauthenticated(m),
+            BackendError::AuthenticationError(m) => tonic::Status::unauthenticated(m),
             // BackendError::EmailFormatInvalid(_) => {
             //     Status::invalid_argument(format!("{:?}", backend_error))
             // }
@@ -114,7 +115,7 @@ impl From<BackendError> for tonic::Status {
             // }
             // BackendError::HashingError => tonic::Status::unavailable(format!("{:?}", backend_error)),
             // _ => tonic::Status::unknown(format!("{:?}", backend_error)),
-            _ => Status::internal("Internal server error"),
+            _ => tonic::Status::internal("Internal server error"),
         }
     }
 }

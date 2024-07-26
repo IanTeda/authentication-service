@@ -27,7 +27,7 @@ INSERT INTO users (
     id, email, name, password_hash, role, is_active, is_verified, created_on
 ) VALUES (
     '019071c5-a31c-7a0e-befa-594702122e75',
-    'admin@teda.id.au',
+    'default_ams@teda.id.au',
     'Admin',
     '$argon2id$v=19$m=15000,t=2,p=1$HBwgCOwk9o745vPiPI/0iA$TozkH3DlprgOaWhMOU4xE1xrVGJkdUWofJujyiJ4j+U',
     'admin',

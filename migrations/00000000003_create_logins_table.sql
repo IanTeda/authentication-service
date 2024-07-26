@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS logins (
     id UUID NOT NULL,
     user_id UUID NOT NULL,
     login_on TIMESTAMP WITH TIME ZONE NOT NULL,
+    login_ip INT,
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

@@ -18,6 +18,7 @@ use crate::configuration::Configuration;
 use crate::middleware;
 use crate::prelude::*;
 use crate::rpc::proto::authentication_server::AuthenticationServer;
+use crate::rpc::proto::logins_server::LoginsServer;
 use crate::rpc::proto::refresh_tokens_server::RefreshTokensServer;
 use crate::rpc::proto::users_server::UsersServer;
 use crate::rpc::proto::utilities_server::UtilitiesServer;
@@ -45,16 +46,19 @@ pub fn get_router(
 
     // Build Utilities server
     let utilities_service = services::UtilitiesService::new(Arc::clone(&config));
+    
     let utilities_server = UtilitiesServer::new(utilities_service);
 
     // Build Authentication server
     let authentication_service =
         services::AuthenticationService::new(Arc::clone(&database), Arc::clone(&config));
+    
     let authentication_server = AuthenticationServer::new(authentication_service);
 
     // Build Users server
     let users_service =
         services::UsersService::new(Arc::clone(&database), Arc::clone(&config));
+    
     let users_server = UsersServer::with_interceptor(
         users_service,
         access_token_interceptor.clone(),
@@ -63,8 +67,18 @@ pub fn get_router(
     // Build Refresh Tokens server
     let refresh_tokens_service =
         services::RefreshTokensService::new(Arc::clone(&database), Arc::clone(&config));
+    
     let refresh_tokens_server = RefreshTokensServer::with_interceptor(
         refresh_tokens_service,
+        access_token_interceptor.clone(),
+    );
+
+    // Build Logins Tokens server
+    let logins_service =
+        services::LoginsService::new(Arc::clone(&database), Arc::clone(&config));
+
+    let logins_server = LoginsServer::with_interceptor(
+        logins_service,
         access_token_interceptor,
     );
 
@@ -78,7 +92,8 @@ pub fn get_router(
         .add_service(utilities_server)
         .add_service(authentication_server)
         .add_service(users_server)
-        .add_service(refresh_tokens_server);
+        .add_service(refresh_tokens_server)
+        .add_service(logins_server);
 
     Ok(router)
 }

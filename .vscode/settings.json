@@ -9,7 +9,7 @@
         "rustc",
         "sqlx",
         "thiserror",
-        "timestamptz",
+        "timestamptz"
     ],
     "cSpell.words": [
         "analyzer",
@@ -49,13 +49,13 @@
     "rust-analyzer.discoverProjectRunner": null,
     "rust-analyzer.cargo.buildScripts.enable": true,
     "rust-analyzer.check.command": "check",
-    "rust-analyzer.completion.snippets.custom": { },
+    "rust-analyzer.completion.snippets.custom": {},
     "protoc": {
         "path": "/usr/bin/protoc",
         "compile_on_save": false,
         "options": [
             "--proto_path=protos/v3",
-            "--proto_path=${workspaceRoot}/proto",
+            "--proto_path=${workspaceRoot}/proto"
         ]
     },
     "sqltools.connections": [
@@ -66,5 +66,5 @@
             "name": "Backend",
             "connectString": "postgrespostgres://postgres:postgres@localhost:5432/"
         }
-    ],
+    ]
 }

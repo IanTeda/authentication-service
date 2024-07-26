@@ -5,7 +5,7 @@
 //! Contains functions to managing the rpc service endpoints
 //! ---
 
-#![allow(unused)] // For development only
+// #![allow(unused)] // For development only
 
 use std::str::FromStr;
 use std::sync::Arc;
@@ -19,6 +19,7 @@ use uuid::Uuid;
 use crate::configuration::Configuration;
 use crate::prelude::BackendError;
 use crate::rpc::proto::users_server::Users;
+//TODO: Refactor Proto function names
 use crate::rpc::proto::{
     CreateUserRequest, DeleteUserRequest, DeleteUserResponse, ReadUserRequest,
     UpdateUserRequest, UserIndexRequest, UserIndexResponse, UserResponse,
@@ -150,6 +151,7 @@ impl Users for UsersService {
                 BackendError::Static("Token Claim not found in request extension."),
             )?;
 
+        // TODO: Delete admin check as it is happening in middleware as well.
         // Parse Token Claim user role into domain type
         let requester_role = domain::UserRole::from_str(&access_token_claim.jur)?;
 

@@ -1,16 +1,20 @@
 // #![allow(unused)] // For beginning only.
 
+use std::net::Ipv4Addr;
+
+use authentication_microservice::BackendError;
 use chrono::{DateTime, SubsecRound, Utc};
 // use chrono::prelude::*;
 use fake::faker::boolean::en::Boolean;
 use fake::faker::chrono::en::DateTime;
 use fake::faker::chrono::en::DateTimeAfter;
+use fake::faker::internet::en::IPv4;
 use fake::faker::name::en::Name;
 use fake::{faker::internet::en::SafeEmail, Fake};
 use secrecy::Secret;
 use uuid::Uuid;
 
-use authentication_microservice::{database, domain, error};
+use authentication_microservice::{database, domain};
 
 pub fn uuid_v7() -> Uuid {
     // Generate random DateTime after UNIX time epoch (00:00:00 UTC on 1 January 1970)
@@ -27,7 +31,7 @@ pub fn uuid_v7() -> Uuid {
     Uuid::new_v7(random_uuid_timestamp)
 }
 
-pub fn password() -> Result<String, error::BackendError> {
+pub fn password() -> Result<String, BackendError> {
     // Get a random count to repeat minimum password requirements
     let random_count = (5..30).fake::<i64>() as usize;
     // Password must have a lower and upper case plus a number and special character
@@ -36,7 +40,7 @@ pub fn password() -> Result<String, error::BackendError> {
     Ok(password)
 }
 
-pub fn users(password: &String) -> Result<database::Users, error::BackendError> {
+pub fn users(password: &String) -> Result<database::Users, BackendError> {
     //-- Generate a random id (Uuid V7) by first generating a random timestamp
     // Generate Uuid V7
     let random_id: Uuid = uuid_v7();
@@ -80,7 +84,7 @@ pub fn users(password: &String) -> Result<database::Users, error::BackendError> 
 
 pub fn refresh_tokens(
     user: &database::Users,
-) -> Result<database::RefreshTokens, error::BackendError> {
+) -> Result<database::RefreshTokens, BackendError> {
     use chrono::SubsecRound;
     use fake::faker::boolean::en::Boolean;
     use fake::faker::chrono::en::DateTime;
@@ -112,4 +116,31 @@ pub fn refresh_tokens(
     };
 
     Ok(random_refresh_token)
+}
+
+pub fn logins(user_id: &Uuid) -> Result<database::Logins, BackendError> {
+    //-- Generate a random id (Uuid V7) by first generating a random timestamp
+    // Generate random Uuid V7 from mocks module
+    let random_id: Uuid = uuid_v7();
+
+    // Use user_id passed into the function
+    let user_id = user_id.to_owned();
+
+    // Generate random DateTime
+    let random_login_on: DateTime<Utc> = DateTime().fake();
+    // Round up accuracy to be consistent with Postgres, so we can do asserts cleaner
+    let random_login_on = random_login_on.round_subsecs(0);
+
+    // Generate random IPV4 address
+    let random_ip: Ipv4Addr = IPv4().fake();
+    // Convert IPV4 to an i32 to be consistent with Postgres INT type
+    let random_ip = u32::from(random_ip) as i32;
+    let random_ip = Some(random_ip);
+
+    Ok(database::Logins{ 
+        id: random_id, 
+        user_id, 
+        login_on: random_login_on, 
+        login_ip: random_ip, 
+    })
 }

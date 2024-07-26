@@ -4,6 +4,7 @@
 
 mod authentication;
 pub mod helpers;
+mod logins;
+mod refresh_tokens;
 mod users;
 mod utilities;
-mod refresh_tokens;
