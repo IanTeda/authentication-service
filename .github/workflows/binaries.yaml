@@ -44,4 +44,4 @@ jobs:
           ARCHIVE_NAME: "authentication"
           PRE_BUILD: "./.github/workflows/pre-build.sh" # I need to be executable (chmod +x)
           MINIFY: "yes"
-          EXTRA_FILES: "README.md LICENSE"
+          EXTRA_FILES: "README.md LICENSE.txt"
