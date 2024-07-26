@@ -201,11 +201,11 @@ mod tests {
         let random_user = database::Users::mock_data()?;
         let _database_record = random_user.insert(&database).await?;
 
-        // Add a random number of refresh tokens for the given user
+        // Add a random number of login for the given user
         let random_count: i64 = (10..30).fake::<i64>();
         for _count in 0..random_count {
             let random_login = Logins::mock_data(&random_user.id)?;
-            // Insert refresh token in the database for deleting
+            // Insert login in the database for deleting
             random_login.insert(&database).await?;
         }
 
@@ -231,7 +231,7 @@ mod tests {
             let _database_record = random_user.insert(&database).await?;
 
             let random_login = Logins::mock_data(&random_user.id)?;
-            // Insert refresh token in the database for deleting
+            // Insert login in the database for deleting
             random_login.insert(&database).await?;
         }
 

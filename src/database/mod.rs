@@ -7,14 +7,14 @@
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
 // Reexport for cleaner code
-pub use refresh_tokens::RefreshTokens;
+pub use sessions::Sessions;
 pub use users::Users;
 pub use logins::Logins;
 
 use crate::{configuration::DatabaseConfiguration, prelude::*};
 
 mod logins;
-mod refresh_tokens;
+mod sessions;
 mod users;
 
 pub async fn init_pool(

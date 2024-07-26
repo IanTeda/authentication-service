@@ -19,7 +19,7 @@ use crate::middleware;
 use crate::prelude::*;
 use crate::rpc::proto::authentication_server::AuthenticationServer;
 use crate::rpc::proto::logins_server::LoginsServer;
-use crate::rpc::proto::refresh_tokens_server::RefreshTokensServer;
+use crate::rpc::proto::sessions_server::SessionsServer;
 use crate::rpc::proto::users_server::UsersServer;
 use crate::rpc::proto::utilities_server::UtilitiesServer;
 use crate::services;
@@ -64,12 +64,12 @@ pub fn get_router(
         access_token_interceptor.clone(),
     );
 
-    // Build Refresh Tokens server
-    let refresh_tokens_service =
-        services::RefreshTokensService::new(Arc::clone(&database), Arc::clone(&config));
+    // Build Sessions server
+    let sessions_service =
+        services::SessionsService::new(Arc::clone(&database), Arc::clone(&config));
     
-    let refresh_tokens_server = RefreshTokensServer::with_interceptor(
-        refresh_tokens_service,
+    let sessions_server = SessionsServer::with_interceptor(
+        sessions_service,
         access_token_interceptor.clone(),
     );
 
@@ -92,7 +92,7 @@ pub fn get_router(
         .add_service(utilities_server)
         .add_service(authentication_server)
         .add_service(users_server)
-        .add_service(refresh_tokens_server)
+        .add_service(sessions_server)
         .add_service(logins_server);
 
     Ok(router)

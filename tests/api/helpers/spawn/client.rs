@@ -20,9 +20,9 @@ use tonic::transport::Channel;
 pub type AuthenticationClient =
 authentication_microservice::rpc::proto::authentication_client::AuthenticationClient<Channel>;
 
-/// Convenience type alias for refresh token client
-pub type RefreshTokensClient =
-authentication_microservice::rpc::proto::refresh_tokens_client::RefreshTokensClient<
+/// Convenience type alias for sessions client
+pub type SessionsClient =
+authentication_microservice::rpc::proto::sessions_client::SessionsClient<
     InterceptedService<Channel, AccessTokenInterceptor>,
 >;
 
@@ -41,7 +41,7 @@ pub type LoginsClient =
 #[derive(Clone)]
 pub struct TonicClient {
     authentication: AuthenticationClient,
-    refresh_tokens: RefreshTokensClient,
+    sessions: SessionsClient,
     users: UsersClient,
     logins: LoginsClient,
 }
@@ -52,9 +52,9 @@ impl TonicClient {
         &mut self.authentication
     }
 
-    /// Returns the refresh tokens client.
-    pub fn refresh_tokens(&mut self) -> &mut RefreshTokensClient {
-        &mut self.refresh_tokens
+    /// Returns the sessions client.
+    pub fn sessions(&mut self) -> &mut SessionsClient {
+        &mut self.sessions
     }
 
     /// Returns the users client.
@@ -85,8 +85,8 @@ impl TonicClient {
         // Build Authentication client request
         let authentication = AuthenticationClient::new(inner.clone());
 
-        // Build Refresh Tokens client request
-        let refresh_tokens = authentication_microservice::rpc::proto::refresh_tokens_client::RefreshTokensClient::with_interceptor(inner.clone(), interceptor.clone());
+        // Build sessions client request
+        let sessions = authentication_microservice::rpc::proto::sessions_client::SessionsClient::with_interceptor(inner.clone(), interceptor.clone());
 
         // Build Users client request
         let users = authentication_microservice::rpc::proto::users_client::UsersClient::with_interceptor(inner.clone(), interceptor.clone());
@@ -95,7 +95,7 @@ impl TonicClient {
 
         let client = TonicClient {
             authentication,
-            refresh_tokens,
+            sessions,
             users,
             logins,
         };

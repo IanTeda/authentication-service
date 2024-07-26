@@ -126,21 +126,21 @@ impl Authentication for AuthenticationService {
 
                 tracing::debug!("Using Access Token: {}", access_token);
 
-                // Build a new Refresh Token
-                let refresh_token =
-                    database::RefreshTokens::new(&user, &token_secret)?;
+                // Build a new Session
+                let session =
+                    database::Sessions::new(&user, &token_secret)?;
 
-                // Insert Refresh Token into the database
+                // Insert Session into the database
                 let refresh_token =
-                    refresh_token.insert(self.database_ref()).await?;
+                    session.insert(self.database_ref()).await?;
 
-                tracing::debug!("Refresh Token added to the database: {}", refresh_token.id);
-                tracing::debug!("Using Refresh Token: {}", refresh_token.token);
+                tracing::debug!("Session added to the database: {}", refresh_token.id);
+                tracing::debug!("Using Refresh Token: {}", refresh_token.refresh_token);
 
                 // Build Authenticate Response with the token
                 let response = TokenResponse {
                     access_token: access_token.to_string(),
-                    refresh_token: refresh_token.token.to_string(),
+                    refresh_token: refresh_token.refresh_token.to_string(),
                 };
 
                 // Send Response
@@ -187,17 +187,17 @@ impl Authentication for AuthenticationService {
             BackendError::AuthenticationError("Authentication Failed!".to_string())
         })?;
 
-        //-- 3. Check Refresh Token status in database
-        let database_record =
-            database::RefreshTokens::from_token(&refresh_token, self.database_ref())
+        //-- 3. Check Session status in database
+        let session =
+            database::Sessions::from_token(&refresh_token, self.database_ref())
                 .await?;
 
-        match database_record.is_active {
+        match session.is_active {
             true => {
-                tracing::info!("Refresh Token is active.");
+                tracing::info!("Session is active.");
 
-                //-- 4. Void all Refresh Tokens for associated user ID
-                database_record
+                //-- 4. Void all Sessions for associated user ID
+                session
                     .revoke_associated(self.database_ref())
                     .await?;
 
@@ -219,28 +219,28 @@ impl Authentication for AuthenticationService {
 
                 tracing::debug!("Using Access Token: {}", access_token);
 
-                // Build a Refresh Token
-                let refresh_token =
-                    database::RefreshTokens::new(&user, &token_secret)?;
+                // Build a Session
+                let session =
+                    database::Sessions::new(&user, &token_secret)?;
 
-                // Add Refresh Token to database
+                // Add Session to database
                 let refresh_token =
-                    refresh_token.insert(self.database_ref()).await?;
+                    session.insert(self.database_ref()).await?;
 
-                tracing::debug!("Using Refresh Token: {}", refresh_token.token);
+                tracing::debug!("Using Refresh Token: {}", refresh_token.refresh_token);
 
                 //-- 5. Send new Access Token and Refresh Token
                 // Build Authenticate Response with the token
                 let response = TokenResponse {
                     access_token: access_token.to_string(),
-                    refresh_token: refresh_token.token.to_string(),
+                    refresh_token: refresh_token.refresh_token.to_string(),
                 };
 
                 // Send Response
                 Ok(Response::new(response))
             }
             false => {
-                tracing::error!("Refresh Token is not active");
+                tracing::error!("Session is not active");
                 Err(Status::unauthenticated("Authentication Failed!"))
             }
         }
@@ -342,22 +342,22 @@ impl Authentication for AuthenticationService {
         let access_token = domain::AccessToken::new(&token_secret, &user)?;
         tracing::debug!("Using Access Token: {}", access_token);
 
-        // Build a new Refresh Token
-        let refresh_token = database::RefreshTokens::new(&user, &token_secret)?;
+        // Build a new session instance
+        let session = database::Sessions::new(&user, &token_secret)?;
 
-        // Revoke refresh tokens associated with the user before adding new one to the database
+        // Revoke sessions associated with the user before adding new one to the database
         // TODO: When do we clean up (delete) the database
         let _rows_affected =
-            refresh_token.revoke_associated(self.database_ref()).await?;
+            session.revoke_associated(self.database_ref()).await?;
 
-        // Add new Refresh Token to the database
-        let refresh_token = refresh_token.insert(self.database_ref()).await?;
-        tracing::debug!("Using Refresh Token: {}", refresh_token.token);
+        // Add new Session to the database
+        let session = session.insert(self.database_ref()).await?;
+        tracing::debug!("Using Refresh Token: {}", session.refresh_token);
 
         // Build Token Response message with the token
         let response_message = TokenResponse {
             access_token: access_token.to_string(),
-            refresh_token: refresh_token.token.to_string(),
+            refresh_token: session.refresh_token.to_string(),
         };
 
         // Send Response
@@ -386,7 +386,7 @@ impl Authentication for AuthenticationService {
         unimplemented!()
     }
 
-    /// Revoke all Refresh Tokens in the database
+    /// Revoke all Sessions in the database
     #[tracing::instrument(name = "Log Out User Request: ", skip(self, request))]
     async fn logout(
         &self,
@@ -416,13 +416,13 @@ impl Authentication for AuthenticationService {
             BackendError::AuthenticationError("Authentication Failed!".to_string())
         })?;
 
-        //-- 3. Get Refresh Token from database
-        let database_record =
-            database::RefreshTokens::from_token(&refresh_token, self.database_ref())
+        //-- 3. Get Session from database
+        let session =
+            database::Sessions::from_token(&refresh_token, self.database_ref())
                 .await?;
 
-        // Revoke all Refresh Tokens associated with user_id
-        let rows_affected = database_record
+        // Revoke all Sessions associated with user_id
+        let rows_affected = session
             .revoke_associated(self.database_ref())
             .await? as i64;
 

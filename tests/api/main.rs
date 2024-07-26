@@ -5,6 +5,6 @@
 mod authentication;
 pub mod helpers;
 mod logins;
-mod refresh_tokens;
+mod sessions;
 mod users;
 mod utilities;

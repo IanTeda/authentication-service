@@ -1,7 +1,7 @@
-//-- ./src/database/refresh_tokens/read.rs
+//-- ./src/database/sessions/read.rs
 
-//! Read RefreshToken[s] in the database, returning a Result with a RefreshTokenModel instance
-//! or a Vec[RefreshTokenModel]
+//! Read Sessions in the database, returning a Result with a Session instance
+//! or a Vec[Sessions]
 //! ---
 
 // // #![allow(unused)] // For development only
@@ -9,34 +9,31 @@
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
-use crate::database::RefreshTokens;
+use crate::database::Sessions;
 use crate::prelude::*;
 
-impl RefreshTokens {
-    /// Get a Refresh Token from the database by querying the uuid, returning a
-    /// Refresh Token instance or sqlx error.
+impl Sessions {
+    /// Get a Sessions from the database by querying the uuid, returning a
+    /// Sessions instance or sqlx error.
     ///
     /// # Parameters
     ///
-    /// * `id` - The uuid of the Refresh Token to be returned.
+    /// * `id` - The uuid of the Sessions to be returned.
     /// * `database` - The sqlx database pool for the database to be queried.
     /// ---
     #[tracing::instrument(
-        name = "Get a Refresh Token from the database using its id (uuid): ",
-        skip(id, database),
-        fields(
-            id = % id,
-        )
+        name = "Get a Sessions from the database: ",
+        skip(database)
     )]
     pub async fn from_id(
         id: &Uuid,
         database: &Pool<Postgres>,
-    ) -> Result<RefreshTokens, BackendError> {
+    ) -> Result<Sessions, BackendError> {
         let database_record = sqlx::query_as!(
-            RefreshTokens,
+            Sessions,
             r#"
                     SELECT *
-                    FROM refresh_tokens
+                    FROM sessions
                     WHERE id = $1
                 "#,
             id
@@ -45,37 +42,34 @@ impl RefreshTokens {
         .await?;
 
         tracing::debug!(
-            "Refresh Token database records retrieved: {database_record:#?}"
+            "Sessions database records retrieved: {database_record:#?}"
         );
 
         Ok(database_record)
     }
 
-    /// Get a Refresh Token from the database by querying the uuid, returning a
-    /// Refresh Token instance or sqlx error.
+    /// Get a Sessions from the database by querying the Sessions, returning a
+    /// Sessions instance or sqlx error.
     ///
     /// # Parameters
     ///
-    /// * `refresh_tokens` - The &str of the Refresh Token in the database.
+    /// * `refresh_tokens` - The &str of the Sessions in the database.
     /// * `database` - The sqlx database pool for the database to be queried.
     /// ---
     #[tracing::instrument(
-        name = "Get a Refresh Token from the database using the token: ",
-        skip(refresh_token, database),
-    // fields(
-    // 	refresh_tokens = %,
-    // ),
+        name = "Get the session associated with: ",
+        skip(database)
     )]
     pub async fn from_token(
         refresh_token: &str,
         database: &Pool<Postgres>,
-    ) -> Result<RefreshTokens, BackendError> {
+    ) -> Result<Sessions, BackendError> {
         let database_record = sqlx::query_as!(
-            RefreshTokens,
+            Sessions,
             r#"
                     SELECT *
-                    FROM refresh_tokens
-                    WHERE token = $1
+                    FROM sessions
+                    WHERE refresh_token = $1
                 "#,
             refresh_token
         )
@@ -83,14 +77,14 @@ impl RefreshTokens {
         .await?;
 
         tracing::debug!(
-            "Refresh Token database records retrieved: {database_record:#?}"
+            "Sessions database records retrieved: {database_record:#?}"
         );
 
         Ok(database_record)
     }
 
-    /// Get an index of Refresh Token from the database by querying a User ID (uuid),
-    /// returning a Vec of Refresh Tokens or a sqlx error.
+    /// Get an index of Sessions from the database by querying a User ID (uuid),
+    /// returning a Vec of Sessions or a sqlx error.
     ///
     /// # Parameters
     ///
@@ -100,23 +94,20 @@ impl RefreshTokens {
     /// * `database` - The sqlx database pool for the database to be queried.
     /// ---
     #[tracing::instrument(
-        name = "Get all Refresh Token from the database for a users id (uuid): ",
-        skip(database),
-    // fields(
-    // 	user_id = %user_id,
-    // )
+        name = "Get all Sessions from the database for a users id (uuid): ",
+        skip(database)
     )]
     pub async fn index_from_user_id(
         user_id: &Uuid,
         limit: &i64,
         offset: &i64,
         database: &Pool<Postgres>,
-    ) -> Result<Vec<RefreshTokens>, BackendError> {
+    ) -> Result<Vec<Sessions>, BackendError> {
         let database_records = sqlx::query_as!(
-            RefreshTokens,
+            Sessions,
             r#"
                     SELECT *
-                    FROM refresh_tokens
+                    FROM sessions
                     WHERE user_id = $1
                     ORDER BY id
                     LIMIT $2 OFFSET $3
@@ -129,13 +120,13 @@ impl RefreshTokens {
         .await?;
 
         tracing::debug!(
-            "Refresh Token database records retrieved: {database_records:#?}"
+            "Sessions ndatabase records retrieved: {database_records:#?}"
         );
 
         Ok(database_records)
     }
 
-    /// Get an index of Refresh Tokens, returning a vector of Refresh Tokens or
+    /// Get an index of Sessions, returning a vector of Sessions or
     /// and SQLx error.
     ///
     /// # Parameters
@@ -145,19 +136,19 @@ impl RefreshTokens {
     /// * `database` - The sqlx database pool for the database to be queried.
     /// ---
     #[tracing::instrument(
-        name = "Index of Refresh Tokens with offset and limit: ",
+        name = "Index of Sessions with offset and limit: ",
         skip(database)
     )]
     pub async fn index(
         limit: &i64,
         offset: &i64,
         database: &Pool<Postgres>,
-    ) -> Result<Vec<RefreshTokens>, BackendError> {
+    ) -> Result<Vec<Sessions>, BackendError> {
         let database_records = sqlx::query_as!(
-            RefreshTokens,
+            Sessions,
             r#"
                     SELECT *
-                    FROM refresh_tokens
+                    FROM sessions
                     ORDER BY id
                     LIMIT $1 OFFSET $2
                 "#,
@@ -168,7 +159,7 @@ impl RefreshTokens {
         .await?;
 
         tracing::debug!(
-            "Refresh Token database records retrieved: {database_records:#?}"
+            "Sessions database records retrieved: {database_records:#?}"
         );
 
         Ok(database_records)
@@ -187,39 +178,37 @@ pub mod tests {
     pub type Result<T> = core::result::Result<T, Error>;
     pub type Error = Box<dyn std::error::Error>;
 
-    // Test getting Refresh Token from database using unique UUID
     #[sqlx::test]
-    async fn get_refresh_token_record_by_id(database: Pool<Postgres>) -> Result<()> {
+    async fn get_instance_by_id(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
         // Generate random user for testing
         let random_user = database::Users::mock_data()?;
 
         // Insert user in the database
-        random_user.insert(&database).await?;
+        let random_user = random_user.insert(&database).await?;
 
-        // Generate refresh token
-        let refresh_token =
-            database::RefreshTokens::mock_data(&random_user).await?;
+        // Generate a session
+        let session =
+            database::Sessions::mock_data(&random_user).await?;
 
-        // Insert refresh token into database for reading later
-        refresh_token.insert(&database).await?;
+        // Insert session into database for reading later
+        let session = session.insert(&database).await?;
 
         //-- Execute Function (Act)
         // Insert user into database
         let database_record =
-            database::RefreshTokens::from_id(&refresh_token.id, &database).await?;
+            database::Sessions::from_id(&session.id, &database).await?;
         // println!("{record:#?}");
 
         //-- Checks (Assertions)
-        assert_eq!(database_record, refresh_token);
+        assert_eq!(database_record, session);
 
         // -- Return
         Ok(())
     }
 
-    // Test getting Refresh Token from database using unique UUID
     #[sqlx::test]
-    async fn get_refresh_token_record_by_token(
+    async fn session_for_refresh_token(
         database: Pool<Postgres>,
     ) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
@@ -229,24 +218,24 @@ pub mod tests {
         // Insert user in the database
         random_user.insert(&database).await?;
 
-        // Generate refresh token
-        let refresh_token =
-            database::RefreshTokens::mock_data(&random_user).await?;
+        // Generate a session
+        let session =
+            database::Sessions::mock_data(&random_user).await?;
 
-        // Insert refresh token into database for reading later
-        refresh_token.insert(&database).await?;
+        // Insert session into database for reading later
+        let session = session.insert(&database).await?;
 
         //-- Execute Function (Act)
         // Insert user into database
-        let database_record = database::RefreshTokens::from_token(
-            &refresh_token.token.as_ref(),
+        let database_record = database::Sessions::from_token(
+            &session.refresh_token.as_ref(),
             &database,
         )
         .await?;
         // println!("{record:#?}");
 
         //-- Checks (Assertions)
-        assert_eq!(database_record, refresh_token);
+        assert_eq!(database_record, session);
 
         // -- Return
         Ok(())
@@ -264,12 +253,12 @@ pub mod tests {
 
         let random_count: i64 = (10..30).fake::<i64>();
         for _count in 0..random_count {
-            // Generate refresh token
-            let refresh_token =
-                database::RefreshTokens::mock_data(&random_user).await?;
+            // Generate session
+            let session =
+                database::Sessions::mock_data(&random_user).await?;
 
-            // Insert refresh token in the database for deleting
-            refresh_token.insert(&database).await?;
+            // Insert session into the database for deleting
+            let session = session.insert(&database).await?;
         }
 
         //-- Execute Function (Act)
@@ -280,7 +269,7 @@ pub mod tests {
         let random_offset = (1..random_count).fake::<i64>();
 
         // Insert user into database
-        let database_records = database::RefreshTokens::index_from_user_id(
+        let database_records = database::Sessions::index_from_user_id(
             &random_user.id,
             &random_limit,
             &random_offset,
@@ -315,12 +304,12 @@ pub mod tests {
 
         let random_count: i64 = (10..30).fake::<i64>();
         for _count in 0..random_count {
-            // Generate refresh token
-            let refresh_token =
-                database::RefreshTokens::mock_data(&random_user).await?;
+            // Generate sessions
+            let session =
+                database::Sessions::mock_data(&random_user).await?;
 
-            // Insert refresh token in the database for deleting
-            refresh_token.insert(&database).await?;
+            // Insert session into the database for deleting
+            let session = session.insert(&database).await?;
         }
 
         //-- Execute Function (Act)
@@ -332,7 +321,7 @@ pub mod tests {
 
         // Insert user into database
         let database_records =
-            database::RefreshTokens::index(&random_limit, &random_offset, &database)
+            database::Sessions::index(&random_limit, &random_offset, &database)
                 .await?;
         // println!("{rows_affected:#?}");
 
