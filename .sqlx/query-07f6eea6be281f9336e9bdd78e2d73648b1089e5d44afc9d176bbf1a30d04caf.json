@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                    SELECT *\n                    FROM refresh_tokens\n                    WHERE token = $1\n                ",
+  "query": "\n\t\t\t\tINSERT INTO sessions (id, user_id, refresh_token, is_active, created_on)\n\t\t\t\tVALUES ($1, $2, $3, $4, $5) \n\t\t\t\tRETURNING *\n\t\t\t",
   "describe": {
     "columns": [
       {
@@ -15,7 +15,7 @@
       },
       {
         "ordinal": 2,
-        "name": "token",
+        "name": "refresh_token",
         "type_info": "Text"
       },
       {
@@ -31,7 +31,11 @@
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Bool",
+        "Timestamptz"
       ]
     },
     "nullable": [
@@ -42,5 +46,5 @@
       false
     ]
   },
-  "hash": "48ea445ace807274fa63b5f266044399870ac227d1bc25fb4c70e30fca7b96f0"
+  "hash": "07f6eea6be281f9336e9bdd78e2d73648b1089e5d44afc9d176bbf1a30d04caf"
 }

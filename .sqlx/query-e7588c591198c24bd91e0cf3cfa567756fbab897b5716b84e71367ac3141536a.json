@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                    SELECT *\n                    FROM refresh_tokens\n                    WHERE user_id = $1\n                    ORDER BY id\n                    LIMIT $2 OFFSET $3\n                ",
+  "query": "\n                    SELECT *\n                    FROM sessions\n                    WHERE id = $1\n                ",
   "describe": {
     "columns": [
       {
@@ -15,7 +15,7 @@
       },
       {
         "ordinal": 2,
-        "name": "token",
+        "name": "refresh_token",
         "type_info": "Text"
       },
       {
@@ -31,9 +31,7 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid",
-        "Int8",
-        "Int8"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -44,5 +42,5 @@
       false
     ]
   },
-  "hash": "01197da2a4f2bdc22dd14d8ec54903f77813d37e4505c6c9ed8b800f069402c4"
+  "hash": "e7588c591198c24bd91e0cf3cfa567756fbab897b5716b84e71367ac3141536a"
 }
