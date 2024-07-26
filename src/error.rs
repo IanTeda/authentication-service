@@ -88,6 +88,9 @@ pub enum BackendError {
     #[error(transparent)]
     TonicReflection(#[from] tonic_reflection::server::Error),
 
+    #[error(transparent)]
+    Chrono(#[from] chrono::ParseError),
+
 }
 
 impl From<BackendError> for tonic::Status {

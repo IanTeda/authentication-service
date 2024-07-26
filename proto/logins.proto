@@ -1,0 +1,54 @@
+//-- ./proto/logins.proto
+
+syntax = "proto3";
+
+package authentication;
+
+service logins  {
+  rpc Create (LoginsCreateRequest) returns (LoginsResponse);
+  rpc Read (LoginsReadRequest) returns (LoginsResponse);
+  rpc Index (LoginsIndexRequest) returns (LoginsIndexResponse);
+  rpc Update (LoginsUpdateRequest) returns (LoginsResponse);
+  rpc Delete (LoginsDeleteRequest) returns (LoginsDeleteResponse);
+}
+
+message LoginsCreateRequest {
+  string user_id = 1;
+  string login_on = 2;
+  optional int32 login_ip = 3;
+}
+
+message LoginsResponse {
+  string id = 1;
+  string user_id = 2;
+  string login_on = 3;
+  optional int32 login_ip = 4;
+}
+
+message LoginsReadRequest {
+  string id = 1;
+}
+
+message LoginsIndexRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message LoginsUpdateRequest {
+  string id = 1;
+  string user_id = 2;
+  string login_on = 3;
+  optional int32 login_ip = 4;
+}
+
+message LoginsDeleteRequest {
+  string id = 1;
+}
+
+message LoginsIndexResponse {
+  repeated LoginsResponse logins = 1;
+}
+
+message LoginsDeleteResponse {
+  int64 rows_affected = 1;
+}

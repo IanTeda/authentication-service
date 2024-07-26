@@ -2,8 +2,9 @@
 
 //! Return a result containing an RPC Authentication Service
 
-#![allow(unused)] // For development only
+// #![allow(unused)] // For development only
 
+use std::net::{IpAddr, Ipv4Addr};
 use std::sync::Arc;
 
 use secrecy::Secret;
@@ -11,11 +12,15 @@ use sqlx::{Pool, Postgres};
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-use crate::{database, domain};
 use crate::configuration::Configuration;
 use crate::prelude::*;
-use crate::rpc::proto::{LoginRequest, LogoutRequest, LogoutResponse, RefreshRequest, RegisterRequest, ResetPasswordRequest, ResetPasswordResponse, TokenResponse, UpdatePasswordRequest};
 use crate::rpc::proto::authentication_server::Authentication;
+use crate::rpc::proto::{
+    LoginRequest, LogoutRequest, LogoutResponse, RefreshRequest, RegisterRequest,
+    ResetPasswordRequest, ResetPasswordResponse, TokenResponse,
+    UpdatePasswordRequest,
+};
+use crate::{database, domain};
 
 // use crate::rpc::proto::authentication_server::Authentication;
 // use crate::rpc::proto::LoginRequest;
@@ -47,11 +52,17 @@ impl AuthenticationService {
 
 #[tonic::async_trait]
 impl Authentication for AuthenticationService {
-    #[tracing::instrument(name = "Authenticate Request: ", skip(self, request))]
+    #[tracing::instrument(name = "Authenticate Request: ", skip_all, fields(
+        src_address=%request.remote_addr().unwrap(),
+    ))]
     async fn login(
         &self,
         request: Request<LoginRequest>,
     ) -> Result<Response<TokenResponse>, Status> {
+        let socket_address = request.remote_addr().unwrap();
+
+        // let login_ip: Ipv4Addr = login_ip.;
+
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
         let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
@@ -93,19 +104,37 @@ impl Authentication for AuthenticationService {
             true => {
                 tracing::info!("Password verified.");
 
-                // Build an Access Token
+                // Get the ip address from the request socket
+                let login_ip = socket_address.ip();
+
+                // IpAddress is an enum with two types, so we need to handle both IP cases
+                let login_ip = match login_ip {
+                    IpAddr::V4(ipv4) => Some(ipv4),
+                    IpAddr::V6(ipv6) => None,
+                };
+
+                // Build a new database Login
+                let login = database::Logins::new(&user.id, login_ip);
+
+                // Insert Login into the database
+                let login = login.insert(self.database_ref()).await?;
+
+                tracing::debug!("Login added to the database: {}", login.id);
+
+                // Build a new Access Token
                 let access_token = domain::AccessToken::new(&token_secret, &user)?;
 
                 tracing::debug!("Using Access Token: {}", access_token);
 
-                // Build a Refresh Token
+                // Build a new Refresh Token
                 let refresh_token =
                     database::RefreshTokens::new(&user, &token_secret)?;
 
-                // Add Refresh Token to database
+                // Insert Refresh Token into the database
                 let refresh_token =
                     refresh_token.insert(self.database_ref()).await?;
 
+                tracing::debug!("Refresh Token added to the database: {}", refresh_token.id);
                 tracing::debug!("Using Refresh Token: {}", refresh_token.token);
 
                 // Build Authenticate Response with the token
@@ -153,10 +182,10 @@ impl Authentication for AuthenticationService {
             &refresh_token,
             &token_secret,
         )
-            .map_err(|_| {
-                tracing::error!("Refresh Token is invalid!");
-                BackendError::AuthenticationError("Authentication Failed!".to_string())
-            })?;
+        .map_err(|_| {
+            tracing::error!("Refresh Token is invalid!");
+            BackendError::AuthenticationError("Authentication Failed!".to_string())
+        })?;
 
         //-- 3. Check Refresh Token status in database
         let database_record =
@@ -209,7 +238,6 @@ impl Authentication for AuthenticationService {
 
                 // Send Response
                 Ok(Response::new(response))
-                // unimplemented!()
             }
             false => {
                 tracing::error!("Refresh Token is not active");
@@ -319,9 +347,8 @@ impl Authentication for AuthenticationService {
 
         // Revoke refresh tokens associated with the user before adding new one to the database
         // TODO: When do we clean up (delete) the database
-        let _rows_affected = refresh_token
-            .revoke_associated(self.database_ref())
-            .await?;
+        let _rows_affected =
+            refresh_token.revoke_associated(self.database_ref()).await?;
 
         // Add new Refresh Token to the database
         let refresh_token = refresh_token.insert(self.database_ref()).await?;
@@ -384,10 +411,10 @@ impl Authentication for AuthenticationService {
             &refresh_token,
             &token_secret,
         )
-            .map_err(|_| {
-                tracing::error!("Refresh Token is invalid!");
-                BackendError::AuthenticationError("Authentication Failed!".to_string())
-            })?;
+        .map_err(|_| {
+            tracing::error!("Refresh Token is invalid!");
+            BackendError::AuthenticationError("Authentication Failed!".to_string())
+        })?;
 
         //-- 3. Get Refresh Token from database
         let database_record =

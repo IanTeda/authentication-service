@@ -35,7 +35,7 @@ impl Logins {
         &self,
         database: &sqlx::Pool<sqlx::Postgres>,
     ) -> Result<Self, BackendError> {
-        // Insert a new user
+        // Insert a new Login
         let database_record = sqlx::query_as!(
             Logins,
             r#"
@@ -53,8 +53,8 @@ impl Logins {
             self.login_on,
             self.login_ip,
         )
-            .fetch_one(database)
-            .await?;
+        .fetch_one(database)
+        .await?;
 
         tracing::debug!("Login database records inserted: {database_record:#?}");
 
@@ -92,6 +92,7 @@ mod tests {
         // Check the two login instances are equal
         assert_eq!(database_record, random_login);
 
+        //-- Return
         Ok(())
     }
 }

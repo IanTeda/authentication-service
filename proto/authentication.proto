@@ -7,8 +7,6 @@ syntax = "proto3";
 
 package authentication;
 
-import "common.proto";
-
 service Authentication {
     rpc Login (LoginRequest) returns (TokenResponse);
     rpc Refresh(RefreshRequest) returns (TokenResponse);

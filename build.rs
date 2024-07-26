@@ -3,7 +3,7 @@ use std::{env, path::PathBuf};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
-   let _tonic_build = tonic_build::configure()
+    tonic_build::configure()
         .build_client(true)
         .build_server(true)
         .build_transport(true)
@@ -12,8 +12,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .protoc_arg("--experimental_allow_proto3_optional")
         .compile(
             &[
-                "./proto/common.proto",
                 "./proto/authentication.proto",
+                "./proto/common.proto",
+                "./proto/logins.proto",
                 "./proto/refresh_tokens.proto",
                 "./proto/users.proto",
                 "./proto/utilities.proto",

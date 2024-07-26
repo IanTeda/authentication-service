@@ -28,9 +28,14 @@ authentication_microservice::rpc::proto::refresh_tokens_client::RefreshTokensCli
 
 // Convenience type alias for users client
 pub type UsersClient =
-authentication_microservice::rpc::proto::users_client::UsersClient<
-    InterceptedService<Channel, AccessTokenInterceptor>,
->;
+    authentication_microservice::rpc::proto::users_client::UsersClient<
+        InterceptedService<Channel, AccessTokenInterceptor>,
+    >;
+
+pub type LoginsClient =
+    authentication_microservice::rpc::proto::logins_client::LoginsClient<
+        InterceptedService<Channel, AccessTokenInterceptor>,
+    >;
 
 /// Tonic Client
 #[derive(Clone)]
@@ -38,6 +43,7 @@ pub struct TonicClient {
     authentication: AuthenticationClient,
     refresh_tokens: RefreshTokensClient,
     users: UsersClient,
+    logins: LoginsClient,
 }
 
 impl TonicClient {
@@ -54,6 +60,11 @@ impl TonicClient {
     /// Returns the users client.
     pub fn users(&mut self) -> &mut UsersClient {
         &mut self.users
+    }
+
+    /// Returns the logins client.
+    pub fn logins(&mut self) -> &mut LoginsClient {
+        &mut self.logins
     }
 
     //noinspection RsUnnecessaryQualifications
@@ -80,10 +91,13 @@ impl TonicClient {
         // Build Users client request
         let users = authentication_microservice::rpc::proto::users_client::UsersClient::with_interceptor(inner.clone(), interceptor.clone());
 
+        let logins = authentication_microservice::rpc::proto::logins_client::LoginsClient::with_interceptor(inner.clone(), interceptor.clone());
+
         let client = TonicClient {
             authentication,
             refresh_tokens,
             users,
+            logins,
         };
 
         Ok(client)
@@ -106,7 +120,7 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
         // println!("access_token: {token:#?}");
 
         request.metadata_mut().append("access_token", token.clone());
-        println!("Access token appended");
+        // println!("Access token appended");
 
         Ok(request)
     }
