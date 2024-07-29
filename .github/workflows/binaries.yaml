@@ -22,8 +22,10 @@ jobs:
             archive: zip
           - target: x86_64-unknown-linux-musl
             archive: tar.gz
-          - target: x86_64-apple-darwin
-            archive: zip
+          # Apple build is not working at the moment
+          # 
+          # - target: x86_64-apple-darwin
+          #   archive: zip
 
     steps:
       # 1. Checkout repo for the workflow

@@ -98,8 +98,8 @@ This microservice has the following features, with a future road map of features
 - [x] Encrypted password
 - [x] Session management
 - [x] Access and Refresh tokens
-- [ ] Docker image
-- [ ] Last logged in
+- [X] Docker image
+- [X] Last logged in
 - [ ] Rate limitations
 - [ ] Two factor authentication
 - [ ] User sign up (registration)
