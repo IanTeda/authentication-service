@@ -35,7 +35,7 @@ WORKDIR /app
 COPY --from=builder /app/target/release/authentication_microservice authentication
 COPY configuration configuration
 LABEL org.opencontainers.image.source="https://github.com/ianteda/authentication_microservice"
-LABEL org.opencontainers.image.description="A microservice for handling application authentication and sessions"
+LABEL org.opencontainers.image.description="A service for handling application authentication and sessions"
 LABEL org.opencontainers.image.licenses="GPL-3.0"
 ENV APP_ENVIRONMENT=production
 ENTRYPOINT ["./authentication"]
