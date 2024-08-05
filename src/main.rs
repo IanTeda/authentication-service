@@ -25,18 +25,11 @@ use crate::prelude::*;
 /// Binary entry point
 #[tokio::main]
 async fn main() -> Result<(), BackendError> {
+    // Start tracing
+    let _telemetry = telemetry::init()?;
+
     // Parse configuration files
     let config = Configuration::parse()?;
-
-    // Build tracing subscriber
-    let tracing_subscriber = telemetry::get_tracing_subscriber(
-        "authentication".into(),
-        std::io::stdout,
-        config.application.runtime_environment,
-        config.application.log_level,
-    );
-
-    telemetry::init_tracing(tracing_subscriber)?;
 
     let database = database::init_pool(&config.database).await?;
 
