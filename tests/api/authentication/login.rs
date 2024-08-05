@@ -57,7 +57,7 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     //-- 3. Checks (Assertions)
     // Get token secret
     let token_secret = &tonic_server.config.application.token_secret;
-    let token_secret = Secret::new(token_secret.to_owned());
+    let token_secret = token_secret.to_owned();
 
     // Build Token Claims from token responses
     let access_token_claim =
@@ -124,7 +124,7 @@ async fn default_user_login(database: Pool<Postgres>) -> Result<()> {
     //-- 3. Checks (Assertions)
     // Get token secret
     let token_secret = &tonic_server.config.application.token_secret;
-    let token_secret = Secret::new(token_secret.to_owned());
+    let token_secret = token_secret.to_owned();
 
     // Build Token Claims from token responses
     let access_token_claim =

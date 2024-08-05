@@ -1,5 +1,7 @@
 // -- ./src/configuration.rs
 
+// #![allow(unused)] // For development only
+
 //! Application configuration settings
 //!
 //! # Application Configuration Crate
@@ -13,89 +15,56 @@
 //! * [config.rs Repository](https://github.com/mehcode/config-rs)
 //! * [Configuration management in Rust web services](https://blog.logrocket.com/configuration-management-in-rust-web-services/)
 
-// #![allow(unused)] // For development only
-
 use crate::prelude::*;
 
 use secrecy::{ExposeSecret, Secret};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
-use std::path::PathBuf;
-use strum::{AsRefStr, Display};
-
-/// Directory from binary base folder to look in for configuration files
-const CONFIGURATION_DIRECTORY_PREFIX: &str = "configuration/";
-/// If the configuration files do not set this default is used.
-const DEFAULT_RUNTIME_ENVIRONMENT: &str = "development";
-/// If the configuration files do not set this default is used.
-const DEFAULT_LOG_LEVEL: &str = "info";
-/// If the configuration files do not set this default is used.
-const DEFAULT_QUERY_OFFSET: i64 = 0;
-/// If the configuration files do not set this default is used.
-const DEFAULT_QUERY_LIMIT: i64 = 10;
+use strum::Display;
 
 /// Configuration for the API
-#[derive(serde::Deserialize, Clone, Debug)]
+#[derive(Debug, Clone, serde::Deserialize)]
 pub struct Configuration {
-    pub database: DatabaseConfiguration,
+    /// Application configuration
     pub application: ApplicationConfiguration,
-}
 
-/// Define log levels the system will recognise
-#[derive(serde::Deserialize, Debug, Clone, AsRefStr, Display, Copy)]
-pub enum LogLevels {
-    Error,
-    Warn,
-    Info,
-    Debug,
-    Trace,
+    /// Database configuration
+    pub database: DatabaseConfiguration,
 }
 
 /// Configuration for running the API application
-#[derive(serde::Deserialize, Clone, Debug)]
+#[derive(Debug, Clone, serde::Deserialize)]
 pub struct ApplicationConfiguration {
     // The host address the api should bind to
     pub ip_address: String,
+
     /// The port that the api should bind to
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
-    /// Application log level has a default set in builder
-    pub log_level: LogLevels,
-    /// Application runtime environment is set to default in the builder
-    pub runtime_environment: Environment,
-    // Secret used to generate JWT keys
-    #[allow(dead_code)]
-    pub token_secret: String,
-    /// Default application settings
-    #[allow(dead_code)]
-    pub default: DefaultApplicationSettings,
-}
 
-/// Default application settings
-#[derive(serde::Deserialize, Clone, Debug)]
-pub struct DefaultApplicationSettings {
-    // Default sql query offset
-    #[allow(dead_code)]
-    pub query_offset: i64,
-    // Default sql query limit
-    #[allow(dead_code)]
-    pub query_limit: i64,
+    // Secret used to generate JWT keys
+    pub token_secret: Secret<String>,
 }
 
 /// Configuration for connecting to the database server
-#[derive(serde::Deserialize, Clone, Debug)]
+#[derive(Debug,Clone, serde::Deserialize)]
 pub struct DatabaseConfiguration {
     /// Database host address
     pub host: String,
+
     /// Database host port
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
+
     /// Database username for login
     pub username: String,
+
     /// Database password for login
     pub password: Secret<String>,
+
     /// Database name to use
     pub database_name: String,
+
     /// Should ssl be used to connect to the database
     pub require_ssl: bool,
 }
@@ -108,7 +77,9 @@ impl DatabaseConfiguration {
         } else {
             PgSslMode::Prefer
         };
-        PgConnectOptions::new()
+        // Pgpass allows for storing postgres passwords int he users directory.
+        // We are not going to use that.
+        PgConnectOptions::new_without_pgpass()
             .host(&self.host)
             .port(self.port)
             .username(&self.username)
@@ -119,7 +90,7 @@ impl DatabaseConfiguration {
 }
 
 /// The possible runtime environment for our application.
-#[derive(Clone, Debug, serde::Deserialize, PartialEq, Copy, Display)]
+#[derive(Clone, Debug, PartialEq, Copy, serde::Deserialize, Display)]
 #[strum(serialize_all = "snake_case")]
 pub enum Environment {
     Development,
@@ -153,59 +124,51 @@ impl TryFrom<String> for Environment {
     }
 }
 
-/// Returns the runtime environment enum used to start the application
-///
-/// This function parse the runtime environmental variables for "APP_ENVIRONMENT".
-/// If the variable is not set, then default to development
-pub fn get_runtime_environment() -> Result<Environment, BackendError> {
-    let environment = std::env::var("APP_ENVIRONMENT")
-        .unwrap_or_else(|_| "development".into())
-        .try_into()
-        .expect("Failed to parse APP_ENVIRONMENT.");
-    Ok(environment)
-}
-
 impl Configuration {
-    /// Parse the application configuration from yaml files, returning a
-    /// `Configuration` result.
+    /// Parse the application configuration, returning a `Configuration` result.
     pub fn parse() -> Result<Configuration, BackendError> {
-        // Define the configuration directory within the base application directory
-        let base_dir_path: PathBuf =
-            std::env::current_dir()?.join(CONFIGURATION_DIRECTORY_PREFIX);
+        // Get the directory that the binary is being run from
+        let base_path = std::env::current_dir()
+            .expect("Failed to determine the current directory");
 
-        let environment_filename =
-            format!("{}.yaml", get_runtime_environment()?.as_str());
+        // Set the configuration directory for the app
+        let configuration_directory = base_path.join("configuration");
+
+        // Set the default config file path
+        let default_config_file = configuration_directory.join("default.yaml");
+
+        // Get the runtime environment the binary was started in
+        let environment: Environment = std::env::var("APP_ENVIRONMENT")
+            .unwrap_or_else(|_| "development".into())
+            .try_into()
+            .expect("Failed to parse APP_ENVIRONMENT.");
+
+        // Set the environment config file path
+        let environment_config_file =
+            configuration_directory.join(format!("{}.yaml", environment));
 
         // Build our configuration instance. Configuration files are added in
         // this order, with subsequent files overwriting previous configurations
         // if present.
         let settings_builder = config::Config::builder()
-            .set_default(
-                "application.runtime_environment",
-                DEFAULT_RUNTIME_ENVIRONMENT,
-            )?
-            .set_default("application.log_level", DEFAULT_LOG_LEVEL)?
-            .set_default("application.default.query_offset", DEFAULT_QUERY_OFFSET)?
-            .set_default("application.default.query_limit", DEFAULT_QUERY_LIMIT)?
-            .add_source(config::File::from(base_dir_path.join("default.yaml")))
-            .add_source(config::File::from(base_dir_path.join(environment_filename)))
-            // -- Environmental variables
+            .add_source(config::File::from(default_config_file))
+            .add_source(config::File::from(environment_config_file))
             // Add in settings from environment variables (with a prefix of BACKEND
-            // and '__' as separator). E.g. `BACKEND__APPLICATION_PORT=5001 would
+            // and '_' as separator). E.g. `BACKEND_APPLICATION_PORT=5001 would
             // set `settings.application.port`
             .add_source(
                 config::Environment::with_prefix("BACKEND")
                     .prefix_separator("_")
-                    .separator("__"),
+                    .separator("_"),
             )
             .build()?;
 
         let configuration = settings_builder.try_deserialize::<Configuration>()?;
 
-        // println!(
-        //     "\n----------- CONFIGURATION ----------- \n{:?} \n-------------------------------------",
-        //     configuration
-        // );
+        tracing::info!(
+            "\n----------- CONFIGURATION ----------- \n{:?} \n-------------------------------------",
+            configuration
+        );
 
         // Convert the configuration values into Settings type
         Ok(configuration)

@@ -1,4 +1,3 @@
-use secrecy::Secret;
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
@@ -49,7 +48,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     //-- Checks (Assertions)
     // Get token secret
     let token_secret = &tonic_server.config.application.token_secret;
-    let token_secret = Secret::new(token_secret.to_owned());
+    let token_secret = token_secret.to_owned();
 
     // Build Token Claims
     let access_token_claim =

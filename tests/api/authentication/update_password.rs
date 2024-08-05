@@ -1,6 +1,5 @@
 // #![allow(unused)] // For beginning only.
 
-use secrecy::Secret;
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
@@ -73,7 +72,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     //-- Checks (Assertions)
     // Get Token Claim Secret before Tonic Client takes ownership of the server instance
     let token_secret = &tonic_server.clone().config.application.token_secret;
-    let token_secret = Secret::new(token_secret.to_owned());
+    let token_secret = token_secret.to_owned();
 
     // Build Token Claims from token responses
     let access_token_claim =

@@ -19,6 +19,16 @@ args = [
     "--watch", "src"
 ]
 
+[tasks.production]
+env =  { "APP_ENVIRONMENT" = "production"}
+command = "cargo"
+args = ["run"]
+
+[tasks.debug]
+env =  { "RUST_LOG" = "debug"}
+command = "cargo"
+args = ["run"]
+
 ## https://github.com/xd009642/tarpaulin
 ## $ cargo make tarpaulin
 [tasks.coverage]

@@ -9,12 +9,10 @@
 /// ---
 use std::sync::Arc;
 
-use once_cell::sync::Lazy;
 use authentication_microservice::{
-    configuration::{Configuration, Environment, LogLevels},
-    domain, startup, telemetry,
+    configuration::Configuration, domain, startup, telemetry,
 };
-use secrecy::Secret;
+use once_cell::sync::Lazy;
 use sqlx::{Pool, Postgres};
 use tonic::transport::{Channel, Uri};
 
@@ -24,25 +22,7 @@ pub type Error = Box<dyn std::error::Error>;
 
 // Ensure that the `tracing` stack is only initialised once using `once_cell`
 static TRACING: Lazy<()> = Lazy::new(|| {
-    let default_filter_level = LogLevels::Info;
-    let subscriber_name = "test".to_string();
-    if std::env::var("TEST_LOG").is_ok() {
-        let tracing_subscriber = telemetry::get_tracing_subscriber(
-            subscriber_name,
-            std::io::stdout,
-            Environment::Development,
-            default_filter_level,
-        );
-        let _ = telemetry::init_tracing(tracing_subscriber);
-    } else {
-        let subscriber = telemetry::get_tracing_subscriber(
-            subscriber_name,
-            std::io::sink,
-            Environment::Development,
-            default_filter_level,
-        );
-        let _ = telemetry::init_tracing(subscriber);
-    };
+    let _telemetry = telemetry::init();
 });
 
 #[derive(Clone)]
@@ -93,10 +73,8 @@ impl TonicServer {
 
         // Generate access token for Tonic Client requests
         let token_secret = &config.application.token_secret;
-        let token_secret = Secret::new(token_secret.to_owned());
         let access_token_string =
-            domain::AccessToken::new(&token_secret, &random_user)?
-                .to_string();
+            domain::AccessToken::new(&token_secret, &random_user)?.to_string();
         // let access_token = mocks::access_token(&random_user.id, &token_secret).await?.to_string();
 
         let config = Arc::new(config);

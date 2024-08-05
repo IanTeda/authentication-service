@@ -9,7 +9,6 @@
 
 use std::sync::Arc;
 
-use secrecy::Secret;
 use sqlx::Pool;
 use sqlx::Postgres;
 use tonic::transport::{server::Router, Server};
@@ -38,7 +37,7 @@ pub fn get_router(
     let config = Arc::new(config);
 
     // Wrap token_secret string in a Secret
-    let token_secret = Secret::new(config.application.token_secret.clone());
+    let token_secret = config.application.token_secret.clone();
 
     // Intercept request and verify Access Token
     let access_token_interceptor =

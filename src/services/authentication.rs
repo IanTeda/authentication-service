@@ -94,7 +94,7 @@ impl Authentication for AuthenticationService {
         tracing::debug!("User retrieved from the database: {}", user.id);
 
         // Wrap the Token Secret string in a Secret
-        let token_secret = Secret::new(self.config.application.token_secret.clone());
+        let token_secret = self.config.application.token_secret.clone();
 
         // Wrap request password in a Secret
         let password_secret = Secret::new(request_message.password);
@@ -174,7 +174,7 @@ impl Authentication for AuthenticationService {
         //-- 2. Get & Validate  the Refresh Token Claim
         // Get the Token Secret from config and wrap it in a Secret to help limit leaks
         let token_secret = &self.config_ref().application.token_secret;
-        let token_secret = Secret::new(token_secret.to_owned());
+        let token_secret = token_secret.to_owned();
 
         // Using the Token Secret decode the token into a Token Claim
         // This also validates the token expiration, not before and Issuer
@@ -273,7 +273,7 @@ impl Authentication for AuthenticationService {
 
         // Get the Token Secret from config and wrap it in a Secret to help limit leaks
         let token_secret = &self.config_ref().application.token_secret;
-        let token_secret = Secret::new(token_secret.to_owned());
+        let token_secret = token_secret.to_owned();
 
         // Using the Token Secret decode the Access Token into a Token Claim. This also
         // validates the token expiration, not before and Issuer.
@@ -403,7 +403,7 @@ impl Authentication for AuthenticationService {
         //-- 2. Get & Validate  the Refresh Token Claim
         // Get the Token Secret from config and wrap it in a Secret to help limit leaks
         let token_secret = &self.config_ref().application.token_secret;
-        let token_secret = Secret::new(token_secret.to_owned());
+        let token_secret = token_secret.to_owned();
 
         // Using the Token Secret decode the token into a Token Claim
         // This also validates the token expiration, not before and Issuer
