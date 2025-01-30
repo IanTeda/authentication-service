@@ -1,8 +1,0 @@
-//-- ./proto/common.proto
-
-syntax = "proto3";
-
-package authentication;
-
-// Empty message.
-message Empty {}
