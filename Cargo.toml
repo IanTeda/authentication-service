@@ -1,7 +1,7 @@
 [package]
 name = "authentication_microservice"
 authors = ["Ian Teda <ian@teda.id.au>"]
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "A microservice for handling application authentication and sessions."
 documentation = "https://github.com/IanTeda/authentication_microservice"
