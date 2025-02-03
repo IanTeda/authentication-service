@@ -3,7 +3,7 @@
 # A Github action that builds and pushes binaries to the Github Release that triggered it
 # Read/Write permission needs  to be set in Repository Workflow Permissions
 ---
-name: Build and Publish Binaries to Release
+name: Build and Publish Binaries to Github Release
 
 on:
   release:
@@ -48,4 +48,4 @@ jobs:
           # MINIFY: "yes"
           EXTRA_FILES: "README.md LICENSE.txt"
           STATIC_LINKING: false
-          TOOLCHAIN_VERSION: 1.84.1 # See https://github.com/rust-lang/rust/releases
+          TOOLCHAIN_VERSION: 1.84.1 # Set Rust version to build with See https://github.com/rust-lang/rust/releases
