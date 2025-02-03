@@ -6,5 +6,5 @@
 
 echo "Installing build dependencies"
 apk add protoc protobuf-dev
-rustup update
+# rustup update
 # cargo clean

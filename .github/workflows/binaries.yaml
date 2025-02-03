@@ -48,3 +48,4 @@ jobs:
           # MINIFY: "yes"
           EXTRA_FILES: "README.md LICENSE.txt"
           STATIC_LINKING: false
+          TOOLCHAIN_VERSION: 1.84.1 # See https://github.com/rust-lang/rust/releases
