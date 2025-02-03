@@ -17,7 +17,7 @@ use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
 use crate::configuration::Configuration;
-use crate::rpc::proto::logins_server::Logins;
+use crate::rpc::proto::logins_service_server::LoginsService as Logins;
 use crate::rpc::proto::{
     self, LoginsCreateRequest, LoginsDeleteRequest, LoginsDeleteResponse,
     LoginsIndexRequest, LoginsIndexResponse, LoginsReadRequest, LoginsResponse,

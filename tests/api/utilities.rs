@@ -8,7 +8,7 @@
 
 // #![allow(unused)] // For beginning only.
 
-use authentication_microservice::rpc::proto::{utilities_client::UtilitiesClient, Empty};
+use authentication_microservice::rpc::proto::{utilities_service_client::UtilitiesServiceClient as UtilitiesClient, Empty};
 
 use sqlx::{Pool, Postgres};
 

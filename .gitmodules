@@ -1,0 +1,3 @@
+[submodule "proto/authentication"]
+	path = proto/authentication
+	url = git@github.com:IanTeda/authentication_protobuf.git

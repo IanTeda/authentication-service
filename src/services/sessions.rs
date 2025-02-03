@@ -14,7 +14,7 @@ use sqlx::{Pool, Postgres};
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-use crate::rpc::proto::sessions_server::Sessions;
+use crate::rpc::proto::sessions_service_server::SessionsService as Sessions;
 use crate::rpc::proto::{Empty, SessionsDeleteRequest, SessionsDeleteResponse, SessionsDeleteUserRequest, SessionsIndexRequest, SessionsIndexResponse, SessionsReadRequest, SessionsResponse, SessionsRevokeRequest, SessionsRevokeResponse, SessionsRevokeUserRequest};
 use crate::{database, domain};
 use crate::configuration::Configuration;

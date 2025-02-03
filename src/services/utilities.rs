@@ -10,7 +10,7 @@ use tonic::{Request, Response, Status};
 
 use crate::configuration::Configuration;
 use crate::rpc::proto::{Empty, PingResponse};
-use crate::rpc::proto::utilities_server::Utilities;
+use crate::rpc::proto::utilities_service_server::UtilitiesService as Utilities;
 
 // #[derive(Debug, Default)]
 pub struct UtilitiesService {

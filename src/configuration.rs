@@ -98,6 +98,8 @@ pub enum Environment {
     Production,
 }
 
+// TODO: why is this dead co
+#[allow(dead_code)]
 impl Environment {
     pub fn as_str(&self) -> &'static str {
         match self {

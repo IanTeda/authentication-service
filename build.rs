@@ -10,14 +10,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .compile_well_known_types(true)
         .file_descriptor_set_path(out_dir.join("authentication_descriptor.bin"))
         .protoc_arg("--experimental_allow_proto3_optional")
-        .compile(
+        .compile_protos(
             &[
-                "./proto/authentication.proto",
-                "./proto/common.proto",
-                "./proto/logins.proto",
-                "./proto/sessions.proto",
-                "./proto/users.proto",
-                "./proto/utilities.proto",
+                "./proto/authentication/authentication.proto",
+                "./proto/authentication/common.proto",
+                "./proto/authentication/logins.proto",
+                "./proto/authentication/sessions.proto",
+                "./proto/authentication/users.proto",
+                "./proto/authentication/utilities.proto",
             ],
             &["./proto"],
         )?;

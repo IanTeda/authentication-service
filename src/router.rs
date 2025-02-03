@@ -11,16 +11,17 @@ use std::sync::Arc;
 
 use sqlx::Pool;
 use sqlx::Postgres;
-use tonic::transport::{server::Router, Server};
+use tonic::transport::server::Router;
+use tonic::transport::Server;
 
 use crate::configuration::Configuration;
 use crate::middleware;
 use crate::prelude::*;
-use crate::rpc::proto::authentication_server::AuthenticationServer;
-use crate::rpc::proto::logins_server::LoginsServer;
-use crate::rpc::proto::sessions_server::SessionsServer;
-use crate::rpc::proto::users_server::UsersServer;
-use crate::rpc::proto::utilities_server::UtilitiesServer;
+use crate::rpc::proto::authentication_service_server::AuthenticationServiceServer;
+use crate::rpc::proto::logins_service_server::LoginsServiceServer;
+use crate::rpc::proto::sessions_service_server::SessionsServiceServer;
+use crate::rpc::proto::users_service_server::UsersServiceServer;
+use crate::rpc::proto::utilities_service_server::UtilitiesServiceServer;
 use crate::services;
 
 // use crate::services::{AuthenticationService, UsersService, UtilitiesService};
@@ -45,20 +46,23 @@ pub fn get_router(
 
     // Build Utilities server
     let utilities_service = services::UtilitiesService::new(Arc::clone(&config));
-    
-    let utilities_server = UtilitiesServer::new(utilities_service);
+
+    let utilities_server = UtilitiesServiceServer::new(utilities_service);
 
     // Build Authentication server
-    let authentication_service =
-        services::AuthenticationService::new(Arc::clone(&database), Arc::clone(&config));
-    
-    let authentication_server = AuthenticationServer::new(authentication_service);
+    let authentication_service = services::AuthenticationService::new(
+        Arc::clone(&database),
+        Arc::clone(&config),
+    );
+
+    let authentication_server =
+        AuthenticationServiceServer::new(authentication_service);
 
     // Build Users server
     let users_service =
         services::UsersService::new(Arc::clone(&database), Arc::clone(&config));
-    
-    let users_server = UsersServer::with_interceptor(
+
+    let users_server = UsersServiceServer::with_interceptor(
         users_service,
         access_token_interceptor.clone(),
     );
@@ -66,8 +70,8 @@ pub fn get_router(
     // Build Sessions server
     let sessions_service =
         services::SessionsService::new(Arc::clone(&database), Arc::clone(&config));
-    
-    let sessions_server = SessionsServer::with_interceptor(
+
+    let sessions_server = SessionsServiceServer::with_interceptor(
         sessions_service,
         access_token_interceptor.clone(),
     );
@@ -76,23 +80,29 @@ pub fn get_router(
     let logins_service =
         services::LoginsService::new(Arc::clone(&database), Arc::clone(&config));
 
-    let logins_server = LoginsServer::with_interceptor(
+    let logins_server = LoginsServiceServer::with_interceptor(
         logins_service,
         access_token_interceptor,
     );
 
     // Build reflections server
-    let reflections_server = services::ReflectionsService::new();
+    // let reflections_server = services::ReflectionsService::new();
 
-    // Build RPC server router
+    // https://github.com/nicktretyakov/gRUSTpcWEB
+
     let router = Server::builder()
+        // Start log tracing
         .trace_fn(|_| tracing::info_span!("Tonic"))
-        .add_service(reflections_server)
-        .add_service(utilities_server)
-        .add_service(authentication_server)
-        .add_service(users_server)
-        .add_service(sessions_server)
-        .add_service(logins_server);
+        // GRPC-web requires http/1.1
+        .accept_http1(true)
+        // Add reflection service
+        // .add_service(reflections_server)
+        // .add_service(utilities_server)
+        .add_service(tonic_web::enable(utilities_server))
+        .add_service(tonic_web::enable(authentication_server))
+        .add_service(tonic_web::enable(users_server))
+        .add_service(tonic_web::enable(sessions_server))
+        .add_service(tonic_web::enable(logins_server));
 
     Ok(router)
 }

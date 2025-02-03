@@ -14,7 +14,7 @@ use uuid::Uuid;
 
 use crate::configuration::Configuration;
 use crate::prelude::*;
-use crate::rpc::proto::authentication_server::Authentication;
+use crate::rpc::proto::authentication_service_server::AuthenticationService as Authentication;
 use crate::rpc::proto::{
     LoginRequest, LogoutRequest, LogoutResponse, RefreshRequest, RegisterRequest,
     ResetPasswordRequest, ResetPasswordResponse, TokenResponse,

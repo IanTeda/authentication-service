@@ -18,7 +18,7 @@ use uuid::Uuid;
 
 use crate::configuration::Configuration;
 use crate::prelude::BackendError;
-use crate::rpc::proto::users_server::Users;
+use crate::rpc::proto::users_service_server::UsersService as Users;
 //TODO: Refactor Proto function names
 use crate::rpc::proto::{
     CreateUserRequest, DeleteUserRequest, DeleteUserResponse, ReadUserRequest,
