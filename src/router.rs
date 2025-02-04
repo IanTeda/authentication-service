@@ -44,42 +44,52 @@ pub fn get_router(
     let access_token_interceptor =
         middleware::AccessTokenInterceptor { token_secret };
 
-    // Build Utilities server
+    //-- Build the Utilities Service
+    // Create a new UtilitiesService instance
     let utilities_service = services::UtilitiesService::new(Arc::clone(&config));
-
+    
+    // Wrap the UtilitiesService in the UtilitiesServiceServer
     let utilities_server = UtilitiesServiceServer::new(utilities_service);
 
-    // Build Authentication server
+    //-- Build the Authentication Service
+    // Create a new AuthenticationService instance
     let authentication_service = services::AuthenticationService::new(
         Arc::clone(&database),
         Arc::clone(&config),
     );
 
+    // Wrap the AuthenticationService in the AuthenticationServiceServer
     let authentication_server =
         AuthenticationServiceServer::new(authentication_service);
 
-    // Build Users server
+    //-- Build the Users Service
+    // Create a new UsersService instance
     let users_service =
         services::UsersService::new(Arc::clone(&database), Arc::clone(&config));
-
+    
+    // Wrap the UsersService in the UsersServiceServer
     let users_server = UsersServiceServer::with_interceptor(
         users_service,
         access_token_interceptor.clone(),
     );
 
-    // Build Sessions server
+    //-- Build the Sessions Service
+    // Create a new SessionsService instance
     let sessions_service =
         services::SessionsService::new(Arc::clone(&database), Arc::clone(&config));
-
+    
+    // Wrap the SessionsService in the SessionsServiceServer
     let sessions_server = SessionsServiceServer::with_interceptor(
         sessions_service,
         access_token_interceptor.clone(),
     );
 
-    // Build Logins Tokens server
+    //-- Build the Logins Service
+    // Create a new LoginsService instance
     let logins_service =
         services::LoginsService::new(Arc::clone(&database), Arc::clone(&config));
-
+    
+    // Wrap the LoginsService in the LoginsServiceServer
     let logins_server = LoginsServiceServer::with_interceptor(
         logins_service,
         access_token_interceptor,
