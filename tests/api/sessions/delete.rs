@@ -5,7 +5,7 @@
 use fake::Fake;
 use sqlx::{Pool, Postgres};
 
-use authentication_microservice::rpc::proto::{Empty, SessionsDeleteRequest, SessionsDeleteUserRequest};
+use authentication_service::rpc::proto::{Empty, SessionsDeleteRequest, SessionsDeleteUserRequest};
 
 use crate::helpers;
 

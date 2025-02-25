@@ -18,6 +18,9 @@ jobs:
       # https://github.com/actions/checkout
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive # Protobuf files is a submodule
+          # token: ${{ secrets.PAT }}
 
       # 2. Grab the metadata from the repo to add tags and labels to the Docker Image
       # A GitHub Action to extract metadata (tags, labels) from Git reference for

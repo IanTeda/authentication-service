@@ -5,7 +5,7 @@
 use fake::Fake;
 use sqlx::{Pool, Postgres};
 
-use authentication_microservice::{
+use authentication_service::{
     database,
     rpc::proto::{ReadUserRequest, UserIndexRequest},
 };

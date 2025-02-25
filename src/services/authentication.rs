@@ -16,9 +16,9 @@ use crate::configuration::Configuration;
 use crate::prelude::*;
 use crate::rpc::proto::authentication_service_server::AuthenticationService as Authentication;
 use crate::rpc::proto::{
-    LoginRequest, LogoutRequest, LogoutResponse, RefreshRequest, RegisterRequest,
-    ResetPasswordRequest, ResetPasswordResponse, TokenResponse,
-    UpdatePasswordRequest,
+    AuthenticationRequest, AuthenticationResponse, LogoutRequest, LogoutResponse,
+    RefreshRequest, RegisterRequest, ResetPasswordRequest, ResetPasswordResponse,
+    UpdatePasswordRequest, UpdatePasswordResponse,
 };
 use crate::{database, domain};
 
@@ -55,10 +55,10 @@ impl Authentication for AuthenticationService {
     #[tracing::instrument(name = "Authenticate Request: ", skip_all, fields(
         src_address=%request.remote_addr().unwrap(),
     ))]
-    async fn login(
+    async fn authentication(
         &self,
-        request: Request<LoginRequest>,
-    ) -> Result<Response<TokenResponse>, Status> {
+        request: Request<AuthenticationRequest>,
+    ) -> Result<Response<AuthenticationResponse>, Status> {
         let socket_address = request.remote_addr().unwrap();
 
         // let login_ip: Ipv4Addr = login_ip.;
@@ -127,18 +127,22 @@ impl Authentication for AuthenticationService {
                 tracing::debug!("Using Access Token: {}", access_token);
 
                 // Build a new Session
-                let session =
-                    database::Sessions::new(&user, &token_secret)?;
+                let session = database::Sessions::new(&user, &token_secret)?;
 
                 // Insert Session into the database
-                let refresh_token =
-                    session.insert(self.database_ref()).await?;
+                let refresh_token = session.insert(self.database_ref()).await?;
 
-                tracing::debug!("Session added to the database: {}", refresh_token.id);
-                tracing::debug!("Using Refresh Token: {}", refresh_token.refresh_token);
+                tracing::debug!(
+                    "Session added to the database: {}",
+                    refresh_token.id
+                );
+                tracing::debug!(
+                    "Using Refresh Token: {}",
+                    refresh_token.refresh_token
+                );
 
                 // Build Authenticate Response with the token
-                let response = TokenResponse {
+                let response = AuthenticationResponse {
                     access_token: access_token.to_string(),
                     refresh_token: refresh_token.refresh_token.to_string(),
                 };
@@ -161,7 +165,7 @@ impl Authentication for AuthenticationService {
     async fn refresh(
         &self,
         request: Request<RefreshRequest>,
-    ) -> Result<Response<TokenResponse>, Status> {
+    ) -> Result<Response<AuthenticationResponse>, Status> {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
         let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
@@ -197,9 +201,7 @@ impl Authentication for AuthenticationService {
                 tracing::info!("Session is active.");
 
                 //-- 4. Void all Sessions for associated user ID
-                session
-                    .revoke_associated(self.database_ref())
-                    .await?;
+                session.revoke_associated(self.database_ref()).await?;
 
                 let user_id =
                     Uuid::try_parse(&refresh_token_claim.sub).map_err(|_| {
@@ -220,18 +222,19 @@ impl Authentication for AuthenticationService {
                 tracing::debug!("Using Access Token: {}", access_token);
 
                 // Build a Session
-                let session =
-                    database::Sessions::new(&user, &token_secret)?;
+                let session = database::Sessions::new(&user, &token_secret)?;
 
                 // Add Session to database
-                let refresh_token =
-                    session.insert(self.database_ref()).await?;
+                let refresh_token = session.insert(self.database_ref()).await?;
 
-                tracing::debug!("Using Refresh Token: {}", refresh_token.refresh_token);
+                tracing::debug!(
+                    "Using Refresh Token: {}",
+                    refresh_token.refresh_token
+                );
 
                 //-- 5. Send new Access Token and Refresh Token
                 // Build Authenticate Response with the token
-                let response = TokenResponse {
+                let response = AuthenticationResponse {
                     access_token: access_token.to_string(),
                     refresh_token: refresh_token.refresh_token.to_string(),
                 };
@@ -251,7 +254,7 @@ impl Authentication for AuthenticationService {
     async fn update_password(
         &self,
         request: Request<UpdatePasswordRequest>,
-    ) -> Result<Response<TokenResponse>, Status> {
+    ) -> Result<Response<UpdatePasswordResponse>, Status>{
         //-- 0. Break the request up into its parts
         let (request_metadata, _extensions, request_message) = request.into_parts();
 
@@ -347,17 +350,16 @@ impl Authentication for AuthenticationService {
 
         // Revoke sessions associated with the user before adding new one to the database
         // TODO: When do we clean up (delete) the database
-        let _rows_affected =
-            session.revoke_associated(self.database_ref()).await?;
+        let _rows_affected = session.revoke_associated(self.database_ref()).await?;
 
         // Add new Session to the database
         let session = session.insert(self.database_ref()).await?;
         tracing::debug!("Using Refresh Token: {}", session.refresh_token);
 
-        // Build Token Response message with the token
-        let response_message = TokenResponse {
-            access_token: access_token.to_string(),
-            refresh_token: session.refresh_token.to_string(),
+        // Build GRPC response message
+        let response_message = UpdatePasswordResponse {
+            success: true,
+            message: "Password updated successfully".to_string(),
         };
 
         // Send Response
@@ -379,7 +381,7 @@ impl Authentication for AuthenticationService {
     async fn register(
         &self,
         request: Request<RegisterRequest>,
-    ) -> Result<Response<TokenResponse>, Status> {
+    ) -> Result<Response<AuthenticationResponse>, Status> {
         //-- 0. Break the request up into its parts
         let (metadata, _extensions, request_message) = request.into_parts();
 
@@ -422,12 +424,14 @@ impl Authentication for AuthenticationService {
                 .await?;
 
         // Revoke all Sessions associated with user_id
-        let rows_affected = session
-            .revoke_associated(self.database_ref())
-            .await? as i64;
+        let rows_affected =
+            session.revoke_associated(self.database_ref()).await? as i64;
 
         // Build Tonic response message
-        let response_message = LogoutResponse { rows_affected };
+        let response_message = LogoutResponse {
+            success: true,
+            message: "You are logged out".to_string(),
+        };
 
         // Send Response
         Ok(Response::new(response_message))

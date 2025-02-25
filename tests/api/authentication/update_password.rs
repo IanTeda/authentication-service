@@ -1,10 +1,10 @@
 // #![allow(unused)] // For beginning only.
 
 use sqlx::{Pool, Postgres};
-use uuid::Uuid;
+// use uuid::Uuid;
 
-use authentication_microservice::domain;
-use authentication_microservice::rpc::proto::{LoginRequest, UpdatePasswordRequest};
+// use authentication_service::domain;
+use authentication_service::rpc::proto::{AuthenticationRequest, UpdatePasswordRequest};
 
 use crate::helpers;
 
@@ -28,7 +28,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     // Build tonic login request
-    let login_request_message = LoginRequest {
+    let login_request_message = AuthenticationRequest {
         email: random_user.email.to_string(),
         password: random_password_original.to_string(),
     };
@@ -39,7 +39,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     // Send tonic client login request to server
     let login_response_message = tonic_client
         .authentication()
-        .login(login_request)
+        .authentication(login_request)
         .await?
         .into_inner();
     // println!("{login_response_message:#?}");
@@ -71,23 +71,26 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
 
     //-- Checks (Assertions)
     // Get Token Claim Secret before Tonic Client takes ownership of the server instance
-    let token_secret = &tonic_server.clone().config.application.token_secret;
-    let token_secret = token_secret.to_owned();
+    // let token_secret = &tonic_server.clone().config.application.token_secret;
+    // let token_secret = token_secret.to_owned();
 
     // Build Token Claims from token responses
-    let access_token_claim =
-        domain::TokenClaim::from_token(&response.access_token, &token_secret)?;
+    // let access_token_claim =
+    //     domain::TokenClaim::from_token(&response.access_token, &token_secret)?;
 
-    let refresh_token_claim =
-        domain::TokenClaim::from_token(&response.refresh_token, &token_secret)?;
+    // let refresh_token_claim =
+    //     domain::TokenClaim::from_token(&response.refresh_token, &token_secret)?;
 
     // Confirm User IDs (uuids) are the same
-    assert_eq!(Uuid::parse_str(&access_token_claim.sub)?, random_user.id);
-    assert_eq!(Uuid::parse_str(&refresh_token_claim.sub)?, random_user.id);
+    // assert_eq!(Uuid::parse_str(&access_token_claim.sub)?, random_user.id);
+    // assert_eq!(Uuid::parse_str(&refresh_token_claim.sub)?, random_user.id);
 
-    // Confirm Token Claims
-    assert_eq!(&access_token_claim.jty, "Access");
-    assert_eq!(&refresh_token_claim.jty, "Refresh");
+    // // Confirm Token Claims
+    // assert_eq!(&access_token_claim.jty, "Access");
+    // assert_eq!(&refresh_token_claim.jty, "Refresh");
+
+    assert_eq!(response.success, true);
+    assert_eq!(response.message, "Password updated successfully");
 
     Ok(())
 }

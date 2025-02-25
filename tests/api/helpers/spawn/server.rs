@@ -9,7 +9,7 @@
 /// ---
 use std::sync::Arc;
 
-use authentication_microservice::{
+use authentication_service::{
     configuration::Configuration, domain, startup, telemetry,
 };
 use once_cell::sync::Lazy;

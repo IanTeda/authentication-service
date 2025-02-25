@@ -18,22 +18,22 @@ use tonic::transport::Channel;
 
 /// Convenience type alias for authentication client.
 pub type AuthenticationClient =
-authentication_microservice::rpc::proto::authentication_service_client::AuthenticationServiceClient<Channel>;
+authentication_service::rpc::proto::authentication_service_client::AuthenticationServiceClient<Channel>;
 
 /// Convenience type alias for sessions client
 pub type SessionsClient =
-authentication_microservice::rpc::proto::sessions_service_client::SessionsServiceClient<
+authentication_service::rpc::proto::sessions_service_client::SessionsServiceClient<
     InterceptedService<Channel, AccessTokenInterceptor>,
 >;
 
 // Convenience type alias for users client
 pub type UsersClient =
-    authentication_microservice::rpc::proto::users_service_client::UsersServiceClient<
+    authentication_service::rpc::proto::users_service_client::UsersServiceClient<
         InterceptedService<Channel, AccessTokenInterceptor>,
     >;
 
 pub type LoginsClient =
-    authentication_microservice::rpc::proto::logins_service_client::LoginsServiceClient<
+    authentication_service::rpc::proto::logins_service_client::LoginsServiceClient<
         InterceptedService<Channel, AccessTokenInterceptor>,
     >;
 
@@ -86,12 +86,12 @@ impl TonicClient {
         let authentication = AuthenticationClient::new(inner.clone());
 
         // Build sessions client request
-        let sessions = authentication_microservice::rpc::proto::sessions_service_client::SessionsServiceClient::with_interceptor(inner.clone(), interceptor.clone());
+        let sessions = authentication_service::rpc::proto::sessions_service_client::SessionsServiceClient::with_interceptor(inner.clone(), interceptor.clone());
 
         // Build Users client request
-        let users = authentication_microservice::rpc::proto::users_service_client::UsersServiceClient::with_interceptor(inner.clone(), interceptor.clone());
+        let users = authentication_service::rpc::proto::users_service_client::UsersServiceClient::with_interceptor(inner.clone(), interceptor.clone());
 
-        let logins = authentication_microservice::rpc::proto::logins_service_client::LoginsServiceClient::with_interceptor(inner.clone(), interceptor.clone());
+        let logins = authentication_service::rpc::proto::logins_service_client::LoginsServiceClient::with_interceptor(inner.clone(), interceptor.clone());
 
         let client = TonicClient {
             authentication,

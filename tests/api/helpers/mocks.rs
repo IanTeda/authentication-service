@@ -2,7 +2,7 @@
 
 use std::net::Ipv4Addr;
 
-use authentication_microservice::BackendError;
+use authentication_service::BackendError;
 use chrono::{DateTime, SubsecRound, Utc};
 // use chrono::prelude::*;
 use fake::faker::boolean::en::Boolean;
@@ -14,7 +14,7 @@ use fake::{faker::internet::en::SafeEmail, Fake};
 use secrecy::Secret;
 use uuid::Uuid;
 
-use authentication_microservice::{database, domain};
+use authentication_service::{database, domain};
 
 pub fn uuid_v7() -> Uuid {
     // Generate random DateTime after UNIX time epoch (00:00:00 UTC on 1 January 1970)

@@ -19,8 +19,7 @@ use sqlx::{Pool, Postgres};
 use tonic::Code;
 use uuid::Uuid;
 
-use authentication_microservice::{database, domain};
-use authentication_microservice::rpc::proto::LoginRequest;
+use authentication_service::{database, domain, rpc::proto::AuthenticationRequest};
 
 use crate::helpers;
 
@@ -42,7 +41,7 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     //-- 2. Execute Test (Act)
-    let request_message = LoginRequest {
+    let request_message = AuthenticationRequest {
         email: random_user.email.to_string(),
         password: random_password.to_string(),
     };
@@ -51,7 +50,7 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     let request = tonic::Request::new(request_message);
 
     // Send tonic client request to server
-    let response_message = tonic_client.authentication().login(request).await?.into_inner();
+    let response_message = tonic_client.authentication().authentication(request).await?.into_inner();
     // println!("{response:#?}");
 
     //-- 3. Checks (Assertions)
@@ -109,7 +108,7 @@ async fn default_user_login(database: Pool<Postgres>) -> Result<()> {
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     //-- 2. Execute Test (Act)
-    let request_message = LoginRequest {
+    let request_message = AuthenticationRequest {
         email: default_user.email.to_string(),
         password: default_password,
     };
@@ -118,7 +117,7 @@ async fn default_user_login(database: Pool<Postgres>) -> Result<()> {
     let request = tonic::Request::new(request_message);
 
     // Send tonic client request to server
-    let response_message = tonic_client.authentication().login(request).await?.into_inner();
+    let response_message = tonic_client.authentication().authentication(request).await?.into_inner();
     // println!("{response:#?}");
 
     //-- 3. Checks (Assertions)
@@ -173,7 +172,7 @@ async fn incorrect_password_returns_error(database: Pool<Postgres>) -> Result<()
 
     //-- 2. Execute Test (Act)
     // Build tonic request message
-    let request_message = LoginRequest {
+    let request_message = AuthenticationRequest {
         email: random_user.email.to_string(),
         password: incorrect_password,
     };
@@ -182,7 +181,7 @@ async fn incorrect_password_returns_error(database: Pool<Postgres>) -> Result<()
     let request = tonic::Request::new(request_message);
 
     // Send tonic client request to server
-    let response = tonic_client.authentication().login(request).await.unwrap_err();
+    let response = tonic_client.authentication().authentication(request).await.unwrap_err();
     // println!("{response:#?}");
 
     //-- 3. Checks (Assertions)
@@ -215,7 +214,7 @@ async fn incorrect_email_returns_error(database: Pool<Postgres>) -> Result<()> {
 
     //-- Execute Test (Act)
     // Build tonic request message
-    let request_message = LoginRequest {
+    let request_message = AuthenticationRequest {
         email: incorrect_email,
         password: random_password,
     };
@@ -224,7 +223,7 @@ async fn incorrect_email_returns_error(database: Pool<Postgres>) -> Result<()> {
     let request = tonic::Request::new(request_message);
 
     // Send tonic client request to server
-    let response = tonic_client.authentication().login(request).await.unwrap_err();
+    let response = tonic_client.authentication().authentication(request).await.unwrap_err();
     // println!("{response:#?}");
 
     //-- Checks (Assertions)

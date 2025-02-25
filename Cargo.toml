@@ -1,12 +1,12 @@
 [package]
-name = "authentication_microservice"
+name = "authentication_service"
 authors = ["Ian Teda <ian@teda.id.au>"]
 version = "0.1.2"
 edition = "2021"
 description = "A microservice for handling application authentication and sessions."
-documentation = "https://github.com/IanTeda/authentication_microservice"
-homepage = "https://github.com/IanTeda/authentication_microservice"
-repository = "https://github.com/IanTeda/authentication_microservice"
+documentation = "https://github.com/IanTeda/authentication_service"
+homepage = "https://github.com/IanTeda/authentication_service"
+repository = "https://github.com/IanTeda/authentication_service"
 readme = "README.md"
 license-file = "LICENSE.txt"
 keywords = ["rust", "authentication", "microservice", "grpc", "tonic"]
@@ -19,7 +19,7 @@ doctest = false
 path = "src/lib.rs"
 
 [[bin]]
-name = "authentication_microservice"
+name = "authentication_service"
 path = "src/main.rs"
 
 [dependencies]

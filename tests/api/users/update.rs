@@ -4,7 +4,7 @@
 
 use sqlx::{Pool, Postgres};
 
-use authentication_microservice::rpc::proto::UpdateUserRequest;
+use authentication_service::rpc::proto::UpdateUserRequest;
 
 use crate::helpers;
 

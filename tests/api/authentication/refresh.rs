@@ -1,8 +1,8 @@
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
-use authentication_microservice::domain;
-use authentication_microservice::rpc::proto::{LoginRequest, RefreshRequest};
+use authentication_service::domain;
+use authentication_service::rpc::proto::{AuthenticationRequest, RefreshRequest};
 
 use crate::helpers;
 
@@ -24,14 +24,14 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     // Build tonic request
-    let request = tonic::Request::new(LoginRequest {
+    let request = tonic::Request::new(AuthenticationRequest {
         email: random_user.email.to_string(),
         password: random_password.to_string(),
     });
 
     // Send tonic client request to server
     let response = tonic_client.authentication()
-        .login(request)
+        .authentication(request)
         .await?
         .into_inner();
 

@@ -21,7 +21,7 @@ RUN cargo chef cook --release --recipe-path recipe.json \
 COPY . .
 ENV SQLX_OFFLINE=true
 # Build our project
-RUN cargo build --release --bin authentication_microservice
+RUN cargo build --release --bin authentication_service
 
 # We do not need the Rust toolchain to run the binary!
 FROM debian:bookworm-slim AS runtime
@@ -32,9 +32,9 @@ WORKDIR /app
 #     && apt-get autoremove -y \
 #     && apt-get clean -y \
 #     && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /app/target/release/authentication_microservice authentication
+COPY --from=builder /app/target/release/authentication_service authentication
 COPY configuration configuration
-LABEL org.opencontainers.image.source="https://github.com/ianteda/authentication_microservice"
+LABEL org.opencontainers.image.source="https://github.com/ianteda/authentication_service"
 LABEL org.opencontainers.image.description="A service for handling application authentication and sessions"
 LABEL org.opencontainers.image.licenses="GPL-3.0"
 ENV APP_ENVIRONMENT=production

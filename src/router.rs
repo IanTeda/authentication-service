@@ -17,14 +17,12 @@ use tonic::transport::Server;
 use crate::configuration::Configuration;
 use crate::middleware;
 use crate::prelude::*;
-use crate::rpc::proto::authentication_service_server::AuthenticationServiceServer;
-use crate::rpc::proto::logins_service_server::LoginsServiceServer;
-use crate::rpc::proto::sessions_service_server::SessionsServiceServer;
-use crate::rpc::proto::users_service_server::UsersServiceServer;
-use crate::rpc::proto::utilities_service_server::UtilitiesServiceServer;
+use crate::rpc::proto::authentication_service_server::AuthenticationServiceServer as AuthenticationServer;
+use crate::rpc::proto::logins_service_server::LoginsServiceServer as LoginsServer;
+use crate::rpc::proto::sessions_service_server::SessionsServiceServer as SessionsServer;
+use crate::rpc::proto::users_service_server::UsersServiceServer as UsersServer;
+use crate::rpc::proto::utilities_service_server::UtilitiesServiceServer as UtilitiesServer;
 use crate::services;
-
-// use crate::services::{AuthenticationService, UsersService, UtilitiesService};
 
 pub fn get_router(
     database: Pool<Postgres>,
@@ -47,9 +45,9 @@ pub fn get_router(
     //-- Build the Utilities Service
     // Create a new UtilitiesService instance
     let utilities_service = services::UtilitiesService::new(Arc::clone(&config));
-    
+
     // Wrap the UtilitiesService in the UtilitiesServiceServer
-    let utilities_server = UtilitiesServiceServer::new(utilities_service);
+    let utilities_server = UtilitiesServer::new(utilities_service);
 
     //-- Build the Authentication Service
     // Create a new AuthenticationService instance
@@ -59,16 +57,15 @@ pub fn get_router(
     );
 
     // Wrap the AuthenticationService in the AuthenticationServiceServer
-    let authentication_server =
-        AuthenticationServiceServer::new(authentication_service);
+    let authentication_server = AuthenticationServer::new(authentication_service);
 
     //-- Build the Users Service
     // Create a new UsersService instance
     let users_service =
         services::UsersService::new(Arc::clone(&database), Arc::clone(&config));
-    
+
     // Wrap the UsersService in the UsersServiceServer
-    let users_server = UsersServiceServer::with_interceptor(
+    let users_server = UsersServer::with_interceptor(
         users_service,
         access_token_interceptor.clone(),
     );
@@ -77,9 +74,9 @@ pub fn get_router(
     // Create a new SessionsService instance
     let sessions_service =
         services::SessionsService::new(Arc::clone(&database), Arc::clone(&config));
-    
+
     // Wrap the SessionsService in the SessionsServiceServer
-    let sessions_server = SessionsServiceServer::with_interceptor(
+    let sessions_server = SessionsServer::with_interceptor(
         sessions_service,
         access_token_interceptor.clone(),
     );
@@ -88,12 +85,10 @@ pub fn get_router(
     // Create a new LoginsService instance
     let logins_service =
         services::LoginsService::new(Arc::clone(&database), Arc::clone(&config));
-    
+
     // Wrap the LoginsService in the LoginsServiceServer
-    let logins_server = LoginsServiceServer::with_interceptor(
-        logins_service,
-        access_token_interceptor,
-    );
+    let logins_server =
+        LoginsServer::with_interceptor(logins_service, access_token_interceptor);
 
     // Build reflections server
     // let reflections_server = services::ReflectionsService::new();

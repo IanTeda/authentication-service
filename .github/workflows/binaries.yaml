@@ -33,6 +33,9 @@ jobs:
       # https://github.com/actions/checkout
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive # Protobuf files is a submodule
+          # token: ${{ secrets.PAT }}
 
       # 2 . Build and upload artifact
       # https://github.com/rust-build/rust-build.action

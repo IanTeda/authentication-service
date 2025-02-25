@@ -4,7 +4,7 @@
 
 use sqlx::{Pool, Postgres};
 
-use authentication_microservice::rpc::proto::LoginsDeleteRequest;
+use authentication_service::rpc::proto::LoginsDeleteRequest;
 
 use crate::helpers;
 
