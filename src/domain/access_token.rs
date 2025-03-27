@@ -48,7 +48,8 @@ impl AccessToken {
     /// - `issuer<&str>` - Containing the issuer of the JWT
     /// - `duration<&time::Duration>` - How long the token is valid for
     /// - `user_id<&database::Users>` - A database Users instance that is going to use the Access Token
-    /// ---
+    /// 
+    // TODO: Make the issuer a secret to avoid leaking in logs 
     #[tracing::instrument(name = "Generate a new Access Token for: ", skip(secret))]
     pub fn new(
         secret: &Secret<String>,

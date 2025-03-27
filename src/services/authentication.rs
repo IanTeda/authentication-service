@@ -506,7 +506,14 @@ impl Authentication for AuthenticationService {
         unimplemented!()
     }
 
-    /// Revoke all Sessions in the database
+    /// # Logout Service
+    /// 
+    /// Revoke all Sessions for the user in the database
+    /// 
+    /// This function first validates the Refresh Token sent in the request header.
+    /// After validation, all sessions associated with user are revoked (set inactive)
+    /// in the database.
+    /// The function then sends a response message with a success boolen and message.
     #[tracing::instrument(name = "Log Out User Request: ", skip(self, request))]
     async fn logout(
         &self,

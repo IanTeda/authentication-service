@@ -44,9 +44,7 @@ impl Sessions {
         .fetch_one(database)
         .await?;
 
-        tracing::debug!(
-            "Sessions database records retrieved: {database_record:#?}"
-        );
+        tracing::debug!("Sessions database records retrieved: {database_record:#?}");
 
         Ok(database_record)
     }
@@ -80,14 +78,12 @@ impl Sessions {
         .await?
         .rows_affected();
 
-        tracing::debug!(
-            "Sessions database records updated: {rows_affected:#?}"
-        );
+        tracing::debug!("Sessions database records updated: {rows_affected:#?}");
 
         Ok(rows_affected)
     }
 
-    /// Revoke (make non-active) a Session with a give PK (id) in the database, 
+    /// Revoke (make non-active) a Session with a give PK (id) in the database,
     /// returning a result with the number of rows affected or and SQLx error
     ///
     /// # Parameters
@@ -116,9 +112,7 @@ impl Sessions {
         .await?
         .rows_affected();
 
-        tracing::debug!(
-            "Sessions database records revoked: {rows_affected:#?}"
-        );
+        tracing::debug!("Sessions database records revoked: {rows_affected:#?}");
 
         Ok(rows_affected)
     }
@@ -153,9 +147,7 @@ impl Sessions {
         .await?
         .rows_affected();
 
-        tracing::debug!(
-            "Sessions database records revoked: {rows_affected:#?}"
-        );
+        tracing::debug!("Sessions database records revoked: {rows_affected:#?}");
 
         Ok(rows_affected)
     }
@@ -170,7 +162,7 @@ impl Sessions {
     /// ---
     #[tracing::instrument(
         name = "Revoke all Sessions in the database: ",
-        skip(database),
+        skip(database)
     )]
     pub async fn revoke_user_id(
         user_id: &Uuid,
@@ -189,15 +181,12 @@ impl Sessions {
         .await?
         .rows_affected();
 
-        tracing::debug!(
-            "Sessions database records updated: {rows_affected:#?}"
-        );
+        tracing::debug!("Sessions database records updated: {rows_affected:#?}");
 
         Ok(rows_affected)
     }
 
-
-    /// Revoke (make non-active) all Sessions in the database, returning a 
+    /// Revoke (make non-active) all Sessions in the database, returning a
     /// result with the number of rows revoked or an SQLx error.
     ///
     /// # Parameters
@@ -208,9 +197,7 @@ impl Sessions {
         name = "Revoke all Sessions in the database: ",
         skip(database)
     )]
-    pub async fn revoke_all(
-        database: &Pool<Postgres>,
-    ) -> Result<u64, BackendError> {
+    pub async fn revoke_all(database: &Pool<Postgres>) -> Result<u64, BackendError> {
         let rows_affected = sqlx::query_as!(
             Sessions,
             r#"
@@ -252,8 +239,7 @@ pub mod tests {
         random_user.insert(&database).await?;
 
         // Generate session
-        let session =
-            database::Sessions::mock_data(&random_user).await?;
+        let session = database::Sessions::mock_data(&random_user).await?;
 
         // Insert session in the database for deleting
         let mut session = session.insert(&database).await?;
@@ -294,8 +280,7 @@ pub mod tests {
         random_user.insert(&database).await?;
 
         // Generate sessions
-        let mut session =
-            database::Sessions::mock_data(&random_user).await?;
+        let mut session = database::Sessions::mock_data(&random_user).await?;
 
         // Set Sessions active
         session.is_active = true;
@@ -330,8 +315,7 @@ pub mod tests {
         random_user.insert(&database).await?;
 
         // Generate session
-        let mut session =
-            database::Sessions::mock_data(&random_user).await?;
+        let mut session = database::Sessions::mock_data(&random_user).await?;
 
         // Set Session active to true
         session.is_active = true;
@@ -340,14 +324,16 @@ pub mod tests {
         let session = session.insert(&database).await?;
 
         //-- Execute Function (Act)
-        let rows_affected = database::Sessions::revoke_by_id(&session.id, &database).await?;
+        let rows_affected =
+            database::Sessions::revoke_by_id(&session.id, &database).await?;
 
         //-- Checks (Assertions)
         // The one entry should be affected
         assert_eq!(rows_affected, 1);
 
         // Get record from the database
-        let database_record = database::Sessions::from_id(&session.id, &database).await?;
+        let database_record =
+            database::Sessions::from_id(&session.id, &database).await?;
 
         // Check the is_active status is false
         assert_eq!(database_record.is_active, false);
@@ -365,8 +351,7 @@ pub mod tests {
         // Insert user in the database
         random_user.insert(&database).await?;
 
-        let mut session =
-                database::Sessions::mock_data(&random_user).await?;
+        let mut session = database::Sessions::mock_data(&random_user).await?;
 
         // Set session active to true
         session.is_active = true;
@@ -400,7 +385,8 @@ pub mod tests {
         assert_eq!(rows_affected, random_count as u64 + 1);
 
         // Get record from the database
-        let database_record = database::Sessions::from_id(&session.id, &database).await?;
+        let database_record =
+            database::Sessions::from_id(&session.id, &database).await?;
 
         // Check the is_active status is false
         assert_eq!(database_record.is_active, false);
@@ -418,8 +404,7 @@ pub mod tests {
         // Insert user in the database
         random_user.insert(&database).await?;
 
-        let mut session =
-                database::Sessions::mock_data(&random_user).await?;
+        let mut session = database::Sessions::mock_data(&random_user).await?;
 
         // Set session active to true
         session.is_active = true;
@@ -446,14 +431,16 @@ pub mod tests {
 
         //-- Execute Function (Act)
         // Generate an updated session
-        let rows_affected = database::Sessions::revoke_user_id(&session.user_id, &database).await?;
+        let rows_affected =
+            database::Sessions::revoke_user_id(&session.user_id, &database).await?;
 
         //-- Checks (Assertions)
         // There is an extra row outside the loop so we can use it for association
         assert_eq!(rows_affected, random_count as u64 + 1);
 
         // Get record from the database
-        let database_record = database::Sessions::from_id(&session.id, &database).await?;
+        let database_record =
+            database::Sessions::from_id(&session.id, &database).await?;
 
         // Check the is_active status is false
         assert_eq!(database_record.is_active, false);
@@ -461,7 +448,6 @@ pub mod tests {
         // -- Return
         Ok(())
     }
-
 
     #[sqlx::test]
     async fn revoke_all_red_button(database: Pool<Postgres>) -> Result<()> {
@@ -472,8 +458,7 @@ pub mod tests {
         // Insert user in the database
         random_user.insert(&database).await?;
 
-        let mut session =
-                database::Sessions::mock_data(&random_user).await?;
+        let mut session = database::Sessions::mock_data(&random_user).await?;
 
         // Set session active to true
         session.is_active = true;
@@ -507,7 +492,8 @@ pub mod tests {
         assert_eq!(rows_affected, random_count as u64 + 1);
 
         // Get record from the database
-        let database_record = database::Sessions::from_id(&session.id, &database).await?;
+        let database_record =
+            database::Sessions::from_id(&session.id, &database).await?;
 
         // Check the is_active status is false
         assert_eq!(database_record.is_active, false);
