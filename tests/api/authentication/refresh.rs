@@ -1,8 +1,15 @@
 // #![allow(unused)] // For development only
 
+use chrono::Duration;
+
 use cookie::Cookie;
+use fake::faker::company::en::CompanyName;
+use fake::Fake;
 use http::header::COOKIE;
 use http::HeaderMap;
+use rand::distributions::Alphanumeric;
+use rand::distributions::DistString;
+use secrecy::Secret;
 use sqlx::{Pool, Postgres};
 use tonic::metadata::MetadataMap;
 use tonic::Request;
@@ -132,9 +139,83 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
             .await?;
     assert_eq!(random_user.id, sessions[0].user_id);
 
-    //-- 4. Return Ok
+    Ok(())
+}
 
-    //TODO: Check database revokes all others
+
+#[sqlx::test]
+async fn incorrect_refresh_token_is_unauthorised(database: Pool<Postgres>) -> Result<()> {
+    //-- 1. Setup and Fixtures (Arrange)
+    // Generate random user and insert into database for testing
+    let random_password = helpers::mocks::password()?;
+    let mut random_user = helpers::mocks::users(&random_password)?;
+    random_user.is_active = true;
+    random_user.is_verified = true;
+    let _database_record = random_user.insert(&database).await?;
+
+    // Spawn Tonic test server
+    let tonic_server = helpers::TonicServer::spawn_server(&database).await?;
+
+    // Spawn Tonic test client
+    let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
+
+    // Generate random secret string
+    let secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
+    let secret = Secret::new(secret);
+
+    //-- 2. Execute Test (Act)
+
+    // Geneate a new random user to make a Refresh Token that is not in the database
+    let new_random_user = helpers::mocks::users(&random_password)?;
+
+    // Generate a random issuer for the incorrect Refresh Token
+    let random_issuer = CompanyName().fake::<String>();
+
+    // Generate a random duration or the incorrect Refresh Token
+    let random_duration =
+        std::time::Duration::from_secs(Duration::days(30).num_seconds() as u64);
+
+    // Generate a new refresh token not in the database so authentication fails
+    let incorrect_refresh_token = domain::RefreshToken::new(
+        &secret,
+        &random_issuer,
+        &random_duration,
+        &new_random_user,
+    )?;
+
+    // Build the incorrect Refresh Token cookie for fail authentication
+    let incorrect_refresh_cookie = incorrect_refresh_token.build_cookie(&tonic_server.address, &random_duration);
+
+    // Build tonic request message
+    let request_message = Empty {};
+
+    // Build a tonic request
+    let mut request = Request::new(request_message);
+
+    // Create a new http header map
+    let mut http_header = HeaderMap::new();
+
+    // Add refresh cookie to the http header map
+    http_header.insert(COOKIE, incorrect_refresh_cookie.to_string().parse().unwrap());
+
+    // Add the http header to the rpc response
+    *request.metadata_mut() = MetadataMap::from_headers(http_header);
+
+    // Send token refresh request to server
+    let refresh_response = tonic_client
+        .authentication()
+        .refresh(request)
+        .await
+        .unwrap_err();
+    // println!("{refresh_response:#?}");
+
+    //-- Checks (Assertions)
+    // Confirm Tonic response status code
+    assert_eq!(refresh_response.code(), tonic::Code::Unauthenticated);
+
+    // Confirm Tonic response message
+    assert_eq!(refresh_response.message(), "Authentication Failed!");
+
 
     Ok(())
 }

@@ -54,7 +54,19 @@ impl AuthenticationService {
 
 #[tonic::async_trait]
 impl Authentication for AuthenticationService {
+    /// # Authentication Service
+    /// 
     /// Authenticate a user using their email and password
+    /// 
+    /// This function takes a tonic AuthenticationRequest, confirms the user is in
+    /// the database, confirms the store password hash matches the password.
+    /// Domain types are used to sanities the email and password before checking
+    /// the database.
+    /// Once the password is verfied the user is check to if they are active and 
+    /// verified. Following this a access token is generated and a session istance
+    /// is saved to the database.
+    /// The access token and refresh token from the sessions instance is sent 
+    /// in response. With the refresh token being sent as a httponly cookie header
     #[tracing::instrument(name = "Authenticate Request: ", skip_all, fields(
         src_address=%request.remote_addr().unwrap(),
     ))]
@@ -218,7 +230,16 @@ impl Authentication for AuthenticationService {
         Ok(response)
     }
 
-    /// Get a new Access Token using the Refresh Token that has a longer life
+    /// # Refresh Service
+    /// 
+    /// Get a new Access Token using the Refresh Token that has a longer life.
+    /// 
+    /// This service takes an empty request with a refresh token in the header. The
+    /// Refresh Token is validated and Token Claim parsed. The Token Claim id is then
+    /// checked in sessions database table to confirm it is registered and current.
+    /// Following verificatoin a new access token is gernated and AuthenticationResponse
+    /// is sent back with the same Refresh Token and User, but a different access
+    /// token.
     #[tracing::instrument(
         name = "Refresh Access Token Request: ",
         skip(self, request)
@@ -262,31 +283,34 @@ impl Authentication for AuthenticationService {
             &refresh_token.to_string(),
             self.database_ref(),
         )
-        .await?;
+        .await
+        .map_err(|_| {
+            tracing::error!("Refresh token not in sessions database");
+            BackendError::AuthenticationError("Authentication Failed!".to_string())
+        })?;;
 
         // Check if the session is active
         if session.is_active == false {
             tracing::error!("Session is not active");
-            return Err(Status::unauthenticated("Authentication Failed!"));
+            BackendError::AuthenticationError("Authentication Failed!".to_string());
         }
         tracing::info!("Session is active.");
 
-        //-- 4. Void all Sessions for associated user ID
-        session.revoke_associated(self.database_ref()).await?;
-
+        // Get user id from the refresh token claim
         let user_id = Uuid::try_parse(&refresh_token_claim.sub).map_err(|_| {
             tracing::error!("Unable to parse Uuid");
             BackendError::AuthenticationError("Authentication Failed!".to_string())
         })?;
 
+        // Check user id in the token claim is in the database
         let user =
             database::Users::from_user_id(&user_id, self.database_ref()).await?;
 
-        //-- 5. Generate new Access and Refresh Tokens
+        //-- 5. Generate new Access Token
         // Build an Access Token
         // Build access token duration seconds from config minutes
         let at_duration = time::Duration::new(
-            (&self.config.application.access_token_duration_minutes * 60), // Seconds
+            (&self.config.application.access_token_duration_minutes * 60), // TODO: this could be done in the config file
             0, // Milliseconds
         );
         let access_token =
@@ -294,19 +318,7 @@ impl Authentication for AuthenticationService {
 
         tracing::debug!("Using Access Token: {}", access_token);
 
-        // Build a Session
-        let rt_duration = time::Duration::new(
-            (&self.config.application.refresh_token_duration_minutes * 60), // Seconds
-            0, // Milliseconds
-        );
-        let session =
-            database::Sessions::new(&token_secret, &issuer, &rt_duration, &user)?;
-
-        // Add Session to database
-        let refresh_token = session.insert(self.database_ref()).await?;
-
-        tracing::debug!("Using Refresh Token: {}", refresh_token.refresh_token);
-
+        // Cast database user into a Tonic UserResponse
         let user_response_message: UserResponse = user.into();
 
         //-- 5. Send new Access Token and Refresh Token
@@ -324,19 +336,16 @@ impl Authentication for AuthenticationService {
             self.config.application.ip_address, self.config.application.port
         );
 
-        let refresh_cookie =
-            session.refresh_token.build_cookie(&domain, &rt_duration);
-
         // Create a new http header map
         let mut http_header = HeaderMap::new();
 
-        // Add refresh cookie to the http header map
-        http_header.insert(SET_COOKIE, refresh_cookie.to_string().parse().unwrap());
+        // Add request refresh cookie to the http header map
+        http_header.insert(SET_COOKIE, refresh_token.to_string().parse().unwrap());
 
         // Add the http header to the rpc response
         *response.metadata_mut() = MetadataMap::from_headers(http_header);
 
-        // tracing::info!("The response is: {:?}", response);
+        tracing::debug!("The response is: {:?}", response);
 
         // Send Response
         Ok(response)

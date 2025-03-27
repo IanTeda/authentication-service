@@ -193,7 +193,7 @@ async fn incorrect_password_returns_error(database: Pool<Postgres>) -> Result<()
     let _database_record = random_user.insert(&database).await?;
 
     // Generate an incorrect password
-    let incorrect_password = String::from("incorrect-Pa$$word-string");
+    let incorrect_password = helpers::mocks::password()?;
 
     // Spawn Tonic test server
     let tonic_server = helpers::TonicServer::spawn_server(&database).await?;
