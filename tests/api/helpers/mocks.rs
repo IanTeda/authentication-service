@@ -8,6 +8,7 @@ use chrono::{DateTime, SubsecRound, Utc};
 use fake::faker::boolean::en::Boolean;
 use fake::faker::chrono::en::DateTime;
 use fake::faker::chrono::en::DateTimeAfter;
+use fake::faker::company::en::CompanyName;
 use fake::faker::internet::en::IPv4;
 use fake::faker::name::en::Name;
 use fake::{faker::internet::en::SafeEmail, Fake};
@@ -82,9 +83,7 @@ pub fn users(password: &String) -> Result<database::Users, BackendError> {
     Ok(random_user)
 }
 
-pub fn sessions(
-    user: &database::Users,
-) -> Result<database::Sessions, BackendError> {
+pub fn sessions(user: &database::Users) -> Result<database::Sessions, BackendError> {
     use chrono::SubsecRound;
     use fake::faker::boolean::en::Boolean;
     use fake::faker::chrono::en::DateTime;
@@ -97,8 +96,17 @@ pub fn sessions(
     let random_secret =
         rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
     let random_secret = Secret::new(random_secret);
+    let random_issuer = CompanyName().fake::<String>();
+    let random_duration = std::time::Duration::from_secs(
+        chrono::Duration::days(30).num_seconds() as u64,
+    );
 
-    let random_token = domain::RefreshToken::new(&random_secret, &user)?;
+    let random_token = domain::RefreshToken::new(
+        &random_secret,
+        &random_issuer,
+        &random_duration,
+        &user,
+    )?;
 
     // Generate random boolean value
     let random_is_active: bool = Boolean(4).fake();
@@ -137,10 +145,10 @@ pub fn logins(user_id: &Uuid) -> Result<database::Logins, BackendError> {
     let random_ip = u32::from(random_ip) as i32;
     let random_ip = Some(random_ip);
 
-    Ok(database::Logins{ 
-        id: random_id, 
-        user_id, 
-        login_on: random_login_on, 
-        login_ip: random_ip, 
+    Ok(database::Logins {
+        id: random_id,
+        user_id,
+        login_on: random_login_on,
+        login_ip: random_ip,
     })
 }

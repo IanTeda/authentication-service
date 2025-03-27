@@ -38,9 +38,15 @@ pub fn get_router(
     // Wrap token_secret string in a Secret
     let token_secret = config.application.token_secret.clone();
 
+    let issuer = "Add to config";
+
     // Intercept request and verify Access Token
     let access_token_interceptor =
-        middleware::AccessTokenInterceptor { token_secret };
+        middleware::AccessTokenInterceptor { token_secret, issuer };
+
+      // Intercept request and verify Access Token
+    // let refresh_token_interceptor =
+    //     middleware::RefreshTokenInterceptor { token_secret, issuer };
 
     //-- Build the Utilities Service
     // Create a new UtilitiesService instance

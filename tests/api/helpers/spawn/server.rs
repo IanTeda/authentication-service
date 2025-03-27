@@ -15,6 +15,7 @@ use authentication_service::{
 use once_cell::sync::Lazy;
 use sqlx::{Pool, Postgres};
 use tonic::transport::{Channel, Uri};
+use std::time;
 
 use crate::helpers::mocks;
 
@@ -28,7 +29,8 @@ static TRACING: Lazy<()> = Lazy::new(|| {
 #[derive(Clone)]
 pub struct TonicServer {
     pub address: String,
-    pub access_token: String,
+    pub access_token: domain::AccessToken,
+    pub refresh_token: domain::RefreshToken,
     pub config: Arc<Configuration>,
 }
 
@@ -48,8 +50,16 @@ impl TonicServer {
         // Generate random user data for testing and insert in test database
         let random_password = mocks::password()?; // In case we need it in the future
         let mut random_user = mocks::users(&random_password)?;
+        random_user.is_active = true;
+        random_user.is_verified = true;
         random_user.role = domain::UserRole::Admin;
         let random_user = random_user.insert(&database).await?;
+
+        // Generate session login to get refresh token
+        let mut session = mocks::sessions(&random_user)?;
+        session.is_active = true;
+        let _database_session = session.insert(&database).await?;
+        
 
         // Build Tonic server using main crate startup
         let tonic_server =
@@ -73,16 +83,21 @@ impl TonicServer {
 
         // Generate access token for Tonic Client requests
         let token_secret = &config.application.token_secret;
-        let access_token_string =
-            domain::AccessToken::new(&token_secret, &random_user)?.to_string();
-        // let access_token = mocks::access_token(&random_user.id, &token_secret).await?.to_string();
+        let at_duration = time::Duration::new(
+            (&config.application.access_token_duration_minutes * 60).try_into().unwrap(),
+            0,
+        );
+
+        // Build access token
+        let access_token =
+            domain::AccessToken::new(&token_secret, &address, &at_duration, &random_user)?;
 
         let config = Arc::new(config);
 
-        // unimplemented!()
         Ok(Self {
-            access_token: access_token_string,
+            access_token,
             address,
+            refresh_token: session.refresh_token,
             config,
         })
     }

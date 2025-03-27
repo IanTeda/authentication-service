@@ -35,15 +35,23 @@ pub struct Configuration {
 /// Configuration for running the API application
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct ApplicationConfiguration {
-    // The host address the api should bind to
+    /// The host address the api should bind to
     pub ip_address: String,
 
     /// The port that the api should bind to
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
 
-    // Secret used to generate JWT keys
+    /// Secret used to generate JWT keys
     pub token_secret: Secret<String>,
+
+    /// How many minutes to keep the access token valid for.
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub access_token_duration_minutes: u64,
+
+    /// How many minutes to keep the access token valid for.
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub refresh_token_duration_minutes: u64,
 }
 
 /// Configuration for connecting to the database server
@@ -159,7 +167,7 @@ impl Configuration {
             // and '_' as separator). E.g. `BACKEND_APPLICATION_PORT=5001 would
             // set `settings.application.port`
             .add_source(
-                config::Environment::with_prefix("BACKEND")
+                config::Environment::with_prefix("AUTHENTICATION")
                     .prefix_separator("_")
                     .separator("_"),
             )

@@ -2,21 +2,20 @@
 
 // #![allow(unused)] // For beginning only.
 
-//! JSON Web Token used to authorise RPC endpoint requests
+//! JSON Web Token used to authorise RPC access for endpoint requests
 //!
 //! Generate a new instance of Access Token and decode an existing Access Token
 //! into a Token Claim
 //! ---
 
+use core::time;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use secrecy::{ExposeSecret, Secret};
 use uuid::Uuid;
 
-use crate::{database, domain::token_claim::TokenType, prelude::*};
+use crate::{database, domain::jwt_token::TokenType, prelude::*};
 
 use super::TokenClaim;
-
-pub static ACCESS_TOKEN_DURATION: u64 = 5 * 60; // 15 minutes as seconds
 
 /// Access Token for authorising endpoint requests
 /// #[derive(Debug, Clone, Default, PartialEq)]
@@ -38,30 +37,28 @@ impl std::fmt::Display for AccessToken {
 }
 
 impl AccessToken {
-    /// Parse a new Access Token, returning a Result with an AccessToken or BackEnd error
+    /// # New Access Token
+    ///
+    /// Create a new Access Token, returning a Result with an AccessToken or
+    /// BackEnd error
     ///
     /// ## Parameters
     ///
-    /// * `secret`: Secret<String> containing the token encryption secret
-    /// * `user_id`: Uuid of the user that is going to use the Access Token
+    /// - `secret<&Secret<String>>` - containing the token encryption secret
+    /// - `issuer<&str>` - Containing the issuer of the JWT
+    /// - `duration<&time::Duration>` - How long the token is valid for
+    /// - `user_id<&database::Users>` - A database Users instance that is going to use the Access Token
     /// ---
-    #[tracing::instrument(
-        name = "Generate a new Access Token for: ",
-        skip(secret),
-    // fields(
-    // 	db_id = %self.id,
-    // 	user_id = %self.user_id,
-    // 	refresh_tokens = %self.refresh_tokens.as_ref(),
-    // 	is_active = %self.is_active,
-    // 	created_on = %self.created_on,
-    // )
-    )]
+    #[tracing::instrument(name = "Generate a new Access Token for: ", skip(secret))]
     pub fn new(
         secret: &Secret<String>,
+        issuer: &str,
+        duration: &time::Duration,
         user: &database::Users,
     ) -> Result<Self, BackendError> {
         // Build the Access Token Claim
-        let token_claim = TokenClaim::new(secret, user, &TokenType::Access);
+        let token_claim =
+            TokenClaim::new(issuer, duration, user, &TokenType::Access);
 
         // Encode the Token Claim into a URL-safe hash encryption
         let token = encode(
@@ -76,10 +73,13 @@ impl AccessToken {
 
 #[cfg(test)]
 mod tests {
+    use chrono::Duration;
+    use fake::faker::company::en::CompanyName;
+    use fake::faker::number::en::Digit;
+    use fake::Fake;
     use rand::distributions::{Alphanumeric, DistString};
 
     use crate::database;
-    use crate::domain::TOKEN_ISSUER;
 
     // Bring module into test scope
     use super::*;
@@ -90,20 +90,40 @@ mod tests {
 
     #[tokio::test]
     async fn generate_new_access_token() -> Result<()> {
+        //-- 1. Setup and Fixtures (Arrange)
+
         // Generate random secret string
-        let secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
-        let secret = Secret::new(secret);
+        let random_secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
+        let random_secret = Secret::new(random_secret);
 
         // Get a random user_id for subject
         let random_user = database::Users::mock_data()?;
 
-        let access_token = AccessToken::new(&secret, &random_user)?;
+        // Generate a random company name as issurer
+        let random_issuer = CompanyName().fake::<String>();
 
-        let token_claim =
-            TokenClaim::from_token(access_token.as_ref(), &secret)?;
-        // println!("{token_claim:#?}");
+        // Generate a random duration between 1 and 10 hours
+        let random_duration =
+            std::time::Duration::from_secs((1..36000).fake::<u64>());
 
-        assert_eq!(token_claim.iss, TOKEN_ISSUER);
+        // Create a new random access token
+        let access_token = AccessToken::new(
+            &random_secret,
+            &random_issuer,
+            &random_duration,
+            &random_user,
+        )?;
+
+        //-- 2. Execute Test (Act)
+        // Parse a token claim from the access token
+        let token_claim = TokenClaim::parse(
+            access_token.as_ref(),
+            &random_secret,
+            &random_issuer,
+        )?;
+
+        //-- 3. Test Assertions 
+        assert_eq!(token_claim.iss, random_issuer);
         assert_eq!(token_claim.sub, random_user.id.to_string());
         assert_eq!(token_claim.jty, TokenType::Access.to_string());
 

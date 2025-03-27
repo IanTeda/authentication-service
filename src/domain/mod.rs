@@ -9,7 +9,7 @@ mod access_token;
 mod email_address;
 mod password_hash;
 mod refresh_token;
-mod token_claim;
+mod jwt_token;
 mod user_name;
 mod user_role;
 
@@ -18,6 +18,6 @@ pub use access_token::AccessToken;
 pub use email_address::EmailAddress;
 pub use password_hash::PasswordHash;
 pub use refresh_token::RefreshToken;
-pub use token_claim::{TokenClaim, TOKEN_ISSUER};
+pub use jwt_token::TokenClaim;
 pub use user_name::UserName;
 pub use user_role::UserRole;

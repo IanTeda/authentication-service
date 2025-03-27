@@ -22,6 +22,8 @@
 //! * [Getting started with Tracing](https://tokio.rs/tokio/topics/tracing)
 //! * [Can we have easier pretty log for development?](https://github.com/LukeMathWalker/tracing-bunyan-formatter/issues/17)
 
+// TODO: Pull level from files
+
 // TODO: Add https://prometheus.io/
 // TODO: Add https://opentelemetry.io/
 // TODO: Add tracing console
@@ -40,7 +42,7 @@ pub fn init() -> Result<(), BackendError>{
     //-- 1. Filter events
     // Default log level if info
     let default_env_filter = EnvFilter::builder()
-        .with_default_directive(LevelFilter::INFO.into())
+        .with_default_directive(LevelFilter::DEBUG.into())
         .from_env_lossy();
 
     // Try to use env runtime level, if not present use default

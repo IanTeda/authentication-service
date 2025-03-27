@@ -92,14 +92,15 @@ The following technology stack has been used in building this microservice:
 
 ### Features
 
-This microservice has the following features, with a future road map of features un-ticked below:
+This service has the following features, with a future road map of features un-ticked below:
 
 - [x] User management
 - [x] Encrypted password
 - [x] Session management
 - [x] Access and Refresh tokens
-- [X] Docker image
-- [X] Last logged in
+- [x] Docker image
+- [x] Last logged in
+- [ ] Use SSL transport layer 
 - [ ] Rate limitations
 - [ ] Two factor authentication
 - [ ] User sign up (registration)

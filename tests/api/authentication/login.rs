@@ -13,7 +13,8 @@
 //! * `logout`: Log me out
 
 use chrono::{DateTime, Utc};
-use fake::{Fake, faker::internet::en::SafeEmail};
+use cookie::Cookie;
+use fake::{faker::internet::en::SafeEmail, Fake};
 use secrecy::Secret;
 use sqlx::{Pool, Postgres};
 use tonic::Code;
@@ -31,7 +32,9 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     //-- 1. Setup and Fixtures (Arrange)
     // Generate random user data and insert into database for testing
     let random_password = helpers::mocks::password()?;
-    let random_user = helpers::mocks::users(&random_password)?;
+    let mut random_user = helpers::mocks::users(&random_password)?;
+    random_user.is_active = true; // Set to true for login testing
+    random_user.is_verified = true; // Set to true for login testing
     let _database_record = random_user.insert(&database).await?;
 
     // Spawn Tonic test server
@@ -49,21 +52,36 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     // Build tonic request
     let request = tonic::Request::new(request_message);
 
-    // Send tonic client request to server
-    let response_message = tonic_client.authentication().authentication(request).await?.into_inner();
-    // println!("{response:#?}");
+    // Send tonic client authentication request to server
+    let (response_metadata, response_message, _response_extensions) = tonic_client.authentication().authentication(request).await?.into_parts();
 
     //-- 3. Checks (Assertions)
-    // Get token secret
+    // Get token secret form server configuration
     let token_secret = &tonic_server.config.application.token_secret;
     let token_secret = token_secret.to_owned();
 
-    // Build Token Claims from token responses
-    let access_token_claim =
-        domain::TokenClaim::from_token(&response_message.access_token, &token_secret)?;
+    // Get JWT issuer from server configuration
+    let issuer = &tonic_server.config.application.ip_address;
 
-    let refresh_token_claim =
-        domain::TokenClaim::from_token(&response_message.refresh_token, &token_secret)?;
+    // Build Access Token Claims from token responses
+    let access_token_claim =
+        domain::TokenClaim::parse(&response_message.access_token, &token_secret, &issuer)?;
+    // println!("access_token_claim: {access_token_claim:#?}");
+
+    // Get the refresh token from the response header (metadata)
+    // Cannot use the RefreshToken from_header() method because the response use "set-cookie" key not
+    // "cookie" that the browser sends in a request.
+    // We are using get, not get_all because we know there will be only one cookie in the response header
+    let set_cookie = response_metadata.get("set-cookie").unwrap().to_str()?;
+
+    // Parse the cookie string into a Cookie object
+    let cookie = Cookie::parse(set_cookie)?;
+
+    // Get the refresh token string value from the cookie
+    let refresh_token = cookie.value().to_string();
+
+    // Decode the refresh token into a Token Claim for asserting
+    let refresh_token_claim = domain::TokenClaim::parse(&refresh_token, &token_secret, &issuer)?;
 
     // Confirm User IDs (uuids) are the same
     assert_eq!(Uuid::parse_str(&access_token_claim.sub)?, random_user.id);
@@ -81,7 +99,7 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     let sessions = database::Sessions::index_from_user_id(&random_user.id, &10, &0, &database).await?;
     assert_eq!(random_user.id, sessions[0].user_id);
     
-    //-- 4. Return
+    //-- 4. Return Ok
     Ok(())
 }
 
@@ -116,21 +134,35 @@ async fn default_user_login(database: Pool<Postgres>) -> Result<()> {
     // Build tonic request
     let request = tonic::Request::new(request_message);
 
-    // Send tonic client request to server
-    let response_message = tonic_client.authentication().authentication(request).await?.into_inner();
-    // println!("{response:#?}");
+    // Send tonic client authentication request to server
+    let (response_metadata, response_message, _response_extensions) = tonic_client.authentication().authentication(request).await?.into_parts();
 
     //-- 3. Checks (Assertions)
     // Get token secret
     let token_secret = &tonic_server.config.application.token_secret;
     let token_secret = token_secret.to_owned();
 
+    // Get JWT issuer from config
+    let issuer = &tonic_server.config.application.ip_address;
+
     // Build Token Claims from token responses
     let access_token_claim =
-        domain::TokenClaim::from_token(&response_message.access_token, &token_secret)?;
+        domain::TokenClaim::parse(&response_message.access_token, &token_secret, &issuer)?;
 
-    let refresh_token_claim =
-        domain::TokenClaim::from_token(&response_message.refresh_token, &token_secret)?;
+    // Get the refresh token from the response header (metadata)
+    // Cannot use the RefreshToken from_header() method because the response use "set-cookie" key not
+    // "cookie" that the browser sends in a request.
+    // We are using get, not get_all because we know there will be only one cookie in the response header
+    let set_cookie = response_metadata.get("set-cookie").unwrap().to_str()?;
+
+    // Parse the cookie string into a Cookie object
+    let cookie = Cookie::parse(set_cookie)?;
+
+    // Get the refresh token string value from the cookie
+    let refresh_token = cookie.value().to_string();
+
+    // Decode the refresh token into a Token Claim for asserting
+    let refresh_token_claim = domain::TokenClaim::parse(&refresh_token, &token_secret, &issuer)?;
 
     // Confirm User IDs (uuids) are the same
     assert_eq!(Uuid::parse_str(&access_token_claim.sub)?, default_user.id);

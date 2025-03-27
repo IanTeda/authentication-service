@@ -2,7 +2,7 @@
 application:
   port: 8081
   ip_address: "0.0.0.0"
-  log_level: "info"
+  log_level: "debug"
 
 # Postgres database config
 database:

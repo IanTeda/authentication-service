@@ -1,5 +1,5 @@
 # Server configuration
-server:
+application:
   log_level: "debug"
 
 # Postgres database config

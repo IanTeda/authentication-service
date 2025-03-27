@@ -2,8 +2,11 @@
 application:
   ip_address: "127.0.0.1"
   port: 8091
-  log_level: "info"
+  log_level: "debug"
   token_secret: "Super_Secret4_Key"
+  access_token_duration_minutes: 15
+  # Thirty days 30 x 24 x 60
+  refresh_token_duration_minutes: 43200
 
 # Postgres database config
 database:

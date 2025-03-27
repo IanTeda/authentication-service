@@ -1,4 +1,4 @@
-//-- ./src/middleware/access_token.rs
+//-- ./src/middleware/refresh_token.rs
 
 // #![allow(unused)] // For beginning only.
 
@@ -10,23 +10,22 @@ use crate::{domain, prelude::*};
 
 /// Check
 #[derive(Clone)]
-pub struct AccessTokenInterceptor<'a> {
+pub struct RefreshTokenInterceptor<'a>  {
     pub(crate) token_secret: Secret<String>,
     pub issuer: &'a str,
 }
 
-impl<'a> tonic::service::Interceptor for AccessTokenInterceptor<'a> {
+impl<'a>  tonic::service::Interceptor for RefreshTokenInterceptor<'a>  {
     fn call(
         &mut self,
         mut request: tonic::Request<()>,
     ) -> Result<tonic::Request<()>, tonic::Status> {
-        // let remote_address = request::remote_addr();
 
         // Unwrap the .get() option
-        match request.metadata().get("access_token") {
-            Some(access_token) => {
+        match request.metadata().get("refresh_token") {
+            Some(refresh_token) => {
                 // Convert Ascii to a string reference
-                let access_token = access_token.to_str().map_err(|_| {
+                let refresh_token = refresh_token.to_str().map_err(|_| {
                     tracing::error!("Access Token is invalid!");
                     // Return error
                     BackendError::AuthenticationError(
@@ -34,10 +33,10 @@ impl<'a> tonic::service::Interceptor for AccessTokenInterceptor<'a> {
                     )
                 })?;
 
-                // Using the Token Secret decode the Access Token into a Token Claim. This also
+                // Using the Token Secret decode the Refresh Token into a Token Claim. This also
                 // validates the token expiration, not before and Issuer.
-                let access_token_claim =
-                    domain::TokenClaim::parse(access_token, &self.token_secret, &self.issuer)
+                let refresh_token_claim =
+                    domain::TokenClaim::parse(refresh_token, &self.token_secret, self.issuer)
                         .map_err(|_| {
                             tracing::error!("Access Token is invalid!");
                             // Return error
@@ -49,19 +48,19 @@ impl<'a> tonic::service::Interceptor for AccessTokenInterceptor<'a> {
 
                 tracing::info!(
                     "Access Token authenticated for user: {}",
-                    access_token_claim.sub
+                    refresh_token_claim.sub
                 );
 
                 // Parse Token Claim user role into domain type
                 let requester_role =
-                    domain::UserRole::from_str(&access_token_claim.jur)?;
+                    domain::UserRole::from_str(&refresh_token_claim.jur)?;
 
                 // If the User Role in the Token Claim is not Admin return early with Tonic Status error
                 // All endpoints in the authentication microservice require admin so we check it here
                 if requester_role != domain::UserRole::Admin {
                     tracing::error!(
                         "User request admin endpoint: {}",
-                        &access_token_claim.sub
+                        &refresh_token_claim.sub
                     );
                     return Err(tonic::Status::unauthenticated(
                         "Admin access required!",
@@ -76,14 +75,14 @@ impl<'a> tonic::service::Interceptor for AccessTokenInterceptor<'a> {
                 // )?;
 
                 // Add Access token to the Tonic request extension for reference in services
-                request.extensions_mut().insert(access_token_claim);
+                request.extensions_mut().insert(refresh_token_claim);
 
                 Ok(request)
             }
             None => {
-                tracing::error!("Access Token not in request header");
+                tracing::error!("Refresh Token not in request header");
                 Err(tonic::Status::unauthenticated(
-                    "Authentication Failed! No valid auth token.",
+                    "Authentication Failed!",
                 ))
             }
         }

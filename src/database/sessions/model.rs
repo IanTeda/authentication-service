@@ -6,6 +6,7 @@
 // #![allow(unused)] // For development only
 
 use chrono::{DateTime, Utc};
+use std::time;
 use secrecy::Secret;
 use uuid::Uuid;
 
@@ -21,14 +22,17 @@ pub struct Sessions {
 }
 
 impl Sessions {
-    #[tracing::instrument(
-        name = "Create new Sessions instance for: ",
-        skip_all,
-    )]
-    pub fn new(user: &database::Users, token_secret: &Secret<String>) -> Result<Self, BackendError> {
+    // TODO: Would it be better to create the new token outside of the model function?
+    #[tracing::instrument(name = "Create new Sessions instance for: ", skip_all)]
+    pub fn new(
+        token_secret: &Secret<String>,
+        issuer: &str,
+        duration: &time::Duration,
+        user: &database::Users,
+    ) -> Result<Self, BackendError> {
         let id = Uuid::now_v7();
         let user_id = user.id.to_owned();
-        let refresh_token = domain::RefreshToken::new(token_secret, user)?;
+        let refresh_token = domain::RefreshToken::new(token_secret, issuer, duration, user)?;
         let is_active = true;
         let created_on = Utc::now();
 
@@ -42,15 +46,14 @@ impl Sessions {
     }
 
     #[cfg(test)]
-    pub async fn mock_data(
-        user: &database::Users,
-    ) -> Result<Self, BackendError> {
+    pub async fn mock_data(user: &database::Users) -> Result<Self, BackendError> {
+        use chrono::SubsecRound;
         use fake::faker::boolean::en::Boolean;
         use fake::faker::chrono::en::DateTime;
+        use fake::faker::company::en::CompanyName;
         use fake::Fake;
         use rand::distributions::DistString;
         use secrecy::Secret;
-        use chrono::SubsecRound;
 
         use crate::utils;
 
@@ -60,8 +63,15 @@ impl Sessions {
             .sample_string(&mut rand::thread_rng(), 60);
         let random_secret = Secret::new(random_secret);
 
+        let random_issuer = CompanyName().fake::<String>();
+
+        // Generate a random duration between 1 and 10 hours
+        // TODO: This should not be random
+        let random_duration =
+            std::time::Duration::from_secs((1..36000).fake::<u64>());
+
         let random_token =
-            domain::RefreshToken::new(&random_secret, user)?;
+            domain::RefreshToken::new(&random_secret, &random_issuer, &random_duration, user)?;
 
         // Generate random boolean value
         let random_is_active: bool = Boolean(4).fake();
