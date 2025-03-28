@@ -25,6 +25,7 @@
         "errorlens",
         "grpcui",
         "Hasher",
+        "httponly",
         "ianteda",
         "jeremychone",
         "jsonwebtoken",

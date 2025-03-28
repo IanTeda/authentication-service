@@ -60,10 +60,10 @@ impl Authentication for AuthenticationService {
     /// 
     /// This function takes a tonic AuthenticationRequest, confirms the user is in
     /// the database, confirms the store password hash matches the password.
-    /// Domain types are used to sanities the email and password before checking
+    /// Domain types are used to sanitise the email and password before checking
     /// the database.
-    /// Once the password is verfied the user is check to if they are active and 
-    /// verified. Following this a access token is generated and a session istance
+    /// Once the password is verified the user is check to if they are active and 
+    /// verified. Following this a access token is generated and a session instance
     /// is saved to the database.
     /// The access token and refresh token from the sessions instance is sent 
     /// in response. With the refresh token being sent as a httponly cookie header
@@ -237,7 +237,7 @@ impl Authentication for AuthenticationService {
     /// This service takes an empty request with a refresh token in the header. The
     /// Refresh Token is validated and Token Claim parsed. The Token Claim id is then
     /// checked in sessions database table to confirm it is registered and current.
-    /// Following verificatoin a new access token is gernated and AuthenticationResponse
+    /// Following verification a new access token is generated and AuthenticationResponse
     /// is sent back with the same Refresh Token and User, but a different access
     /// token.
     #[tracing::instrument(
@@ -351,6 +351,14 @@ impl Authentication for AuthenticationService {
         Ok(response)
     }
 
+    /// # Update My Password Service
+    /// 
+    /// Update my password using the original password and new password
+    /// 
+    /// This service takes a UpdatePasswordRequest with the original password and new password.
+    /// The original password is verified against the password hash in the database.
+    /// If the original password is valid, the new password is hashed and updated in the database.
+    /// The function then sends a response message with a success boolean and message.
     #[tracing::instrument(name = "Update Password Request: ", skip(self, request))]
     async fn update_password(
         &self,
@@ -414,6 +422,7 @@ impl Authentication for AuthenticationService {
                     "Authentication Failed!".to_string(),
                 );
             })?;
+        tracing::debug!("User retrieved from the database: {}", user.id);
 
         // Check user is active
         if user.is_active == false {
@@ -443,36 +452,6 @@ impl Authentication for AuthenticationService {
         user.password_hash = new_password_hash;
         user.update(&self.database_ref());
         tracing::debug!("Users password updated in the database: {}", user.id);
-
-        let access_token_duration_minutes =
-            self.config.application.access_token_duration_minutes;
-
-        let at_duration = time::Duration::new(
-            (&self.config.application.access_token_duration_minutes * 60), // Seconds
-            0, // Milliseconds
-        );
-
-        // Build an new Access Token
-        let access_token =
-            domain::AccessToken::new(&token_secret, &issuer, &at_duration, &user)?;
-        tracing::debug!("Using Access Token: {}", access_token);
-
-        let rt_duration = time::Duration::new(
-            (&self.config.application.refresh_token_duration_minutes * 60), // Seconds
-            0, // Milliseconds
-        );
-
-        // Build a new session instance
-        let session =
-            database::Sessions::new(&token_secret, &issuer, &rt_duration, &user)?;
-
-        // Revoke sessions associated with the user before adding new one to the database
-        // TODO: When do we clean up (delete) the database
-        let _rows_affected = session.revoke_associated(self.database_ref()).await?;
-
-        // Add new Session to the database
-        let session = session.insert(self.database_ref()).await?;
-        tracing::debug!("Using Refresh Token: {}", session.refresh_token);
 
         // Build GRPC response message
         let response_message = UpdatePasswordResponse {
