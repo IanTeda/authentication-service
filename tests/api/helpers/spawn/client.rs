@@ -167,8 +167,8 @@ impl tonic::service::Interceptor for TokenInterceptor {
     ) -> Result<tonic::Request<()>, tonic::Status> {
         // Create a new http header map
         let mut http_header = HeaderMap::new();
-        println!("Access Token: {:?}", self.access_cookie);
-        println!("Refresh Token: {:?}", self.refresh_cookie);
+        // println!("Access Token: {:?}", self.access_cookie);
+        // println!("Refresh Token: {:?}", self.refresh_cookie);
 
         // Add refresh cookie to the http header map
         http_header.append(COOKIE, self.access_cookie.parse().unwrap());

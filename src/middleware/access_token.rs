@@ -76,6 +76,19 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
                 )
             })?;
 
+        // // TODO: Delete admin check as it is happening in middleware as well.
+        // // Parse Token Claim user role into domain type
+        // let requester_role = domain::UserRole::from_str(&access_token_claim.jur)?;
+
+        // // If the User Role in the Token Claim is not Admin return early with Tonic Status error
+        // if requester_role != domain::UserRole::Admin {
+        //     tracing::error!(
+        //         "User request admin endpoint: {}",
+        //         &access_token_claim.sub
+        //     );
+        //     return Err(Status::unauthenticated("Admin access required!"));
+        // }
+
         Ok(request)
     }
 }

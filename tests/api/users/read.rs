@@ -76,9 +76,9 @@ async fn id_returns_user(database: Pool<Postgres>) -> Result<()> {
 #[sqlx::test]
 async fn index_returns_users(pool: Pool<Postgres>) -> Result<()> {
     //-- Setup and Fixtures (Arrange)
-    // Get a random number between 10 and 30
-    let random_count: i64 = (10..30).fake::<i64>();
-    // println!("{random_count:#?}");
+    // Get a random number between 2 and 30
+    let random_count: i64 = (2..30).fake::<i64>();
+    // println!("Random Count: {random_count:#?}");
 
     // Initiate vector to store users for assertion
     let mut test_vec: Vec<database::Users> = Vec::new();
@@ -93,16 +93,23 @@ async fn index_returns_users(pool: Pool<Postgres>) -> Result<()> {
         test_vec.push(database_record);
     }
 
-    // Spawn Tonic test server
+    // Spawn Tonic test server.
+    // This adds two users to the database.
     let tonic_server = helpers::TonicServer::spawn_server(&pool).await?;
 
     // Spawn Tonic test client
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     //-- Execute Test (Act)
-    // Generate a random limit and offset based on number of user entries
-    let random_limit = (1..random_count).fake::<i64>();
+    // Generate a random offset based on number of user entries
+    // This is the number of users to skip before returning the results
     let random_offset = (1..random_count).fake::<i64>();
+    // println!("Random offset: {random_offset:#?}");
+
+    // Generate a random limit based on number of user entries
+    // This is the maximum number of users to be returned
+    let random_limit = (1..random_count).fake::<i64>();
+    // println!("Random limit: {random_limit:#?}");
 
     // Build Tonic request message
     let request_message = UserIndexRequest {
@@ -120,19 +127,30 @@ async fn index_returns_users(pool: Pool<Postgres>) -> Result<()> {
     // println!("{response:#?}");
 
     // Get the user index from the response message
-    let index = response_message.users;
+    let users = response_message.users;
+
+    // Get the length of the users vector
+    // This is the number of users returned from the server
+    let users_length: i64 = users.len().try_into().unwrap();
+    // println!("Index length: {users_length:#?}");
 
     //-- Checks (Assertions)
-    let count_less_offset: i64 = random_count - random_offset;
+    // Need to add two users that the mock server adds
+    let available_records: i64 = (random_count - random_offset +2)
+        .try_into()
+        .unwrap_or(0);
+    // println!("Available records: {available_records}");
 
-    let expected_records = if count_less_offset < random_limit {
-        count_less_offset
+    // Check for edge case were available records is less than the random limit
+    let expected_records = if available_records < random_limit {
+        available_records
     } else {
         random_limit
     };
+    // println!("Expected records: {expected_records}");
 
     // Check the number of returned users equals the limit and offset parameters
-    assert_eq!(expected_records, index.len() as i64);
+    assert_eq!(expected_records, users_length);
 
     Ok(())
 }

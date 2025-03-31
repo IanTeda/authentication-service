@@ -39,9 +39,11 @@ async fn returns_created_user(database: Pool<Postgres>) -> Result<()> {
         is_active: random_user.is_active,
         is_verified: random_user.is_verified,
     };
+    // println!("{request_message:#?}");
 
     // Build tonic request
     let request = tonic::Request::new(request_message);
+    // println!("{request:#?}");
 
     // Send request to tonic server and get response message
     let response_message = tonic_client
