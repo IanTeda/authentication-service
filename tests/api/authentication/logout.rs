@@ -124,6 +124,7 @@ async fn incorrect_refresh_token_is_unauthorised(database: Pool<Postgres>) -> Re
 
     // Generate a random issuer for the incorrect Refresh Token
     let random_issuer = CompanyName().fake::<String>();
+    let random_issuer = Secret::new(random_issuer);
 
     // Generate a random duration or the incorrect Refresh Token
     let random_duration =

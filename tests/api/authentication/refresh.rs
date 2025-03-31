@@ -94,7 +94,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     let token_secret = token_secret.to_owned();
 
     // Get JWT issuer from server configuration
-    let issuer = &tonic_server.config.application.ip_address;
+    let issuer = &tonic_server.config.application.get_issuer();
 
     // Build Access Token Claims from token responses
     let access_token_claim = domain::TokenClaim::parse(
@@ -170,6 +170,7 @@ async fn incorrect_refresh_token_is_unauthorised(database: Pool<Postgres>) -> Re
 
     // Generate a random issuer for the incorrect Refresh Token
     let random_issuer = CompanyName().fake::<String>();
+    let random_issuer = Secret::new(random_issuer);
 
     // Generate a random duration or the incorrect Refresh Token
     let random_duration =

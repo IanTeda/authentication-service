@@ -61,7 +61,7 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     let token_secret = token_secret.to_owned();
 
     // Get JWT issuer from server configuration
-    let issuer = &tonic_server.config.application.ip_address;
+    let issuer = &tonic_server.config.application.get_issuer();
 
     // Build Access Token Claims from token responses
     let access_token_claim =
@@ -143,7 +143,7 @@ async fn default_user_login(database: Pool<Postgres>) -> Result<()> {
     let token_secret = token_secret.to_owned();
 
     // Get JWT issuer from config
-    let issuer = &tonic_server.config.application.ip_address;
+    let issuer = &tonic_server.config.application.get_issuer();
 
     // Build Token Claims from token responses
     let access_token_claim =

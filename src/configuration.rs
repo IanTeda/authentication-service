@@ -183,4 +183,31 @@ impl Configuration {
         // Convert the configuration values into Settings type
         Ok(configuration)
     }
+
+
+}
+
+impl ApplicationConfiguration {
+    /// # Get Token Issuer
+    /// 
+    /// This function returns the issuer URL for the token. The issuer URL is
+    /// used to validate the token issuer when parsing the token.
+    ///
+    /// # Returns
+    ///
+    /// * `Secret<String>` - The issuer URL for the token.
+    pub fn get_issuer(&self) -> Secret<String> {
+        let issuer = format!(
+            "https://{}:{}",
+            self.ip_address, self.port
+        );
+        Secret::new(issuer)
+    }
+    pub fn get_domain(&self) -> String {
+        let domain = format!(
+            "https://{}",
+            self.ip_address
+        );
+        domain
+    }
 }

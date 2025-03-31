@@ -1,14 +1,11 @@
 // #![allow(unused)] // For beginning only.
 
 use std::net::Ipv4Addr;
-
 use authentication_service::BackendError;
 use chrono::{DateTime, SubsecRound, Utc};
-// use chrono::prelude::*;
 use fake::faker::boolean::en::Boolean;
 use fake::faker::chrono::en::DateTime;
 use fake::faker::chrono::en::DateTimeAfter;
-use fake::faker::company::en::CompanyName;
 use fake::faker::internet::en::IPv4;
 use fake::faker::name::en::Name;
 use fake::{faker::internet::en::SafeEmail, Fake};
@@ -83,7 +80,7 @@ pub fn users(password: &String) -> Result<database::Users, BackendError> {
     Ok(random_user)
 }
 
-pub fn sessions(user: &database::Users) -> Result<database::Sessions, BackendError> {
+pub fn sessions(user: &database::Users, issuer: &Secret<String>) -> Result<database::Sessions, BackendError> {
     use chrono::SubsecRound;
     use fake::faker::boolean::en::Boolean;
     use fake::faker::chrono::en::DateTime;
@@ -96,14 +93,13 @@ pub fn sessions(user: &database::Users) -> Result<database::Sessions, BackendErr
     let random_secret =
         rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
     let random_secret = Secret::new(random_secret);
-    let random_issuer = CompanyName().fake::<String>();
     let random_duration = std::time::Duration::from_secs(
         chrono::Duration::days(30).num_seconds() as u64,
     );
 
     let random_token = domain::RefreshToken::new(
         &random_secret,
-        &random_issuer,
+        issuer,
         &random_duration,
         &user,
     )?;

@@ -160,7 +160,7 @@ impl Authentication for AuthenticationService {
         tracing::debug!("Login added to the database: {}", login.id);
 
         // Set the JWT issuer as the ip address of the server
-        let issuer = &self.config.application.ip_address;
+        let issuer = &self.config.application.get_issuer();
 
         // Build access token duration seconds from config minutes
         let at_duration = time::Duration::new(
@@ -204,15 +204,11 @@ impl Authentication for AuthenticationService {
         let mut response = Response::new(response_message);
 
         // Set the domain for the cookie
-        // TODO: Move this to the config file
-        let domain = format!(
-            "http://{}:{}",
-            self.config.application.ip_address, self.config.application.port
-        );
+        let domain = &self.config.application.get_domain();
 
         // Build the refresh cookie
         let refresh_cookie =
-            session.refresh_token.build_cookie(&domain, &rt_duration);
+            session.refresh_token.build_cookie(domain, &rt_duration);
 
         // Create a new http header map
         let mut http_header = HeaderMap::new();
@@ -256,13 +252,11 @@ impl Authentication for AuthenticationService {
         let token_secret = &self.config_ref().application.token_secret;
 
         // Set the JWT issuer as the ip address of the server
-        // TODO: Build a issuer in the config file
-        let issuer = &self.config.application.ip_address;
+        let issuer = &self.config.application.get_issuer();
 
         // Get the refresh token from the request header (metadata)
         let refresh_token: domain::RefreshToken = domain::RefreshToken::from_header(
             token_secret,
-            issuer,
             &request_metadata,
         )?;
 
@@ -331,11 +325,6 @@ impl Authentication for AuthenticationService {
         // Create a new mutable Tonic response. It is mutable because we need to add the set-cookie header
         let mut response = Response::new(response_message);
 
-        let domain = format!(
-            "http://{}:{}",
-            self.config.application.ip_address, self.config.application.port
-        );
-
         // Create a new http header map
         let mut http_header = HeaderMap::new();
 
@@ -388,7 +377,7 @@ impl Authentication for AuthenticationService {
         let token_secret = token_secret.to_owned();
 
         // Set the JWT issuer as the ip address of the server
-        let issuer = &self.config.application.ip_address;
+        let issuer = &self.config.application.get_issuer();
 
         // Using the Token Secret decode the Access Token into a Token Claim. This also
         // validates the token expiration, not before and Issuer.
@@ -506,13 +495,11 @@ impl Authentication for AuthenticationService {
         let token_secret = &self.config_ref().application.token_secret;
 
         // Set the JWT issuer as the ip address of the server
-        // TODO: Build a issuer in the config file
-        let issuer = &self.config.application.ip_address;
+        let issuer = &self.config.application.get_issuer();
 
         // Get the refresh token from the request header (metadata)
         let refresh_token: domain::RefreshToken = domain::RefreshToken::from_header(
             token_secret,
-            issuer,
             &request_metadata,
         )?;
 

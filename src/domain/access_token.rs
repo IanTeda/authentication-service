@@ -53,7 +53,7 @@ impl AccessToken {
     #[tracing::instrument(name = "Generate a new Access Token for: ", skip(secret))]
     pub fn new(
         secret: &Secret<String>,
-        issuer: &str,
+        issuer: &Secret<String>,
         duration: &time::Duration,
         user: &database::Users,
     ) -> Result<Self, BackendError> {
@@ -102,6 +102,7 @@ mod tests {
 
         // Generate a random company name as issurer
         let random_issuer = CompanyName().fake::<String>();
+        let random_issuer = Secret::new(random_issuer);
 
         // Generate a random duration between 1 and 10 hours
         let random_duration =
@@ -124,7 +125,7 @@ mod tests {
         )?;
 
         //-- 3. Test Assertions 
-        assert_eq!(token_claim.iss, random_issuer);
+        assert_eq!(token_claim.iss, *random_issuer.expose_secret());
         assert_eq!(token_claim.sub, random_user.id.to_string());
         assert_eq!(token_claim.jty, TokenType::Access.to_string());
 

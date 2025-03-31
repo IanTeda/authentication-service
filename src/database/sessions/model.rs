@@ -26,7 +26,7 @@ impl Sessions {
     #[tracing::instrument(name = "Create new Sessions instance for: ", skip_all)]
     pub fn new(
         token_secret: &Secret<String>,
-        issuer: &str,
+        issuer: &Secret<String>,
         duration: &time::Duration,
         user: &database::Users,
     ) -> Result<Self, BackendError> {
@@ -64,6 +64,7 @@ impl Sessions {
         let random_secret = Secret::new(random_secret);
 
         let random_issuer = CompanyName().fake::<String>();
+        let random_issuer = Secret::new(random_issuer);
 
         // Generate a random duration between 1 and 10 hours
         // TODO: This should not be random

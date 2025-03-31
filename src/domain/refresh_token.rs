@@ -67,7 +67,7 @@ impl RefreshToken {
     )]
     pub fn new(
         secret: &Secret<String>,
-        issuer: &str,
+        issuer: &Secret<String>,
         duration: &time::Duration,
         user: &database::Users,
     ) -> Result<Self, BackendError> {
@@ -129,7 +129,6 @@ impl RefreshToken {
     #[tracing::instrument(name = "Extract Refresh Token from http header: ", skip(token_secret))]
     pub fn from_header(
         token_secret: &Secret<String>,
-        issuer: &str,
         request_metadata: &tonic::metadata::MetadataMap,
     ) -> Result<Self, BackendError> {
         // Collect all cookies from the request metadata into a vector
@@ -203,6 +202,7 @@ mod tests {
         let random_user = database::Users::mock_data()?;
 
         let random_issuer = CompanyName().fake::<String>();
+        let random_issuer = Secret::new(random_issuer);
 
         let random_duration =
             std::time::Duration::from_secs(Duration::days(30).num_seconds() as u64);
@@ -219,7 +219,7 @@ mod tests {
         let token_claim =
             TokenClaim::parse(refresh_token.as_ref(), &secret, &random_issuer)?;
 
-        assert_eq!(token_claim.iss, random_issuer);
+        assert_eq!(token_claim.iss, *random_issuer.expose_secret());
         assert_eq!(token_claim.sub, random_user.id.to_string());
         assert_eq!(token_claim.jty, TokenType::Refresh.to_string());
 
@@ -240,6 +240,7 @@ mod tests {
         let random_user = database::Users::mock_data()?;
 
         let random_issuer = CompanyName().fake::<String>();
+        let random_issuer = Secret::new(random_issuer);
 
         let random_duration =
             std::time::Duration::from_secs(Duration::days(30).num_seconds() as u64);

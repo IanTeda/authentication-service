@@ -1,91 +1,81 @@
 //-- ./src/middleware/access_token.rs
 
-// #![allow(unused)] // For beginning only.
-
-use std::str::FromStr;
+#![allow(unused)] // For beginning only.
 
 use secrecy::Secret;
 
-use crate::{domain, prelude::*};
+use crate::{domain, middleware::access_token, prelude::*, utils};
+use std::str::FromStr;
 
 /// Check
 #[derive(Clone)]
-pub struct AccessTokenInterceptor<'a> {
+pub struct AccessTokenInterceptor {
     pub(crate) token_secret: Secret<String>,
-    pub issuer: &'a str,
+    pub(crate) issuer: Secret<String>,
 }
 
-impl<'a> tonic::service::Interceptor for AccessTokenInterceptor<'a> {
+impl tonic::service::Interceptor for AccessTokenInterceptor {
     fn call(
         &mut self,
         mut request: tonic::Request<()>,
     ) -> Result<tonic::Request<()>, tonic::Status> {
-        // let remote_address = request::remote_addr();
+        // Get the metatata from the tonic request
+        let metadata: &tonic::metadata::MetadataMap = request.metadata();
 
-        // Unwrap the .get() option
-        match request.metadata().get("access_token") {
-            Some(access_token) => {
-                // Convert Ascii to a string reference
-                let access_token = access_token.to_str().map_err(|_| {
-                    tracing::error!("Access Token is invalid!");
-                    // Return error
-                    BackendError::AuthenticationError(
-                        "Authentication Failed!".to_string(),
-                    )
-                })?;
+        // Using the cookie jar utility, extract the cookies form the metadata
+        // into a Cookie Jar.
+        let cookie_jar = utils::metadata::get_cookie_jar(metadata)?;
 
-                // Using the Token Secret decode the Access Token into a Token Claim. This also
-                // validates the token expiration, not before and Issuer.
-                let access_token_claim =
-                    domain::TokenClaim::parse(access_token, &self.token_secret, &self.issuer)
-                        .map_err(|_| {
-                            tracing::error!("Access Token is invalid!");
-                            // Return error
-                            BackendError::AuthenticationError(
-                                "Authentication Failed! No valid auth token."
-                                    .to_string(),
-                            )
-                        })?;
+        // Initate the access token string
+        let mut access_token_string: String;
 
-                tracing::info!(
-                    "Access Token authenticated for user: {}",
-                    access_token_claim.sub
-                );
-
-                // Parse Token Claim user role into domain type
-                let requester_role =
-                    domain::UserRole::from_str(&access_token_claim.jur)?;
-
-                // If the User Role in the Token Claim is not Admin return early with Tonic Status error
-                // All endpoints in the authentication microservice require admin so we check it here
-                if requester_role != domain::UserRole::Admin {
-                    tracing::error!(
-                        "User request admin endpoint: {}",
-                        &access_token_claim.sub
-                    );
-                    return Err(tonic::Status::unauthenticated(
-                        "Admin access required!",
-                    ));
-                }
-
-                // Add access token claim to request
-                // let (request_metadata, request_extensions, request_message) = request.into_parts();
-
-                // let access_token_claim = request_extensions.get::<domain::TokenClaim>().ok_or(
-                //     BackendError::Static("Token Claim not found in request extension."),
-                // )?;
-
-                // Add Access token to the Tonic request extension for reference in services
-                request.extensions_mut().insert(access_token_claim);
-
-                Ok(request)
+        // Get the access token cookie from the request metadata and return the
+        // token string without the extra cookie metadata
+        let access_token_cookie = match cookie_jar.get("access_token") {
+            Some(cookie) => {
+                access_token_string = cookie.value_trimmed().to_string();
             }
             None => {
-                tracing::error!("Access Token not in request header");
-                Err(tonic::Status::unauthenticated(
-                    "Authentication Failed! No valid auth token.",
-                ))
+                tracing::error!(
+                    "Access token cookie not found in the request header."
+                );
+                return Err(tonic::Status::unauthenticated(
+                    "Authentication Failed!",
+                ));
             }
-        }
+        };
+        tracing::debug!("Access token string: {}", access_token_string);
+
+        // Using the Token Secret decode the Access Token string into a Token Claim. 
+        // This validates the token expiration, not before and Issuer.
+        let access_token_claim = domain::TokenClaim::parse(
+            &access_token_string,
+            &self.token_secret,
+            &self.issuer,
+        )
+        .map_err(|_| {
+            tracing::error!("Access Token is invalid! Unable to parse token claim.");
+            // Return error
+            BackendError::AuthenticationError(
+                "Authentication Failed!".to_string(),
+            )
+        })?;
+        tracing::debug!(
+            "Access Token authenticated for user: {}",
+            access_token_claim.sub
+        );
+
+        // Parse Token Claim user role into domain type
+        // TODO: Impliment authorisation function to confirm request authorisation
+        let role = domain::UserRole::from_str(access_token_claim.jur.as_str())
+            .map_err(|_| {
+                tracing::error!("Access Token user role is invalid!");
+                // Return error
+                BackendError::AuthenticationError(
+                    "Authentication Failed! No valid auth token.".to_string(),
+                )
+            })?;
+
+        Ok(request)
     }
 }

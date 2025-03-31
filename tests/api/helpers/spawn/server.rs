@@ -14,14 +14,15 @@ use authentication_service::{
 };
 use once_cell::sync::Lazy;
 use sqlx::{Pool, Postgres};
-use tonic::transport::{Channel, Uri};
 use std::time;
+use tonic::transport::{Channel, Uri};
 
 use crate::helpers::mocks;
 
 pub type Error = Box<dyn std::error::Error>;
 
 // Ensure that the `tracing` stack is only initialised once using `once_cell`
+// Lazy makes it gloally available
 static TRACING: Lazy<()> = Lazy::new(|| {
     let _telemetry = telemetry::init();
 });
@@ -54,12 +55,32 @@ impl TonicServer {
         random_user.is_verified = true;
         random_user.role = domain::UserRole::Admin;
         let random_user = random_user.insert(&database).await?;
+        tracing::debug!("Random User: {:?}", random_user);
+
+        // Get the token issuer from the configuration
+        let issuer = config.application.get_issuer();
 
         // Generate session login to get refresh token
-        let mut session = mocks::sessions(&random_user)?;
+        let mut session = mocks::sessions(&random_user, &issuer)?;
         session.is_active = true;
         let _database_session = session.insert(&database).await?;
-        
+        tracing::debug!("Session: {:?}", session);
+
+        // Generate access token for Tonic Client requests
+        let token_secret = &config.application.token_secret;
+        let at_duration = time::Duration::new(
+            (&config.application.access_token_duration_minutes * 60)
+                .try_into()
+                .unwrap(),
+            0,
+        );
+        let access_token = domain::AccessToken::new(
+            &token_secret,
+            &issuer,
+            &at_duration,
+            &random_user,
+        )?;
+        tracing::debug!("Access token: {}", access_token);
 
         // Build Tonic server using main crate startup
         let tonic_server =
@@ -72,6 +93,7 @@ impl TonicServer {
             tonic_server.listener.local_addr()?.ip(),
             tonic_server.listener.local_addr()?.port()
         );
+        tracing::debug!("Tonic test server at: {:?}", address);
 
         // Run as a background task by wrapping server instance in a tokio future
         tokio::spawn(async move {
@@ -81,22 +103,11 @@ impl TonicServer {
         // Give the test server a few ms to become available
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
-        // Generate access token for Tonic Client requests
-        let token_secret = &config.application.token_secret;
-        let at_duration = time::Duration::new(
-            (&config.application.access_token_duration_minutes * 60).try_into().unwrap(),
-            0,
-        );
-
-        // Build access token
-        let access_token =
-            domain::AccessToken::new(&token_secret, &address, &at_duration, &random_user)?;
-
         let config = Arc::new(config);
 
         Ok(Self {
-            access_token,
             address,
+            access_token,
             refresh_token: session.refresh_token,
             config,
         })

@@ -6,6 +6,7 @@
 //!
 //! //TODO: Make errors consistent across application
 //! //TODO: Tidy up token domain into a subfolder
+//! //TODO: Implient display for TokenClaim
 //!
 //! # References
 //!
@@ -107,13 +108,13 @@ impl TokenClaim {
     /// - `token_type<token_claim::Kind>` - What type of JWT will the new claim be, access or refresh token.
     /// ---
     pub fn new(
-        issuer: &str,
+        issuer: &Secret<String>,
         duration: &time::Duration,
         user: &database::Users,
         token_type: &TokenType,
     ) -> Self {
         // Take ownership of the string, since it will be passsed back in the Token Claim
-        let issuer = issuer.to_string();
+        let issuer = issuer.expose_secret().to_string();
 
         // Get System Time now
         let now = time::SystemTime::now();
@@ -171,14 +172,14 @@ impl TokenClaim {
     pub fn parse(
         token: &str,
         secret: &Secret<String>,
-        issuer: &str,
+        issuer: &Secret<String>,
     ) -> Result<Self, BackendError> {
         // Build token validation requirements. By default, the decoding will 
         // automatically validate the expiration (exp) claim
         let mut validation = Validation::default();
 
         // Issuer (iss) of token to validate against
-        validation.set_issuer(&[issuer]);
+        validation.set_issuer(&[issuer.expose_secret()]);
 
         // Validate Not before (nbf) claim
         validation.validate_nbf = true;
@@ -221,6 +222,7 @@ mod tests {
     async fn generate_new_token_claim() -> Result<()> {
         // Generate a random company name as issurer
         let random_issuer = CompanyName().fake::<String>();
+        let random_issuer = Secret::new(random_issuer);
 
         // Generate a random duration between 1 and 10 hours
         let random_duration =
@@ -240,7 +242,7 @@ mod tests {
             &random_token_type,
         );
 
-        assert_eq!(token_claim.iss, random_issuer);
+        assert_eq!(token_claim.iss, *random_issuer.expose_secret());
         assert_eq!(token_claim.sub, random_user.id.to_string());
         assert_eq!(token_claim.sub, random_user.id.to_string());
         assert_eq!(token_claim.jur, random_user.role.to_string());

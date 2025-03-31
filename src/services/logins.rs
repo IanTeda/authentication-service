@@ -118,7 +118,7 @@ impl Logins for LoginsService {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
         let (_request_metadata, request_extensions, request_message) =
             request.into_parts();
-        // println!("{request_message:#?}");
+        println!("{request_message:#?}");
 
         // Convert the LoginsCreateRequest into a database::Logins
         let login: database::Logins = request_message.try_into()?;
