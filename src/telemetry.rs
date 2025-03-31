@@ -30,22 +30,22 @@
 
 use crate::prelude::*;
 
-use tracing::level_filters::LevelFilter;
-use tracing::subscriber::set_global_default;
+use tracing::{level_filters::LevelFilter, subscriber::set_global_default};
 use tracing_subscriber::{
     fmt::format::FmtSpan,
     layer::SubscriberExt,
     EnvFilter,
 };
 
-pub fn init() -> Result<(), BackendError>{
+pub fn init(log_level: LevelFilter) -> Result<(), BackendError>{
     //-- 1. Filter events
-    // Default log level if info
+    // Set default log level based on configuration file
     let default_env_filter = EnvFilter::builder()
-        .with_default_directive(LevelFilter::DEBUG.into())
+        .with_default_directive(log_level.into())
         .from_env_lossy();
 
     // Try to use env runtime level, if not present use default
+    // TODO: How do we test this
     let env_filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| default_env_filter);
 

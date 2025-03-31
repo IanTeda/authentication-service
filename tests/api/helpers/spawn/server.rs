@@ -14,6 +14,7 @@ use authentication_service::{
 };
 use once_cell::sync::Lazy;
 use sqlx::{Pool, Postgres};
+use tracing::level_filters::LevelFilter;
 use std::time;
 use tonic::transport::{Channel, Uri};
 
@@ -24,7 +25,9 @@ pub type Error = Box<dyn std::error::Error>;
 // Ensure that the `tracing` stack is only initialised once using `once_cell`
 // Lazy makes it gloally available
 static TRACING: Lazy<()> = Lazy::new(|| {
-    let _telemetry = telemetry::init();
+    // TODO: Does the log level need to be configured somewhere
+    let testing_log_level = LevelFilter::ERROR;
+    let _telemetry = telemetry::init(testing_log_level);
 });
 
 #[derive(Clone)]

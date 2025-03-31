@@ -25,16 +25,17 @@ use crate::prelude::*;
 /// Binary entry point
 #[tokio::main]
 async fn main() -> Result<(), BackendError> {
-    // Start tracing
-    let _telemetry = telemetry::init()?;
-
     // Parse configuration files
     let config = Configuration::parse()?;
+
+    // Start tracing
+    let log_level = config.application.log_level;
+    let _telemetry = telemetry::init(log_level)?;
 
     let database = database::init_pool(&config.database).await?;
 
     let tonic_server = startup::TonicServer::build(config, database).await?;
-    let _ = tonic_server.run().await;
+    let _tonic_server = tonic_server.run().await;
 
     Ok(())
 }

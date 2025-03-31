@@ -14,6 +14,7 @@
 //!
 //! * [config.rs Repository](https://github.com/mehcode/config-rs)
 //! * [Configuration management in Rust web services](https://blog.logrocket.com/configuration-management-in-rust-web-services/)
+//! - [Example 2](https://github.com/stoically/web-service-rs-template/blob/main/src/config.rs)
 
 use crate::prelude::*;
 
@@ -21,6 +22,8 @@ use secrecy::{ExposeSecret, Secret};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
 use strum::Display;
+use serde_with::{serde_as, DisplayFromStr};
+use tracing_subscriber::filter as tracing;
 
 /// Configuration for the API
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -33,6 +36,7 @@ pub struct Configuration {
 }
 
 /// Configuration for running the API application
+#[serde_as]
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct ApplicationConfiguration {
     /// The host address the api should bind to
@@ -41,6 +45,9 @@ pub struct ApplicationConfiguration {
     /// The port that the api should bind to
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
+
+    #[serde_as(as = "DisplayFromStr")]
+    pub log_level: tracing::LevelFilter,
 
     /// Secret used to generate JWT keys
     pub token_secret: Secret<String>,
@@ -175,8 +182,8 @@ impl Configuration {
 
         let configuration = settings_builder.try_deserialize::<Configuration>()?;
 
-        tracing::info!(
-            "\n----------- CONFIGURATION ----------- \n{:?} \n-------------------------------------",
+        println!(
+            "\n----------- CONFIGURATION ----------- \n{:#?} \n-------------------------------------",
             configuration
         );
 
@@ -203,9 +210,13 @@ impl ApplicationConfiguration {
         );
         Secret::new(issuer)
     }
+
+    /// # Get the Cookie Domain
+    /// 
+    /// Cookies are set to website domain. Everytime
     pub fn get_domain(&self) -> String {
         let domain = format!(
-            "https://{}",
+            "http://{}",
             self.ip_address
         );
         domain
