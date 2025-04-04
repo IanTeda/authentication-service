@@ -14,9 +14,9 @@ use authentication_service::{
 };
 use once_cell::sync::Lazy;
 use sqlx::{Pool, Postgres};
-use tracing::level_filters::LevelFilter;
 use std::time;
 use tonic::transport::{Channel, Uri};
+use tracing::level_filters::LevelFilter;
 
 use crate::helpers::mocks;
 
@@ -63,14 +63,31 @@ impl TonicServer {
         // Get the token issuer from the configuration
         let issuer = config.application.get_issuer();
 
+        // Get the token secret from the configuration
+        let token_secret = &config.application.token_secret;
+
+        // Generate refresh token for Tonic Client requests
+        let rt_duration = time::Duration::new(
+            (&config.application.refresh_token_duration_minutes * 60)
+                .try_into()
+                .unwrap(),
+            0,
+        );
+        let refresh_token = domain::RefreshToken::new(
+            &token_secret,
+            &issuer,
+            &rt_duration,
+            &random_user,
+        )?;
+        tracing::debug!("Refresh token: {}", refresh_token);
+
         // Generate session login to get refresh token
-        let mut session = mocks::sessions(&random_user, &issuer)?;
+        let mut session = mocks::sessions(&random_user, &refresh_token)?;
         session.is_active = true;
         let _database_session = session.insert(&database).await?;
         tracing::debug!("Session: {:?}", session);
 
         // Generate access token for Tonic Client requests
-        let token_secret = &config.application.token_secret;
         let at_duration = time::Duration::new(
             (&config.application.access_token_duration_minutes * 60)
                 .try_into()

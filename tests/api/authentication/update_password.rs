@@ -1,5 +1,6 @@
 // #![allow(unused)] // For beginning only.
 
+use cookie::Cookie;
 use sqlx::{Pool, Postgres};
 // use uuid::Uuid;
 
@@ -32,7 +33,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
         email: random_user.email.to_string(),
         password: random_password_original.to_string(),
     };
-    // println!("{request_message:#?}");
+    // println!("{login_request_message:#?}");
 
     let login_request = tonic::Request::new(login_request_message);
 
@@ -54,13 +55,17 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
         password_new: random_password_update.to_string(),
     };
 
+    let access_token = login_response_message.access_token.clone();
+    let access_cookie = Cookie::new("access_token", access_token).to_string();
+
     // Build Update Password Request
     let mut update_password_request = tonic::Request::new(update_password_request_message);
 
     // Append access token from login to request
     update_password_request
         .metadata_mut()
-        .append("access_token", login_response_message.access_token.parse().unwrap());
+        .insert("cookie", access_cookie.parse().unwrap());
+    // println!("{update_password_request:#?}");
 
     // Send update password request to server
     let response = tonic_client
@@ -208,7 +213,7 @@ async fn bad_new_password(database: Pool<Postgres>) -> Result<()> {
 
     //-- Checks (Assertions)
     // Confirm Tonic response status code
-    assert_eq!(update_password_response.code(), tonic::Code::Internal);
+    assert_eq!(update_password_response.code(), tonic::Code::Unauthenticated);
 
     // Confirm Tonic response message
     // assert_eq!(update_password_response.message(), "Authentication Failed!");

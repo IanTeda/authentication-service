@@ -33,17 +33,12 @@ pub type UsersClient =
     authentication_service::rpc::proto::users_service_client::UsersServiceClient<
         InterceptedService<Channel, TokenInterceptor>>;
 
-pub type LoginsClient =
-    authentication_service::rpc::proto::logins_service_client::LoginsServiceClient<
-        InterceptedService<Channel, TokenInterceptor>>;
-
 /// Tonic Client
 #[derive(Clone)]
 pub struct TonicClient {
     authentication: AuthenticationClient,
     sessions: SessionsClient,
     users: UsersClient,
-    logins: LoginsClient,
 }
 
 impl TonicClient {
@@ -60,11 +55,6 @@ impl TonicClient {
     /// Returns the users client.
     pub fn users(&mut self) -> &mut UsersClient {
         &mut self.users
-    }
-
-    /// Returns the logins client.
-    pub fn logins(&mut self) -> &mut LoginsClient {
-        &mut self.logins
     }
 
     /// Spawn a new tonic client based on the tonic server
@@ -134,13 +124,10 @@ impl TonicClient {
         // Build Users client request
         let users = authentication_service::rpc::proto::users_service_client::UsersServiceClient::with_interceptor(inner.clone(), client_interceptor.clone());
 
-        let logins = authentication_service::rpc::proto::logins_service_client::LoginsServiceClient::with_interceptor(inner.clone(), client_interceptor.clone());
-
         let client = TonicClient {
             authentication,
             sessions,
             users,
-            logins,
         };
 
         Ok(client)

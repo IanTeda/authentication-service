@@ -1,6 +1,6 @@
 -- Insert dummy data into users table
 -- https://www.uuidgenerator.net/version7
-INSERT INTO users (id, email, user_name, password_hash, is_active, created_on) VALUES
+INSERT INTO users (id, email, name, password_hash, is_active, created_on) VALUES
     ('019071c5-a31c-7a0e-befa-594702122e75', 'ian@teda.id.au', 'Ian Teda', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
     ('019071c5-a31c-7d2f-93b2-933edda75592', 'Terrance69@aol.com', 'Terrance', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
     ('019071c5-a31c-7b1a-b0b0-b00bd515ed8b', 'Wilburn.Turcotte@aol.com', 'Wilburn', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'false', '2019-10-17T00:00:00.000000Z'),

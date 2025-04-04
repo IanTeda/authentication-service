@@ -4,7 +4,6 @@
 
 mod authentication;
 pub mod helpers;
-mod logins;
 mod sessions;
 mod users;
 mod utilities;

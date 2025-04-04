@@ -19,6 +19,10 @@ args = [
     "--watch", "src"
 ]
 
+[tasks.submodules]
+command = "git"
+args = ["submodule", "update", "--recursive", "--remote"]
+
 [tasks.production]
 env =  { "APP_ENVIRONMENT" = "production"}
 command = "cargo"
@@ -37,11 +41,12 @@ command = "cargo"
 args = ["tarpaulin", "--ignore-tests"]
 
 ## Drop Database
-## $ sqlx database create
+## $ sqlx database drop
+## $ cargo make db_drop
 [tasks.db_drop]
 install_crate = "sqlx-cli"
 command = "sqlx"
-args = ["database", "drop"]
+args = ["database", "drop", "-y"]
 
 ## Create Database
 ## $ sqlx database create
@@ -62,6 +67,8 @@ install_crate = "sqlx-cli"
 command = "cargo"
 args = ["sqlx", "prepare", "--check"]
 
+# Run Database tasks
+# $ cargo make db
 [tasks.db]
 dependencies = ["db_drop", "db_create", "db_migrate", "db_prepare"]
 

@@ -1,15 +1,14 @@
 // #![allow(unused)] // For beginning only.
 
-use std::net::Ipv4Addr;
 use authentication_service::BackendError;
 use chrono::{DateTime, SubsecRound, Utc};
 use fake::faker::boolean::en::Boolean;
 use fake::faker::chrono::en::DateTime;
 use fake::faker::chrono::en::DateTimeAfter;
-use fake::faker::internet::en::IPv4;
 use fake::faker::name::en::Name;
 use fake::{faker::internet::en::SafeEmail, Fake};
 use secrecy::Secret;
+use std::net::Ipv4Addr;
 use uuid::Uuid;
 
 use authentication_service::{database, domain};
@@ -80,71 +79,75 @@ pub fn users(password: &String) -> Result<database::Users, BackendError> {
     Ok(random_user)
 }
 
-pub fn sessions(user: &database::Users, issuer: &Secret<String>) -> Result<database::Sessions, BackendError> {
+pub fn sessions(
+    user: &database::Users,
+    refresh_token: &domain::RefreshToken,
+) -> Result<database::Sessions, BackendError> {
     use chrono::SubsecRound;
+    use std::time;
     use fake::faker::boolean::en::Boolean;
     use fake::faker::chrono::en::DateTime;
+    use fake::faker::internet::en::IPv4;
     use fake::Fake;
-    use rand::distributions::DistString;
-    use secrecy::Secret;
 
+    // Generate random Uuid V7
     let random_id = uuid_v7();
-    let user_id = user.id.to_owned();
-    let random_secret =
-        rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
-    let random_secret = Secret::new(random_secret);
-    let random_duration = std::time::Duration::from_secs(
-        chrono::Duration::days(30).num_seconds() as u64,
-    );
 
-    let random_token = domain::RefreshToken::new(
-        &random_secret,
-        issuer,
-        &random_duration,
-        &user,
-    )?;
+    // Take ownership of the user_id
+    let user_id = user.id.to_owned();
+
+    // Generate random login time
+    let random_login_on: DateTime<Utc> = DateTime().fake();
+    let random_login_on = random_login_on.round_subsecs(0);
+
+    // Generate random IPV4 address, with 25% chance of being None
+    let random_ip: Ipv4Addr = IPv4().fake();
+    // Convert IPV4 to an i32 to be consistent with Postgres INT type
+    let random_ip = u32::from(random_ip) as i32;
+    let random_login_ip = if Boolean(4).fake() {
+        Some(random_ip)
+    } else {
+        None
+    };
+
+    // Generate a random session expiration date between 1 and 30 days.
+    let random_duration_days = (1..30).fake::<u64>();
+    let duration = time::Duration::from_secs(random_duration_days * 24 * 60 * 60);
+    let random_expires_on = random_login_on + duration;
 
     // Generate random boolean value
     let random_is_active: bool = Boolean(4).fake();
 
-    // Generate random DateTime
-    let random_created_on: DateTime<Utc> = DateTime().fake();
-    let random_created_on = random_created_on.round_subsecs(0);
-
-    let random_refresh_token = database::Sessions {
-        id: random_id,
-        user_id,
-        refresh_token: random_token,
-        is_active: random_is_active,
-        created_on: random_created_on,
+    // Generate random login time
+    let random_logout = random_login_on.round_subsecs(0);
+    let random_logout_on = if Boolean(4).fake() {
+        Some(random_logout)
+    } else {
+        None
     };
 
-    Ok(random_refresh_token)
-}
-
-pub fn logins(user_id: &Uuid) -> Result<database::Logins, BackendError> {
-    //-- Generate a random id (Uuid V7) by first generating a random timestamp
-    // Generate random Uuid V7 from mocks module
-    let random_id: Uuid = uuid_v7();
-
-    // Use user_id passed into the function
-    let user_id = user_id.to_owned();
-
-    // Generate random DateTime
-    let random_login_on: DateTime<Utc> = DateTime().fake();
-    // Round up accuracy to be consistent with Postgres, so we can do asserts cleaner
-    let random_login_on = random_login_on.round_subsecs(0);
-
-    // Generate random IPV4 address
+    // Generate random IPV4 address, with 25% chance of being None
     let random_ip: Ipv4Addr = IPv4().fake();
     // Convert IPV4 to an i32 to be consistent with Postgres INT type
     let random_ip = u32::from(random_ip) as i32;
-    let random_ip = Some(random_ip);
+    let random_logout_ip = if Boolean(4).fake() {
+        Some(random_ip)
+    } else {
+        None
+    };
 
-    Ok(database::Logins {
+    // Build the mock session instance
+    let mock_session = database::Sessions {
         id: random_id,
         user_id,
         login_on: random_login_on,
-        login_ip: random_ip,
-    })
+        login_ip: random_login_ip,
+        login_expires_on: random_expires_on,
+        refresh_token: refresh_token.to_owned(),
+        is_active: random_is_active,
+        logout_on: random_logout_on,
+        logout_ip: random_logout_ip,
+    };
+
+    Ok(mock_session)
 }

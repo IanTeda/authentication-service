@@ -7,23 +7,28 @@
 
 // #![allow(unused)] // For development only
 
-use std::str::FromStr;
 use std::sync::Arc;
 
 use sqlx::{Pool, Postgres};
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-use crate::rpc::proto::sessions_service_server::SessionsService as Sessions;
-use crate::rpc::proto::{Empty, SessionsDeleteRequest, SessionsDeleteResponse, SessionsDeleteUserRequest, SessionsIndexRequest, SessionsIndexResponse, SessionsReadRequest, SessionsResponse, SessionsRevokeRequest, SessionsRevokeResponse, SessionsRevokeUserRequest};
-use crate::{database, domain};
 use crate::configuration::Configuration;
+use crate::database;
 use crate::prelude::BackendError;
+use crate::rpc::proto::sessions_service_server::SessionsService as Sessions;
+use crate::rpc::proto::{
+    Empty, SessionsDeleteRequest, SessionsDeleteResponse, SessionsDeleteUserRequest,
+    SessionsIndexRequest, SessionsIndexResponse, SessionsReadRequest,
+    SessionsResponse, SessionsRevokeRequest, SessionsRevokeResponse,
+    SessionsRevokeUserRequest,
+};
 
 /// User service containing a database pool
 // #[derive(Debug)]
 pub struct SessionsService {
     database: Arc<Pool<Postgres>>,
+    #[allow(dead_code)]
     config: Arc<Configuration>,
 }
 
@@ -39,6 +44,7 @@ impl SessionsService {
     }
 
     /// Shorthand for reference to application configuration instance
+    #[allow(dead_code)]
     fn config_ref(&self) -> &Configuration {
         &self.config
     }
@@ -49,16 +55,28 @@ impl From<database::Sessions> for SessionsResponse {
     fn from(value: database::Sessions) -> Self {
         let id = value.id.to_string();
         let user_id = value.user_id.to_string();
+        let login_on = value.login_on.to_string();
+        let login_ip = value.login_ip;
+        let login_expires_on = value.login_expires_on.to_string();
         let refresh_token = value.refresh_token.to_string();
         let is_active = value.is_active;
-        let created_on = value.created_on.to_string();
+        let logout_on = if value.logout_on.is_none() {
+            None
+        } else {
+            Some(value.logout_on.unwrap().to_string())
+        };
+        let logout_ip = value.logout_ip;
 
         Self {
             id,
             user_id,
+            login_on,
+            login_ip,
+            login_expires_on,
             refresh_token,
             is_active,
-            created_on,
+            logout_on,
+            logout_ip,
         }
     }
 }
@@ -72,9 +90,9 @@ impl Sessions for SessionsService {
         request: Request<SessionsReadRequest>,
     ) -> Result<Response<SessionsResponse>, Status> {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
-        let (_request_metadata, request_extensions, request_message) =
+        let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
-        
+
         // Parse the request message string into a Uuid
         let id = Uuid::parse_str(&request_message.id).map_err(|_| {
             tracing::error!("Unable to parse Session id to UUID!");
@@ -83,7 +101,8 @@ impl Sessions for SessionsService {
             );
         })?;
 
-        let database_record = database::Sessions::from_id(&id, self.database_ref()).await?;
+        let database_record =
+            database::Sessions::from_id(&id, self.database_ref()).await?;
 
         // Convert the database record into a LoginsResponse message
         let response_message: SessionsResponse = database_record.into();
@@ -99,7 +118,7 @@ impl Sessions for SessionsService {
         request: Request<SessionsIndexRequest>,
     ) -> Result<Response<SessionsIndexResponse>, Status> {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
-        let (_request_metadata, request_extensions, request_message) =
+        let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
         // TODO: Why does this need to be i64, could we use i32
@@ -132,7 +151,7 @@ impl Sessions for SessionsService {
         request: Request<SessionsRevokeRequest>,
     ) -> Result<Response<SessionsRevokeResponse>, Status> {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
-        let (_request_metadata, request_extensions, request_message) =
+        let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
         // Parse the request message string into a Uuid
@@ -145,8 +164,7 @@ impl Sessions for SessionsService {
 
         // Revoke Session in database based on database row PK (id)
         let rows_affected =
-            database::Sessions::revoke_by_id(&id, self.database_ref()).await?
-                as i64;
+            database::Sessions::revoke_by_id(&id, self.database_ref()).await? as i64;
 
         // Build Session Response message
         let response_message = SessionsRevokeResponse { rows_affected };
@@ -165,7 +183,7 @@ impl Sessions for SessionsService {
         request: Request<SessionsRevokeUserRequest>,
     ) -> Result<Response<SessionsRevokeResponse>, Status> {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
-        let (_request_metadata, request_extensions, request_message) =
+        let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
         // Parse the request message string into a Uuid
@@ -178,8 +196,8 @@ impl Sessions for SessionsService {
 
         // Revoke Sessions in database based on database row PK (id)
         let rows_affected =
-            database::Sessions::revoke_user_id(&user_id, self.database_ref())
-                .await? as i64;
+            database::Sessions::revoke_user_id(&user_id, self.database_ref()).await?
+                as i64;
 
         // Build Sessions Response message
         let response_message = SessionsRevokeResponse { rows_affected };
@@ -198,7 +216,7 @@ impl Sessions for SessionsService {
         request: Request<Empty>,
     ) -> Result<Response<SessionsRevokeResponse>, Status> {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
-        let (_request_metadata, request_extensions, _request_message) =
+        let (_request_metadata, _request_extensions, _request_message) =
             request.into_parts();
 
         // Revoke (set is_active = false) all Access Tokens in the database
@@ -219,7 +237,7 @@ impl Sessions for SessionsService {
         request: Request<SessionsDeleteRequest>,
     ) -> Result<Response<SessionsDeleteResponse>, Status> {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
-        let (_request_metadata, request_extensions, request_message) =
+        let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
         // Parse the request message string into a Uuid
@@ -232,8 +250,7 @@ impl Sessions for SessionsService {
 
         // Revoke Session in database based on database row PK (id)
         let rows_affected =
-            database::Sessions::delete_by_id(&id, self.database_ref()).await?
-                as i64;
+            database::Sessions::delete_by_id(&id, self.database_ref()).await? as i64;
 
         // Build Session Response message
         let response_message = SessionsDeleteResponse { rows_affected };
@@ -252,7 +269,7 @@ impl Sessions for SessionsService {
         request: Request<SessionsDeleteUserRequest>,
     ) -> Result<Response<SessionsDeleteResponse>, Status> {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
-        let (_request_metadata, request_extensions, request_message) =
+        let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
         // Parse the request message string into a Uuid
@@ -264,11 +281,9 @@ impl Sessions for SessionsService {
         })?;
 
         // Revoke Session in database based on database row PK (id)
-        let rows_affected = database::Sessions::delete_all_user(
-            &user_id,
-            self.database_ref(),
-        )
-            .await? as i64;
+        let rows_affected =
+            database::Sessions::delete_all_user(&user_id, self.database_ref())
+                .await? as i64;
 
         // Build Session Response message
         let response_message = SessionsDeleteResponse { rows_affected };
@@ -287,7 +302,7 @@ impl Sessions for SessionsService {
         request: Request<Empty>,
     ) -> Result<Response<SessionsDeleteResponse>, Status> {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
-        let (_request_metadata, request_extensions, _request_message) =
+        let (_request_metadata, _request_extensions, _request_message) =
             request.into_parts();
 
         // Revoke (set is_active = false) all Access Tokens in the database

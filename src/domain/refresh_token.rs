@@ -58,8 +58,10 @@ impl RefreshToken {
     ///
     /// ## Parameters
     ///
-    /// - `secret`: Secret<String> containing the token encryption secret
-    /// - `user_id`: Uuid of the user that is going to use the Access Token
+    /// - `secret<Secret<String>` - The token encryption secret
+    /// - `isser<&Secret<String>>` - The token issuer secret
+    /// - 'duration<&time::Duration>` - How long the token is valid for
+    /// - `user<&database::Users>` - A database instance of the user to generate the token for
     /// ---
     #[tracing::instrument(
         name = "Generate a new Refresh Token for: "
@@ -85,9 +87,42 @@ impl RefreshToken {
         Ok(Self(token))
     }
 
+    #[cfg(test)]
+    pub fn mock_data(user: &database::Users) -> Result<Self, BackendError> {
+        use fake::faker::company::en::CompanyName;
+        use fake::faker::internet::en::Password;
+        use fake::Fake;
+        use rand::distributions::DistString;
+
+        // Generate a random token secret
+        let random_secret = rand::distributions::Alphanumeric
+            .sample_string(&mut rand::thread_rng(), 60);
+        let random_secret = Secret::new(random_secret);
+
+        // Generate a random issuer company
+        let random_issuer = CompanyName().fake::<String>();
+        let random_issuer = Secret::new(random_issuer);
+
+        // Generate a random duration between 1 and 10 hours
+        // TODO: This should not be random
+        let random_duration =
+            std::time::Duration::from_secs((1..36000).fake::<u64>());
+
+        let mock_refresh_token = RefreshToken::new(
+            &random_secret,
+            &random_issuer,
+            &random_duration,
+            &user,
+        )?;
+
+        Ok(mock_refresh_token)
+    }
+
     /// Build the Refresh Token cookie from the token string
     ///
     /// # Build the Refresh Token Cookie
+    /// 
+    /// TODO: Change to a impl into method
     ///
     /// ## Parameters
     ///
@@ -100,9 +135,7 @@ impl RefreshToken {
     /// - https://github.com/dlunch/account/blob/main/server/src/handlers/auth.rs
     /// - https://docs.rs/cookie/latest/cookie/struct.CookieBuilder.html
     ///
-        #[tracing::instrument(
-        name = "Build a Refresh Token cookie from: "
-    )]
+    #[tracing::instrument(name = "Build a Refresh Token cookie from: ")]
     pub fn build_cookie(&self, domain: &str, duration: &time::Duration) -> Cookie {
         let duration = cookie::time::Duration::new(duration.as_secs() as i64, 0);
 
@@ -123,10 +156,13 @@ impl RefreshToken {
     }
 
     /// # Extract Token Form Header
-    /// 
+    ///
     /// Extract the Refresh token string from the tonic request header
     // TODO: Use Cookie parse instead of manually parsing the cookie string
-    #[tracing::instrument(name = "Extract Refresh Token from http header: ", skip(token_secret))]
+    #[tracing::instrument(
+        name = "Extract Refresh Token from http header: ",
+        skip(token_secret)
+    )]
     pub fn from_header(
         token_secret: &Secret<String>,
         request_metadata: &tonic::metadata::MetadataMap,
@@ -165,12 +201,14 @@ impl RefreshToken {
         }
 
         let refresh_token = cookies_map.get("refresh_token").ok_or(
-            BackendError::AuthenticationError("No refresh token in cookie map".to_string()),
+            BackendError::AuthenticationError(
+                "No refresh token in cookie map".to_string(),
+            ),
         )?;
 
         // Build a new refresh token from the refresh token string
         let refresh_token = RefreshToken(refresh_token.to_string());
-        
+
         Ok(refresh_token)
     }
 }

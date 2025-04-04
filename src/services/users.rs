@@ -30,6 +30,7 @@ use crate::{database, domain};
 // #[derive(Debug)]
 pub struct UsersService {
     database: Arc<Pool<Postgres>>,
+    #[allow(dead_code)]
     config: Arc<Configuration>,
 }
 
@@ -45,6 +46,7 @@ impl UsersService {
         &self.database
     }
 
+    #[allow(dead_code)]
     fn config_ref(&self) -> &Configuration {
         &self.config
     }
@@ -143,7 +145,7 @@ impl Users for UsersService {
         tracing::debug!("User request: {request:#?}");
 
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
-        let (_request_metadata, request_extensions, request_message) =
+        let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
         // Convert create user request message into a user instance
@@ -171,7 +173,7 @@ impl Users for UsersService {
         request: Request<ReadUserRequest>,
     ) -> Result<Response<UserResponse>, Status> {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
-        let (_request_metadata, request_extensions, request_message) =
+        let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
         let id = Uuid::parse_str(&request_message.id).map_err(|_| {
@@ -203,7 +205,7 @@ impl Users for UsersService {
         request: Request<UserIndexRequest>,
     ) -> Result<Response<UserIndexResponse>, Status> {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
-        let (_request_metadata, request_extensions, request_message) =
+        let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
         // Offset, where to start the records from
@@ -243,7 +245,7 @@ impl Users for UsersService {
         request: Request<UpdateUserRequest>,
     ) -> Result<Response<UserResponse>, Status> {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
-        let (_request_metadata, request_extensions, request_message) =
+        let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
         // Convert create user request message into a user instance
@@ -271,7 +273,7 @@ impl Users for UsersService {
         request: Request<DeleteUserRequest>,
     ) -> Result<Response<DeleteUserResponse>, Status> {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
-        let (_request_metadata, request_extensions, request_message) =
+        let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
         let id = Uuid::parse_str(&request_message.id).map_err(|_| {

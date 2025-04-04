@@ -9,11 +9,9 @@ use sqlx::{postgres::PgPoolOptions, PgPool};
 // Reexport for cleaner code
 pub use sessions::Sessions;
 pub use users::Users;
-pub use logins::Logins;
 
 use crate::{configuration::DatabaseConfiguration, prelude::*};
 
-mod logins;
 mod sessions;
 mod users;
 

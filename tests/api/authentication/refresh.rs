@@ -129,9 +129,11 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     assert_eq!(&refresh_token_claim.jty, "Refresh");
 
     // Confirm Login is in database
-    let logins =
-        database::Logins::index_user(&random_user.id, &10, &0, &database).await?;
-    assert_eq!(random_user.id, logins[0].user_id);
+    // let logins =
+    //     database::Logins::index_user(&random_user.id, &10, &0, &database).await?;
+    // let session = database::Sessions::get_by_user_id(&random_user.id, &database).await?;
+    let session = database::Sessions::from_token(&refresh_token, &database).await?;
+    assert_eq!(random_user.id, session.user_id);
 
     // Confirm Session is in the database
     let sessions =

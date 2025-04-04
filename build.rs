@@ -19,7 +19,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             &[
                 "proto/authentication/authentication.proto",
                 "proto/authentication/common.proto",
-                "proto/authentication/logins.proto",
                 "proto/authentication/sessions.proto",
                 "proto/authentication/users.proto",
                 "proto/authentication/utilities.proto",

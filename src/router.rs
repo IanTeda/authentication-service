@@ -18,7 +18,6 @@ use crate::configuration::Configuration;
 use crate::middleware;
 use crate::prelude::*;
 use crate::rpc::proto::authentication_service_server::AuthenticationServiceServer as AuthenticationServer;
-use crate::rpc::proto::logins_service_server::LoginsServiceServer as LoginsServer;
 use crate::rpc::proto::sessions_service_server::SessionsServiceServer as SessionsServer;
 use crate::rpc::proto::users_service_server::UsersServiceServer as UsersServer;
 use crate::rpc::proto::utilities_service_server::UtilitiesServiceServer as UtilitiesServer;
@@ -83,15 +82,6 @@ pub fn get_router(
         access_token_interceptor.clone(),
     );
 
-    //-- Build the Logins Service
-    // Create a new LoginsService instance
-    let logins_service =
-        services::LoginsService::new(Arc::clone(&database), Arc::clone(&config));
-
-    // Wrap the LoginsService in the LoginsServiceServer
-    let logins_server =
-        LoginsServer::with_interceptor(logins_service, access_token_interceptor);
-
     // Build reflections server
     // let reflections_server = services::ReflectionsService::new();
 
@@ -108,8 +98,7 @@ pub fn get_router(
         .add_service(tonic_web::enable(utilities_server))
         .add_service(tonic_web::enable(authentication_server))
         .add_service(tonic_web::enable(users_server))
-        .add_service(tonic_web::enable(sessions_server))
-        .add_service(tonic_web::enable(logins_server));
+        .add_service(tonic_web::enable(sessions_server));
 
     Ok(router)
 }
