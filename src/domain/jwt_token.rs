@@ -6,7 +6,7 @@
 //!
 //! //TODO: Make errors consistent across application
 //! //TODO: Tidy up token domain into a subfolder
-//! //TODO: Implient display for TokenClaim
+//! //TODO: Implement display for TokenClaim
 //!
 //! # References
 //!
@@ -18,7 +18,7 @@
 use jsonwebtoken::{
     decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation,
 };
-use secrecy::{ExposeSecret, Secret};
+use secrecy::{ExposeSecret, SecretString};
 use std::time;
 use strum::Display;
 use uuid::Uuid;
@@ -108,12 +108,12 @@ impl TokenClaim {
     /// - `token_type<token_claim::Kind>` - What type of JWT will the new claim be, access or refresh token.
     /// ---
     pub fn new(
-        issuer: &Secret<String>,
+        issuer: &SecretString,
         duration: &time::Duration,
         user: &database::Users,
         token_type: &TokenType,
     ) -> Self {
-        // Take ownership of the string, since it will be passsed back in the Token Claim
+        // Take ownership of the string, since it will be passed back in the Token Claim
         let issuer = issuer.expose_secret().to_string();
 
         // Get System Time now
@@ -133,7 +133,7 @@ impl TokenClaim {
             .expect("valid timestamp")
             .as_secs();
         
-        // Convert user id UUID to a string for the clim
+        // Convert user id UUID to a string for the claim
         let user_id = user.id.to_string();
 
         // Token claim id with Uuid V7 with now timestamp
@@ -166,13 +166,13 @@ impl TokenClaim {
     /// ## Parameters
     ///
     /// - `token<&str>` - The Token string to be decoded into a Token Claim.
-    /// - `secret<Secret<String>>` - Contains the token encryption secret.
-    /// - `issuer<&str>` - Who issused the JWT. Used to verify the token.
+    /// - `secret<SecretString>` - Contains the token encryption secret.
+    /// - `issuer<SecretString>` - Who issued the JWT. Used to verify the token.
     /// ---
     pub fn parse(
         token: &str,
-        secret: &Secret<String>,
-        issuer: &Secret<String>,
+        secret: &SecretString,
+        issuer: &SecretString,
     ) -> Result<Self, BackendError> {
         // Build token validation requirements. By default, the decoding will 
         // automatically validate the expiration (exp) claim
@@ -222,7 +222,7 @@ mod tests {
     async fn generate_new_token_claim() -> Result<()> {
         // Generate a random company name as issurer
         let random_issuer = CompanyName().fake::<String>();
-        let random_issuer = Secret::new(random_issuer);
+        let random_issuer = SecretString::from(random_issuer);
 
         // Generate a random duration between 1 and 10 hours
         let random_duration =

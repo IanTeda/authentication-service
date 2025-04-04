@@ -29,10 +29,7 @@ impl TonicServer {
         database: Pool<Postgres>,
     ) -> Result<Self, BackendError> {
         // TODO: Refactor into config file
-        let address = format!(
-            "{}:{}",
-            &config.application.ip_address, &config.application.port
-        );
+        let address = config.application.get_address();
 
         let router = router::get_router(database, config)?;
 

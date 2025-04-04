@@ -121,7 +121,6 @@ impl Sessions for SessionsService {
         let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
 
-        // TODO: Why does this need to be i64, could we use i32
         // Offset, where to start the records from
         let offset: i64 = request_message.offset.into();
 

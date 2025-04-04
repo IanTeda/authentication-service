@@ -10,7 +10,7 @@ use http::header::COOKIE;
 use http::HeaderMap;
 use rand::distributions::Alphanumeric;
 use rand::distributions::DistString;
-use secrecy::Secret;
+use secrecy::SecretString;
 use sqlx::{Pool, Postgres};
 use tonic::metadata::MetadataMap;
 use tonic::Request;
@@ -48,7 +48,7 @@ async fn returns_logout_true(database: Pool<Postgres>) -> Result<()> {
     // Build tonic request
     let auth_request = tonic::Request::new(auth_message);
 
-    // Request authenticaoitn of random user email and password
+    // Request authentication of random user email and password
     let (response_metadata, _response_message, _response_extensions) = tonic_client
         .authentication()
         .login(auth_request)
@@ -61,7 +61,7 @@ async fn returns_logout_true(database: Pool<Postgres>) -> Result<()> {
     // Parse the cookie header string into a Cookie object
     let refresh_cookie = Cookie::parse(refresh_cookie)?;
 
-    // Strip out additoinal cookie detail and convert to key=vaule string
+    // Strip out additional cookie detail and convert to key=value string
     let refresh_cookie = refresh_cookie.stripped().to_string();
 
     // Build tonic request message
@@ -114,16 +114,16 @@ async fn incorrect_refresh_token_is_unauthorised(database: Pool<Postgres>) -> Re
 
     // Generate random secret string
     let secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
-    let secret = Secret::new(secret);
+    let secret = SecretString::from(secret);
 
     //-- 2. Execute Test (Act)
 
-    // Geneate a new random user to make a Refresh Token that is not in the database
+    // Generate a new random user to make a Refresh Token that is not in the database
     let new_random_user = helpers::mocks::users(&random_password)?;
 
     // Generate a random issuer for the incorrect Refresh Token
     let random_issuer = CompanyName().fake::<String>();
-    let random_issuer = Secret::new(random_issuer);
+    let random_issuer = SecretString::from(random_issuer);
 
     // Generate a random duration or the incorrect Refresh Token
     let random_duration =

@@ -10,7 +10,7 @@ use http::header::COOKIE;
 use http::HeaderMap;
 use rand::distributions::Alphanumeric;
 use rand::distributions::DistString;
-use secrecy::Secret;
+use secrecy::SecretString;
 use sqlx::{Pool, Postgres};
 use tonic::metadata::MetadataMap;
 use tonic::Request;
@@ -164,7 +164,7 @@ async fn incorrect_refresh_token_is_unauthorised(database: Pool<Postgres>) -> Re
 
     // Generate random secret string
     let secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
-    let secret = Secret::new(secret);
+    let secret = SecretString::from(secret);
 
     //-- 2. Execute Test (Act)
 
@@ -173,7 +173,7 @@ async fn incorrect_refresh_token_is_unauthorised(database: Pool<Postgres>) -> Re
 
     // Generate a random issuer for the incorrect Refresh Token
     let random_issuer = CompanyName().fake::<String>();
-    let random_issuer = Secret::new(random_issuer);
+    let random_issuer = SecretString::from(random_issuer);
 
     // Generate a random duration or the incorrect Refresh Token
     let random_duration =

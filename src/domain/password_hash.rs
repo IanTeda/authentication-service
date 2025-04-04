@@ -20,7 +20,7 @@ use crate::prelude::*;
 use crate::domain::RefreshToken;
 use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, PasswordVerifier, Version};
-use secrecy::{ExposeSecret, Secret};
+use secrecy::{ExposeSecret, SecretString};
 
 // TODO: rationalise serde derives
 #[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -33,7 +33,7 @@ impl PasswordHash {
     ///
     /// * `password`: The password in a string
     /// ---
-    pub fn parse(password: Secret<String>) -> Result<PasswordHash, BackendError> {
+    pub fn parse(password: SecretString) -> Result<PasswordHash, BackendError> {
         // Parse String into Secret struct
         // let password = Secret::new(password.into());
 
@@ -113,7 +113,7 @@ impl PasswordHash {
     /// ---
     pub fn verify_password(
         &self,
-        password: &Secret<String>,
+        password: &SecretString,
     ) -> Result<bool, BackendError> {
         // Initiate new Argon2 instance
         let argon2 = Argon2::new(
@@ -142,7 +142,7 @@ impl PasswordHash {
 
         let random_count = (5..30).fake::<i64>() as usize;
         let password = "aB1%".repeat(random_count);
-        let password = Secret::new(password);
+        let password = SecretString::from(password);
 
         PasswordHash::parse(password)
     }
@@ -174,7 +174,7 @@ mod tests {
     use argon2::{Argon2, PasswordVerifier};
     use claims::{assert_err, assert_ok};
     use fake::Fake;
-    use secrecy::{ExposeSecret, Secret};
+    use secrecy::{ExposeSecret, SecretString};
 
     // Override with more flexible error
     pub type Result<T> = core::result::Result<T, Error>;
@@ -183,7 +183,7 @@ mod tests {
     #[test]
     fn less_than_twelve_fails() -> Result<()> {
         let password = "aB1%".to_string();
-        let password = Secret::new(password);
+        let password = SecretString::from(password);
         assert_err!(domain::PasswordHash::parse(password));
 
         Ok(())
@@ -193,7 +193,7 @@ mod tests {
     fn more_than_twelve_fails() -> Result<()> {
         let random_count = (256..300).fake::<i64>() as usize;
         let password = "aB1%".repeat(random_count);
-        let password = Secret::new(password);
+        let password = SecretString::from(password);
         assert_err!(domain::PasswordHash::parse(password));
 
         Ok(())
@@ -203,7 +203,7 @@ mod tests {
     fn no_uppercase_characters_fails() -> Result<()> {
         let random_count = (5..30).fake::<i64>() as usize;
         let password = "ab1%".repeat(random_count);
-        let password = Secret::new(password);
+        let password = SecretString::from(password);
         assert_err!(domain::PasswordHash::parse(password));
 
         Ok(())
@@ -213,7 +213,7 @@ mod tests {
     fn no_number_characters_fails() -> Result<()> {
         let random_count = (5..30).fake::<i64>() as usize;
         let password = "aBc%".repeat(random_count);
-        let password = Secret::new(password);
+        let password = SecretString::from(password);
         assert_err!(domain::PasswordHash::parse(password));
 
         Ok(())
@@ -223,7 +223,7 @@ mod tests {
     fn no_special_characters_fails() -> Result<()> {
         let random_count = (5..30).fake::<i64>() as usize;
         let password = "aB15".repeat(random_count);
-        let password = Secret::new(password);
+        let password = SecretString::from(password);
         assert_err!(domain::PasswordHash::parse(password));
 
         Ok(())
@@ -233,7 +233,7 @@ mod tests {
     fn password_passes() -> Result<()> {
         let random_count = (5..30).fake::<i64>() as usize;
         let password = "aB1%".repeat(random_count);
-        let password = Secret::new(password);
+        let password = SecretString::from(password);
         assert_ok!(domain::PasswordHash::parse(password));
 
         Ok(())
@@ -244,8 +244,7 @@ mod tests {
         //-- Setup and Fixtures (Arrange)
         // Generate a password that meets the minimum requirements in parse
         let random_count = (5..30).fake::<i64>() as usize;
-        let password_secret = Secret::new("aB1%".repeat(random_count));
-        // let password_secret = Secret::new("S3cret-Admin-Pas$word!".to_string());
+        let password_secret = SecretString::from("aB1%".repeat(random_count));
 
         //-- Execute Function (Act)
         // Parse a password hash from the domain

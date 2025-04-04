@@ -23,7 +23,7 @@ use std::sync::Arc;
 use std::time;
 
 use http::header::{HeaderMap, SET_COOKIE};
-use secrecy::Secret;
+use secrecy::SecretString;
 use sqlx::{Pool, Postgres};
 use tonic::metadata::MetadataMap;
 use tonic::{Request, Response, Status};
@@ -62,7 +62,7 @@ impl AuthenticationService {
 
     /// # Authentication Database Pool Reference
     ///
-    /// This function is a shorthand eference to the Authenticatoin Service
+    /// This function is a shorthand reference to the Authentication Service
     /// database pool.
     fn database_ref(&self) -> &Pool<Postgres> {
         &self.database
@@ -137,7 +137,7 @@ impl Authentication for AuthenticationService {
         tracing::debug!("User retrieved from the database: {}", user.id);
 
         // Wrap request password in a Secret type to limit accidental exposure
-        let password = Secret::new(request_message.password);
+        let password = SecretString::from(request_message.password);
 
         // Verify the password hash using the password secret.
         // This will return a boolean indicating if the password is valid.
@@ -498,7 +498,7 @@ impl Authentication for AuthenticationService {
         tracing::debug!("User email is verified in the database: {}", user.id);
 
         //-- Verify existing/original password
-        let original_password = Secret::new(request_message.password_original);
+        let original_password = SecretString::from(request_message.password_original);
         if user.password_hash.verify_password(&original_password)? == false {
             tracing::error!("Original password is incorrect");
             return Err(Status::unauthenticated("Authentication Failed!"));
@@ -509,7 +509,7 @@ impl Authentication for AuthenticationService {
         /////////////////////////////////////////////////////////////////////////
 
         // Wrap the new password in a Secret type to limit accidental exposure
-        let new_password = Secret::new(request_message.password_new);
+        let new_password = SecretString::from(request_message.password_new);
 
         // Parse the new password string into a PasswordHash
         let new_password_hash = domain::PasswordHash::parse(new_password)?;
@@ -566,7 +566,7 @@ impl Authentication for AuthenticationService {
     /// This function first validates the Refresh Token sent in the request header.
     /// After validation, all sessions associated with user are revoked (set inactive)
     /// in the database.
-    /// The function then sends a response message with a success boolen and message.
+    /// The function then sends a response message with a success boolean and message.
     #[tracing::instrument(name = "Log Out User Request: ", skip(self, request))]
     async fn logout(
         &self,

@@ -2,7 +2,7 @@
 
 #![allow(unused)] // For beginning only.
 
-use secrecy::Secret;
+use secrecy::SecretString;
 
 use crate::{domain, middleware::access_token, prelude::*, utils};
 use std::str::FromStr;
@@ -10,8 +10,8 @@ use std::str::FromStr;
 /// Check
 #[derive(Clone)]
 pub struct AccessTokenInterceptor {
-    pub(crate) token_secret: Secret<String>,
-    pub(crate) issuer: Secret<String>,
+    pub(crate) token_secret: SecretString,
+    pub(crate) issuer: SecretString,
 }
 
 impl tonic::service::Interceptor for AccessTokenInterceptor {
@@ -19,14 +19,14 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
         &mut self,
         mut request: tonic::Request<()>,
     ) -> Result<tonic::Request<()>, tonic::Status> {
-        // Get the metatata from the tonic request
+        // Get the metadata from the tonic request
         let metadata: &tonic::metadata::MetadataMap = request.metadata();
 
         // Using the cookie jar utility, extract the cookies form the metadata
         // into a Cookie Jar.
         let cookie_jar = utils::metadata::get_cookie_jar(metadata)?;
 
-        // Initate the access token string
+        // Initiate the access token string
         let mut access_token_string: String;
 
         // Get the access token cookie from the request metadata and return the
@@ -66,7 +66,7 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
         );
 
         // Parse Token Claim user role into domain type
-        // TODO: Impliment authorisation function to confirm request authorisation
+        // TODO: Implement authorisation function to confirm request authorisation
         let role = domain::UserRole::from_str(access_token_claim.jur.as_str())
             .map_err(|_| {
                 tracing::error!("Access Token user role is invalid!");
@@ -75,19 +75,6 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
                     "Authentication Failed! No valid auth token.".to_string(),
                 )
             })?;
-
-        // // TODO: Delete admin check as it is happening in middleware as well.
-        // // Parse Token Claim user role into domain type
-        // let requester_role = domain::UserRole::from_str(&access_token_claim.jur)?;
-
-        // // If the User Role in the Token Claim is not Admin return early with Tonic Status error
-        // if requester_role != domain::UserRole::Admin {
-        //     tracing::error!(
-        //         "User request admin endpoint: {}",
-        //         &access_token_claim.sub
-        //     );
-        //     return Err(Status::unauthenticated("Admin access required!"));
-        // }
 
         Ok(request)
     }

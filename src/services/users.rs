@@ -11,7 +11,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use chrono::Utc;
-use secrecy::Secret;
+use secrecy::SecretString;
 use sqlx::{Pool, Postgres};
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
@@ -19,7 +19,6 @@ use uuid::Uuid;
 use crate::configuration::Configuration;
 use crate::prelude::BackendError;
 use crate::rpc::proto::users_service_server::UsersService as Users;
-//TODO: Refactor Proto function names
 use crate::rpc::proto::{
     CreateUserRequest, DeleteUserRequest, DeleteUserResponse, ReadUserRequest,
     UpdateUserRequest, UserIndexRequest, UserIndexResponse, UserResponse,
@@ -60,7 +59,7 @@ impl TryFrom<CreateUserRequest> for database::Users {
         let id = Uuid::now_v7();
         let email = domain::EmailAddress::parse(value.email)?;
         let name = domain::UserName::parse(value.name)?;
-        let password = Secret::new(value.password);
+        let password = SecretString::from(value.password);
         let password_hash = domain::PasswordHash::parse(password)?;
         let role = domain::UserRole::from_str(&value.role)?;
         let is_active = value.is_active;
@@ -90,7 +89,7 @@ impl TryFrom<UpdateUserRequest> for database::Users {
         // Password does not get updated
         let name = domain::UserName::parse(value.name)?;
         let password =
-            Secret::new("this-does-not-matter!-I-do-not-update3".to_string());
+            SecretString::from("this-does-not-matter!-I-do-not-update3".to_string());
         let password_hash = domain::PasswordHash::parse(password)?;
         let role = domain::UserRole::from_str(&value.role)?;
         let is_active = value.is_active;

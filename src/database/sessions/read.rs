@@ -120,7 +120,7 @@ impl Sessions {
         .await?;
 
         tracing::debug!(
-            "Sessions ndatabase records retrieved: {database_records:#?}"
+            "Sessions database records retrieved: {database_records:#?}"
         );
 
         Ok(database_records)

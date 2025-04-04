@@ -18,7 +18,7 @@
 
 use crate::prelude::*;
 
-use secrecy::{ExposeSecret, Secret};
+use secrecy::{ExposeSecret, SecretString};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
 use strum::Display;
@@ -50,7 +50,7 @@ pub struct ApplicationConfiguration {
     pub log_level: tracing::LevelFilter,
 
     /// Secret used to generate JWT keys
-    pub token_secret: Secret<String>,
+    pub token_secret: SecretString,
 
     /// How many minutes to keep the access token valid for.
     #[serde(deserialize_with = "deserialize_number_from_string")]
@@ -75,7 +75,7 @@ pub struct DatabaseConfiguration {
     pub username: String,
 
     /// Database password for login
-    pub password: Secret<String>,
+    pub password: SecretString,
 
     /// Database name to use
     pub database_name: String,
@@ -203,22 +203,30 @@ impl ApplicationConfiguration {
     /// # Returns
     ///
     /// * `Secret<String>` - The issuer URL for the token.
-    pub fn get_issuer(&self) -> Secret<String> {
+    pub fn get_issuer(&self) -> SecretString {
         let issuer = format!(
             "https://{}:{}",
             self.ip_address, self.port
         );
-        Secret::new(issuer)
+        SecretString::from(issuer)
     }
 
     /// # Get the Cookie Domain
     /// 
-    /// Cookies are set to website domain. Everytime
+    /// Cookies are set to website domain.
     pub fn get_domain(&self) -> String {
         let domain = format!(
             "http://{}",
             self.ip_address
         );
         domain
+    }
+
+    /// # Get the Server Address
+    ///
+    /// This function returns the server address for the API. The server address
+    /// is used to bind the server to the correct address and port.
+    pub fn get_address(&self) -> String {
+        format!("{}:{}", self.ip_address, self.port)
     }
 }

@@ -7,7 +7,6 @@
 
 use chrono::{DateTime, SubsecRound, Utc};
 use std::{net::Ipv4Addr, time};
-use secrecy::Secret;
 use uuid::Uuid;
 
 use crate::{database, domain, prelude::BackendError};
@@ -47,7 +46,7 @@ impl Sessions {
         /// The unique (primary key) session id as a UUid v7
         let id = Uuid::now_v7();
 
-        /// The unique user id (foriegn key) for the session user
+        /// The unique user id (foreign key) for the session user
         let user_id = user.id.to_owned();
 
         /// The login time is the current time
@@ -102,7 +101,6 @@ impl Sessions {
         use fake::faker::internet::en::IPv4;
         use fake::Fake;
         use rand::distributions::DistString;
-        use secrecy::Secret;
 
         use crate::utils;
 

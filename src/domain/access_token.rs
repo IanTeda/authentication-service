@@ -10,7 +10,7 @@
 
 use core::time;
 use jsonwebtoken::{encode, EncodingKey, Header};
-use secrecy::{ExposeSecret, Secret};
+use secrecy::{ExposeSecret, SecretString};
 use uuid::Uuid;
 
 use crate::{database, domain::jwt_token::TokenType, prelude::*};
@@ -44,16 +44,15 @@ impl AccessToken {
     ///
     /// ## Parameters
     ///
-    /// - `secret<&Secret<String>>` - containing the token encryption secret
-    /// - `issuer<&str>` - Containing the issuer of the JWT
+    /// - `secret<&SecretString>` - containing the token encryption secret
+    /// - `issuer<&SecretString>` - Containing the issuer of the JWT
     /// - `duration<&time::Duration>` - How long the token is valid for
     /// - `user_id<&database::Users>` - A database Users instance that is going to use the Access Token
-    /// 
-    // TODO: Make the issuer a secret to avoid leaking in logs 
+    ///
     #[tracing::instrument(name = "Generate a new Access Token for: ", skip(secret))]
     pub fn new(
-        secret: &Secret<String>,
-        issuer: &Secret<String>,
+        secret: &SecretString ,
+        issuer: &SecretString ,
         duration: &time::Duration,
         user: &database::Users,
     ) -> Result<Self, BackendError> {
@@ -95,14 +94,14 @@ mod tests {
 
         // Generate random secret string
         let random_secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
-        let random_secret = Secret::new(random_secret);
+        let random_secret = SecretString::from(random_secret);
 
         // Get a random user_id for subject
         let random_user = database::Users::mock_data()?;
 
         // Generate a random company name as issurer
         let random_issuer = CompanyName().fake::<String>();
-        let random_issuer = Secret::new(random_issuer);
+        let random_issuer = SecretString::from(random_issuer);
 
         // Generate a random duration between 1 and 10 hours
         let random_duration =
@@ -124,7 +123,7 @@ mod tests {
             &random_issuer,
         )?;
 
-        //-- 3. Test Assertions 
+        //-- 3. Test Assertions
         assert_eq!(token_claim.iss, *random_issuer.expose_secret());
         assert_eq!(token_claim.sub, random_user.id.to_string());
         assert_eq!(token_claim.jty, TokenType::Access.to_string());

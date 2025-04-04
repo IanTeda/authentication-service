@@ -205,7 +205,8 @@ pub mod tests {
 
         //-- Checks (Assertions)
         // Calculate the count less offset
-        let count_less_offset: i64 = random_count - random_offset;
+        // We need to add the default user that the database migration creates
+        let count_less_offset: i64 = (random_count - random_offset + 1);
 
         // Expected records based on offset and limit
         let expected_records = if count_less_offset < random_limit {
@@ -214,10 +215,10 @@ pub mod tests {
             random_limit
         };
 
-        // TODO: Fix this test
         // Assert expected length is the same
-        // assert_eq!(database_records.len() as i64, expected_records);
+        assert_eq!(database_records.len() as i64, expected_records);
 
+        // TODO: Fix this test
         // Database records are not in the same order
         // let random_vec_index = (1..expected_records).fake::<i64>() as usize;
         // assert_eq!(database_records[random_vec_index], test_vec[random_vec_index]);

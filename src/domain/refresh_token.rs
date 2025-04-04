@@ -11,7 +11,7 @@
 use cookie::Cookie;
 use core::time;
 use jsonwebtoken::{encode, EncodingKey, Header};
-use secrecy::{ExposeSecret, Secret};
+use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 use std::collections::{self, HashMap};
 use tonic::{metadata::MetadataValue, Status};
@@ -22,6 +22,7 @@ use crate::{database, domain::jwt_token::TokenType, prelude::*};
 use super::TokenClaim;
 
 // TODO: Sanitise before parsing
+// TODO: Write an into method from a token claim
 
 /// What paths within the domain should the browser send the cookie back to the server.
 /// Set to root, so it will be sent for all paths in the domain set within the cookie
@@ -58,8 +59,8 @@ impl RefreshToken {
     ///
     /// ## Parameters
     ///
-    /// - `secret<Secret<String>` - The token encryption secret
-    /// - `isser<&Secret<String>>` - The token issuer secret
+    /// - `secret<&SecretString>` - The token encryption secret
+    /// - `issuer<&SecretString>` - The token issuer secret
     /// - 'duration<&time::Duration>` - How long the token is valid for
     /// - `user<&database::Users>` - A database instance of the user to generate the token for
     /// ---
@@ -68,8 +69,8 @@ impl RefreshToken {
         skip(secret)
     )]
     pub fn new(
-        secret: &Secret<String>,
-        issuer: &Secret<String>,
+        secret: &SecretString,
+        issuer: &SecretString,
         duration: &time::Duration,
         user: &database::Users,
     ) -> Result<Self, BackendError> {
@@ -97,11 +98,11 @@ impl RefreshToken {
         // Generate a random token secret
         let random_secret = rand::distributions::Alphanumeric
             .sample_string(&mut rand::thread_rng(), 60);
-        let random_secret = Secret::new(random_secret);
+        let random_secret = SecretString::from(random_secret);
 
         // Generate a random issuer company
         let random_issuer = CompanyName().fake::<String>();
-        let random_issuer = Secret::new(random_issuer);
+        let random_issuer = SecretString::from(random_issuer);
 
         // Generate a random duration between 1 and 10 hours
         // TODO: This should not be random
@@ -127,7 +128,7 @@ impl RefreshToken {
     /// ## Parameters
     ///
     /// - `domain<&str>` - The domain of the cookie
-    /// - `duration<&time::Duration>` - How long is the cookie valide for
+    /// - `duration<&time::Duration>` - How long is the cookie validate for
     ///
     /// ## References
     /// - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie
@@ -164,7 +165,7 @@ impl RefreshToken {
         skip(token_secret)
     )]
     pub fn from_header(
-        token_secret: &Secret<String>,
+        token_secret: &SecretString,
         request_metadata: &tonic::metadata::MetadataMap,
     ) -> Result<Self, BackendError> {
         // Collect all cookies from the request metadata into a vector
@@ -234,13 +235,13 @@ mod tests {
     async fn generate_new_refresh_token() -> Result<()> {
         // Generate random secret string
         let secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
-        let secret = Secret::new(secret);
+        let secret = SecretString::from(secret);
 
         // Get a random user_id for subject
         let random_user = database::Users::mock_data()?;
 
         let random_issuer = CompanyName().fake::<String>();
-        let random_issuer = Secret::new(random_issuer);
+        let random_issuer = SecretString::from(random_issuer);
 
         let random_duration =
             std::time::Duration::from_secs(Duration::days(30).num_seconds() as u64);
@@ -268,7 +269,7 @@ mod tests {
     async fn build_refresh_cookie() -> Result<()> {
         // Generate random secret string
         let random_secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
-        let random_secret = Secret::new(random_secret);
+        let random_secret = SecretString::from(random_secret);
 
         // Generate a random duration between 1 and 10 hours
         let random_duration =
@@ -278,7 +279,7 @@ mod tests {
         let random_user = database::Users::mock_data()?;
 
         let random_issuer = CompanyName().fake::<String>();
-        let random_issuer = Secret::new(random_issuer);
+        let random_issuer = SecretString::from(random_issuer);
 
         let random_duration =
             std::time::Duration::from_secs(Duration::days(30).num_seconds() as u64);
@@ -298,13 +299,13 @@ mod tests {
             &random_issuer,
         )?;
 
-        // Genrate a random domain
+        // Generate a random domain
         let domain = DomainSuffix().fake::<String>();
 
         // Build the refresh token cookie
         let cookie = refresh_token.build_cookie(&domain, &random_duration);
 
-        // Convert to a cookie duration for assertiion
+        // Convert to a cookie duration for assertion
         let random_duration: cookie::time::Duration =
             cookie::time::Duration::new(random_duration.as_secs() as i64, 0);
 

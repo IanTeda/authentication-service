@@ -15,7 +15,7 @@
 use chrono::{DateTime, Utc};
 use cookie::Cookie;
 use fake::{faker::internet::en::SafeEmail, Fake};
-use secrecy::Secret;
+use secrecy::SecretString;
 use sqlx::{Pool, Postgres};
 use tonic::Code;
 use uuid::Uuid;
@@ -123,7 +123,7 @@ async fn default_user_login(database: Pool<Postgres>) -> Result<()> {
         id: Uuid::parse_str("019071c5-a31c-7a0e-befa-594702122e75")?,
         email: domain::EmailAddress::parse("default_ams@teda.id.au")?,
         name: domain::UserName::parse("Admin")?,
-        password_hash: domain::PasswordHash::parse(Secret::new(
+        password_hash: domain::PasswordHash::parse(SecretString::from(
             default_password.clone(),
         ))?,
         role: domain::UserRole::Admin,

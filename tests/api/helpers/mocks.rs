@@ -7,7 +7,7 @@ use fake::faker::chrono::en::DateTime;
 use fake::faker::chrono::en::DateTimeAfter;
 use fake::faker::name::en::Name;
 use fake::{faker::internet::en::SafeEmail, Fake};
-use secrecy::Secret;
+use secrecy::SecretString;
 use std::net::Ipv4Addr;
 use uuid::Uuid;
 
@@ -51,7 +51,7 @@ pub fn users(password: &String) -> Result<database::Users, BackendError> {
     let random_name = domain::UserName::parse(random_name)?;
 
     // Generate random password hash
-    let password = Secret::new(password.to_owned());
+    let password = SecretString::from(password.to_owned());
     let password_hash = domain::PasswordHash::parse(password)?;
 
     let random_role: domain::UserRole = rand::random();
