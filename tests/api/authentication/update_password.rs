@@ -5,7 +5,7 @@ use sqlx::{Pool, Postgres};
 // use uuid::Uuid;
 
 // use authentication_service::domain;
-use authentication_service::rpc::proto::{AuthenticationRequest, UpdatePasswordRequest};
+use authentication_service::rpc::proto::{LoginRequest, UpdatePasswordRequest};
 
 use crate::helpers;
 
@@ -29,7 +29,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     // Build tonic login request
-    let login_request_message = AuthenticationRequest {
+    let login_request_message = LoginRequest {
         email: random_user.email.to_string(),
         password: random_password_original.to_string(),
     };
@@ -40,7 +40,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     // Send tonic client login request to server
     let login_response_message = tonic_client
         .authentication()
-        .authentication(login_request)
+        .login(login_request)
         .await?
         .into_inner();
     // println!("{login_response_message:#?}");
@@ -98,7 +98,7 @@ async fn incorrect_original_password_returns_unauthenticated(database: Pool<Post
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     // Build tonic login request
-    let login_request_message = AuthenticationRequest {
+    let login_request_message = LoginRequest {
         email: random_user.email.to_string(),
         password: random_password_original.to_string(),
     };
@@ -109,7 +109,7 @@ async fn incorrect_original_password_returns_unauthenticated(database: Pool<Post
     // Send tonic client login request to server
     let login_response_message = tonic_client
         .authentication()
-        .authentication(login_request)
+        .login(login_request)
         .await?
         .into_inner();
     // println!("{login_response_message:#?}");
@@ -169,7 +169,7 @@ async fn bad_new_password(database: Pool<Postgres>) -> Result<()> {
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     // Build tonic login request
-    let login_request_message = AuthenticationRequest {
+    let login_request_message = LoginRequest {
         email: random_user.email.to_string(),
         password: random_password_original.to_string(),
     };
@@ -180,7 +180,7 @@ async fn bad_new_password(database: Pool<Postgres>) -> Result<()> {
     // Send tonic client login request to server
     let login_response_message = tonic_client
         .authentication()
-        .authentication(login_request)
+        .login(login_request)
         .await?
         .into_inner();
     // println!("{login_response_message:#?}");

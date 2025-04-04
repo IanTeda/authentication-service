@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     user_id UUID NOT NULL,
     login_on TIMESTAMP WITH TIME ZONE NOT NULL,
     login_ip INT,
-    login_expires_on TIMESTAMP WITH TIME ZONE NOT NULL,
+    expires_on TIMESTAMP WITH TIME ZONE NOT NULL,
     refresh_token TEXT NOT NULL,
     is_active BOOLEAN NOT NULL,
     logout_on TIMESTAMP WITH TIME ZONE,

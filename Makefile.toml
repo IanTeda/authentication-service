@@ -19,6 +19,9 @@ args = [
     "--watch", "src"
 ]
 
+## Update git submodules in repository
+## $ git submodule update --recursive --remote
+## $ cargo make submodules
 [tasks.submodules]
 command = "git"
 args = ["submodule", "update", "--recursive", "--remote"]

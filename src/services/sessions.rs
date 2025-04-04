@@ -57,7 +57,7 @@ impl From<database::Sessions> for SessionsResponse {
         let user_id = value.user_id.to_string();
         let login_on = value.login_on.to_string();
         let login_ip = value.login_ip;
-        let login_expires_on = value.login_expires_on.to_string();
+        let expires_on = value.expires_on.to_string();
         let refresh_token = value.refresh_token.to_string();
         let is_active = value.is_active;
         let logout_on = if value.logout_on.is_none() {
@@ -72,7 +72,7 @@ impl From<database::Sessions> for SessionsResponse {
             user_id,
             login_on,
             login_ip,
-            login_expires_on,
+            expires_on,
             refresh_token,
             is_active,
             logout_on,

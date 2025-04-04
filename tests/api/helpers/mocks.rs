@@ -142,7 +142,7 @@ pub fn sessions(
         user_id,
         login_on: random_login_on,
         login_ip: random_login_ip,
-        login_expires_on: random_expires_on,
+        expires_on: random_expires_on,
         refresh_token: refresh_token.to_owned(),
         is_active: random_is_active,
         logout_on: random_logout_on,

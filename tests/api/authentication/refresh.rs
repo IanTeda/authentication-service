@@ -1,5 +1,6 @@
 // #![allow(unused)] // For development only
 
+use authentication_service::rpc::proto::LoginRequest;
 use chrono::Duration;
 
 use cookie::Cookie;
@@ -17,7 +18,7 @@ use uuid::Uuid;
 
 use authentication_service::database;
 use authentication_service::domain;
-use authentication_service::rpc::proto::{AuthenticationRequest, Empty};
+use authentication_service::rpc::proto::Empty;
 
 use crate::helpers;
 
@@ -41,7 +42,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     //-- 2. Execute Test (Act)
-    let auth_message = AuthenticationRequest {
+    let auth_message = LoginRequest {
         email: random_user.email.to_string(),
         password: random_password.to_string(),
     };
@@ -52,7 +53,7 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     // Request authentication of random user email and password
     let (response_metadata, _response_message, _response_extensions) = tonic_client
         .authentication()
-        .authentication(auth_request)
+        .login(auth_request)
         .await?
         .into_parts();
 

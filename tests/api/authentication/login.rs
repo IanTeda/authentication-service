@@ -20,7 +20,7 @@ use sqlx::{Pool, Postgres};
 use tonic::Code;
 use uuid::Uuid;
 
-use authentication_service::{database, domain, rpc::proto::AuthenticationRequest};
+use authentication_service::{database, domain, rpc::proto::LoginRequest};
 
 use crate::helpers;
 
@@ -44,7 +44,7 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     //-- 2. Execute Test (Act)
-    let request_message = AuthenticationRequest {
+    let request_message = LoginRequest {
         email: random_user.email.to_string(),
         password: random_password.to_string(),
     };
@@ -53,7 +53,11 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     let request = tonic::Request::new(request_message);
 
     // Send tonic client authentication request to server
-    let (response_metadata, response_message, _response_extensions) = tonic_client.authentication().authentication(request).await?.into_parts();
+    let (response_metadata, response_message, _response_extensions) = tonic_client
+        .authentication()
+        .login(request)
+        .await?
+        .into_parts();
 
     //-- 3. Checks (Assertions)
     // Get token secret form server configuration
@@ -64,8 +68,11 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     let issuer = &tonic_server.config.application.get_issuer();
 
     // Build Access Token Claims from token responses
-    let access_token_claim =
-        domain::TokenClaim::parse(&response_message.access_token, &token_secret, &issuer)?;
+    let access_token_claim = domain::TokenClaim::parse(
+        &response_message.access_token,
+        &token_secret,
+        &issuer,
+    )?;
     // println!("access_token_claim: {access_token_claim:#?}");
 
     // Get the refresh token from the response header (metadata)
@@ -81,7 +88,8 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     let refresh_token = cookie.value().to_string();
 
     // Decode the refresh token into a Token Claim for asserting
-    let refresh_token_claim = domain::TokenClaim::parse(&refresh_token, &token_secret, &issuer)?;
+    let refresh_token_claim =
+        domain::TokenClaim::parse(&refresh_token, &token_secret, &issuer)?;
 
     // Confirm User IDs (uuids) are the same
     assert_eq!(Uuid::parse_str(&access_token_claim.sub)?, random_user.id);
@@ -97,9 +105,11 @@ async fn returns_access_refresh_tokens(database: Pool<Postgres>) -> Result<()> {
     assert_eq!(random_user.id, session.user_id);
 
     // Confirm Session is in the database
-    let sessions = database::Sessions::index_from_user_id(&random_user.id, &10, &0, &database).await?;
+    let sessions =
+        database::Sessions::index_from_user_id(&random_user.id, &10, &0, &database)
+            .await?;
     assert_eq!(random_user.id, sessions[0].user_id);
-    
+
     //-- 4. Return Ok
     Ok(())
 }
@@ -109,15 +119,18 @@ async fn default_user_login(database: Pool<Postgres>) -> Result<()> {
     //-- 1. Setup and Fixtures (Arrange)
     // I am add with the database migrations and should be updated on first load
     let default_password = "S3cret-Admin-Pas$word!".to_string();
-    let default_user = database::Users { 
-        id: Uuid::parse_str("019071c5-a31c-7a0e-befa-594702122e75")?, 
-        email: domain::EmailAddress::parse("default_ams@teda.id.au")?, 
-        name: domain::UserName::parse("Admin")?, 
-        password_hash: domain::PasswordHash::parse(Secret::new(default_password.clone()))?, 
-        role: domain::UserRole::Admin, 
-        is_active: true, 
-        is_verified: true, 
-        created_on: DateTime::parse_from_rfc3339("2019-10-17T00:00:00.000000Z")?.with_timezone(&Utc)
+    let default_user = database::Users {
+        id: Uuid::parse_str("019071c5-a31c-7a0e-befa-594702122e75")?,
+        email: domain::EmailAddress::parse("default_ams@teda.id.au")?,
+        name: domain::UserName::parse("Admin")?,
+        password_hash: domain::PasswordHash::parse(Secret::new(
+            default_password.clone(),
+        ))?,
+        role: domain::UserRole::Admin,
+        is_active: true,
+        is_verified: true,
+        created_on: DateTime::parse_from_rfc3339("2019-10-17T00:00:00.000000Z")?
+            .with_timezone(&Utc),
     };
 
     // Spawn Tonic test server
@@ -127,7 +140,7 @@ async fn default_user_login(database: Pool<Postgres>) -> Result<()> {
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     //-- 2. Execute Test (Act)
-    let request_message = AuthenticationRequest {
+    let request_message = LoginRequest {
         email: default_user.email.to_string(),
         password: default_password,
     };
@@ -135,8 +148,12 @@ async fn default_user_login(database: Pool<Postgres>) -> Result<()> {
     // Build tonic request
     let request = tonic::Request::new(request_message);
 
-    // Send tonic client authentication request to server
-    let (response_metadata, response_message, _response_extensions) = tonic_client.authentication().authentication(request).await?.into_parts();
+    // Send tonic client login request to server
+    let (response_metadata, response_message, _response_extensions) = tonic_client
+        .authentication()
+        .login(request)
+        .await?
+        .into_parts();
 
     //-- 3. Checks (Assertions)
     // Get token secret
@@ -147,8 +164,11 @@ async fn default_user_login(database: Pool<Postgres>) -> Result<()> {
     let issuer = &tonic_server.config.application.get_issuer();
 
     // Build Token Claims from token responses
-    let access_token_claim =
-        domain::TokenClaim::parse(&response_message.access_token, &token_secret, &issuer)?;
+    let access_token_claim = domain::TokenClaim::parse(
+        &response_message.access_token,
+        &token_secret,
+        &issuer,
+    )?;
 
     // Get the refresh token from the response header (metadata)
     // Cannot use the RefreshToken from_header() method because the response use "set-cookie" key not
@@ -163,7 +183,8 @@ async fn default_user_login(database: Pool<Postgres>) -> Result<()> {
     let refresh_token = cookie.value().to_string();
 
     // Decode the refresh token into a Token Claim for asserting
-    let refresh_token_claim = domain::TokenClaim::parse(&refresh_token, &token_secret, &issuer)?;
+    let refresh_token_claim =
+        domain::TokenClaim::parse(&refresh_token, &token_secret, &issuer)?;
 
     // Confirm User IDs (uuids) are the same
     assert_eq!(Uuid::parse_str(&access_token_claim.sub)?, default_user.id);
@@ -179,9 +200,11 @@ async fn default_user_login(database: Pool<Postgres>) -> Result<()> {
     assert_eq!(default_user.id, session.user_id);
 
     // Confirm Session is in the database
-    let sessions = database::Sessions::index_from_user_id(&default_user.id, &10, &0, &database).await?;
+    let sessions =
+        database::Sessions::index_from_user_id(&default_user.id, &10, &0, &database)
+            .await?;
     assert_eq!(default_user.id, sessions[0].user_id);
-    
+
     //-- 4. Return
     Ok(())
 }
@@ -203,10 +226,9 @@ async fn incorrect_password_returns_error(database: Pool<Postgres>) -> Result<()
     // Spawn Tonic test client
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
-
     //-- 2. Execute Test (Act)
     // Build tonic request message
-    let request_message = AuthenticationRequest {
+    let request_message = LoginRequest {
         email: random_user.email.to_string(),
         password: incorrect_password,
     };
@@ -215,7 +237,11 @@ async fn incorrect_password_returns_error(database: Pool<Postgres>) -> Result<()
     let request = tonic::Request::new(request_message);
 
     // Send tonic client request to server
-    let response = tonic_client.authentication().authentication(request).await.unwrap_err();
+    let response = tonic_client
+        .authentication()
+        .login(request)
+        .await
+        .unwrap_err();
     // println!("{response:#?}");
 
     //-- 3. Checks (Assertions)
@@ -248,7 +274,7 @@ async fn incorrect_email_returns_error(database: Pool<Postgres>) -> Result<()> {
 
     //-- Execute Test (Act)
     // Build tonic request message
-    let request_message = AuthenticationRequest {
+    let request_message = LoginRequest {
         email: incorrect_email,
         password: random_password,
     };
@@ -257,7 +283,11 @@ async fn incorrect_email_returns_error(database: Pool<Postgres>) -> Result<()> {
     let request = tonic::Request::new(request_message);
 
     // Send tonic client request to server
-    let response = tonic_client.authentication().authentication(request).await.unwrap_err();
+    let response = tonic_client
+        .authentication()
+        .login(request)
+        .await
+        .unwrap_err();
     // println!("{response:#?}");
 
     //-- Checks (Assertions)

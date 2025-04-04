@@ -18,7 +18,7 @@ pub struct Sessions {
     pub user_id: Uuid,
     pub login_on: DateTime<Utc>,
     pub login_ip: Option<i32>,
-    pub login_expires_on: DateTime<Utc>,
+    pub expires_on: DateTime<Utc>,
     pub refresh_token: domain::RefreshToken,
     pub is_active: bool,
     pub logout_on: Option<DateTime<Utc>>,
@@ -60,7 +60,7 @@ impl Sessions {
         let refresh_token = refresh_token.to_owned();
 
         /// The login expires on is the login time + the duration of the session
-        let login_expires_on = login_on + *duration;
+        let expires_on = login_on + *duration;
 
         /// The is_active field is set to true by default and can be used revoke a session and thus refresh token.
         let is_active = true;
@@ -76,7 +76,7 @@ impl Sessions {
             user_id,
             login_on,
             login_ip,
-            login_expires_on,
+            expires_on,
             refresh_token,
             is_active,
             logout_on,
@@ -162,7 +162,7 @@ impl Sessions {
             user_id,
             login_on: random_login_on,
             login_ip: random_login_ip,
-            login_expires_on: random_expires_on,
+            expires_on: random_expires_on,
             refresh_token: random_refresh_token,
             is_active: random_is_active,
             logout_on: random_logout_on,

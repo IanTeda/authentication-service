@@ -32,9 +32,7 @@ use uuid::Uuid;
 use crate::configuration::Configuration;
 use crate::rpc::proto::authentication_service_server::AuthenticationService as Authentication;
 use crate::rpc::proto::{
-    AuthenticationRequest, AuthenticationResponse, Empty, LogoutResponse,
-    RegisterRequest, ResetPasswordRequest, ResetPasswordResponse,
-    UpdatePasswordRequest, UpdatePasswordResponse, UserResponse,
+    Empty, LoginRequest, LoginResponse, LogoutResponse, RefreshResponse, RegisterRequest, RegisterResponse, ResetPasswordRequest, ResetPasswordResponse, UpdatePasswordRequest, UpdatePasswordResponse, UserResponse
 };
 use crate::{database, domain};
 use crate::{prelude::*, utils};
@@ -97,10 +95,10 @@ impl Authentication for AuthenticationService {
     #[tracing::instrument(name = "Authenticate Request: ", skip_all, fields(
         src_address=%request.remote_addr().unwrap(),
     ))]
-    async fn authentication(
+    async fn login(
         &self,
-        request: Request<AuthenticationRequest>,
-    ) -> Result<Response<AuthenticationResponse>, Status> {
+        request: Request<LoginRequest>,
+    ) -> Result<Response<LoginResponse>, Status> {
         let socket_address = request.remote_addr().unwrap();
 
         // Break the request up into its three parts: 1. Metadata, 2. Extensions & 3. Message
@@ -235,7 +233,7 @@ impl Authentication for AuthenticationService {
         let user_response_message: UserResponse = user.into();
 
         // Build Authenticate response message
-        let response_message = AuthenticationResponse {
+        let response_message = LoginResponse {
             access_token: access_token.to_string(),
             user: Some(user_response_message),
         };
@@ -283,7 +281,7 @@ impl Authentication for AuthenticationService {
     async fn refresh(
         &self,
         request: Request<Empty>,
-    ) -> Result<Response<AuthenticationResponse>, Status> {
+    ) -> Result<Response<RefreshResponse>, Status> {
         // Break up the Tonic Request into its three parts: 1. Metadata; 2. Extensions; 3. Message;
         let (request_metadata, _request_extensions, _request_message) =
             request.into_parts();
@@ -368,16 +366,12 @@ impl Authentication for AuthenticationService {
         )?;
         tracing::debug!("Generated new Access Token: {}", access_token);
 
-        //-- 4. Send the Tonic response
+        //-- 4. Send the Tonic Refresh Response
         ////////////////////////////////////////////////////////////////////////
 
-        // Cast database user into a Tonic UserResponse
-        let user_response_message: UserResponse = user.into();
-
         // Build Authenticate Response with the token
-        let response_message = AuthenticationResponse {
+        let response_message = RefreshResponse {
             access_token: access_token.to_string(),
-            user: Some(user_response_message),
         };
 
         // Create a new mutable Tonic response. It is mutable because we need to add the set-cookie header
@@ -558,7 +552,7 @@ impl Authentication for AuthenticationService {
     async fn register(
         &self,
         request: Request<RegisterRequest>,
-    ) -> Result<Response<AuthenticationResponse>, Status> {
+    ) -> Result<Response<RegisterResponse>, Status> {
         //-- 0. Break the request up into its parts
         let (_metadata, _extensions, _request_message) = request.into_parts();
 

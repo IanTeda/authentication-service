@@ -31,7 +31,7 @@ impl Sessions {
         let database_record = sqlx::query_as!(
             Sessions,
             r#"
-				INSERT INTO sessions (id, user_id, login_on, login_ip, login_expires_on, refresh_token, is_active, logout_on, logout_ip)
+				INSERT INTO sessions (id, user_id, login_on, login_ip, expires_on, refresh_token, is_active, logout_on, logout_ip)
 				VALUES ($1, $2, $3, $4, $5, $6, $7,$8, $9) 
 				RETURNING *
 			"#,
@@ -39,7 +39,7 @@ impl Sessions {
             self.user_id,
             self.login_on,
             self.login_ip,
-            self.login_expires_on,
+            self.expires_on,
             self.refresh_token.as_ref(),
             self.is_active,
             self.logout_on,
