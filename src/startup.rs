@@ -15,10 +15,13 @@ use crate::{configuration::Configuration, prelude::*, router};
 use sqlx::{Pool, Postgres};
 use tokio::net::TcpListener;
 use tonic::transport::server::Router;
+use tonic_web::GrpcWebLayer;
+use tower_http::cors::CorsLayer;
+use tower_layer::{Stack,Identity };
 
 /// Tonic Server instance enum;
 pub struct TonicServer {
-    pub router: Router,
+    pub router: Router<Stack<GrpcWebLayer, Stack<CorsLayer, Identity>>>,
     pub listener: TcpListener,
 }
 
@@ -28,9 +31,11 @@ impl TonicServer {
         config: Configuration,
         database: Pool<Postgres>,
     ) -> Result<Self, BackendError> {
-        // TODO: Refactor into config file
+
+        // Get the address from the configuration
         let address = config.application.get_address();
 
+        // Create the router with the database and configuration
         let router = router::get_router(database, config)?;
 
         // We are using listener as it will bind a random port when port setting

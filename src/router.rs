@@ -1,47 +1,116 @@
-// -- ./src/rpc/mod.rs
+// -- ./src/router.rs
 
+//! # GRPC Router
+//!
 //! RPC module containing endpoint configurations
 //!
 //! `proto` brings the Protobuf generated files into scope
 //! `get_router` returns all the rpc endpoints for building the Tonic server.
+//!
+//! ## References
+//!
+//! - https://github.com/nicktretyakov/gRUSTpcWEB
 
 // #![allow(unused)] // For development only
 
 use std::sync::Arc;
 
+use core::time;
+use http::HeaderName;
 use sqlx::Pool;
 use sqlx::Postgres;
-use tonic::transport::server::Router;
-use tonic::transport::Server;
+use tonic::transport as tonic_transport;
+use tower_http::cors;
 
 use crate::configuration::Configuration;
 use crate::middleware;
 use crate::prelude::*;
+use crate::rpc;
 use crate::rpc::proto::authentication_service_server::AuthenticationServiceServer as AuthenticationServer;
 use crate::rpc::proto::sessions_service_server::SessionsServiceServer as SessionsServer;
 use crate::rpc::proto::users_service_server::UsersServiceServer as UsersServer;
 use crate::rpc::proto::utilities_service_server::UtilitiesServiceServer as UtilitiesServer;
 use crate::services;
 
+//-- Constants
+
+// Default max age for CORS preflight requests
+// This is the time the browser will cache the preflight response
+// before sending a new preflight request.
+const DEFAULT_MAX_AGE: time::Duration = time::Duration::from_secs(24 * 60 * 60);
+
+// Default exposed headers for CORS
+// These are the headers that will be exposed to the browser
+// when the response is returned from the server.
+// The browser will not expose these headers by default
+// unless they are specified in the CORS response.
+// The gRPC-web client will use these headers to parse the response.
+const DEFAULT_EXPOSED_HEADERS: [&str; 3] =
+    ["grpc-status", "grpc-message", "grpc-status-details-bin"];
+
+// Default allowed headers for CORS
+// These are the headers that will be allowed in the CORS request
+// The browser will not send these headers by default
+// unless they are specified in the CORS request.
+// The gRPC-web client will use these headers to send the request.
+const DEFAULT_ALLOW_HEADERS: [&str; 4] =
+    ["x-grpc-web", "content-type", "x-user-agent", "grpc-timeout"];
+
+/// # GRPC Router
+///
+/// RPC module containing endpoint configurations
+///
+/// `database: Pool<Postgres>` - The database connection pool
+/// `config: Configuration` - The application configuration
+///
+/// ## References
+///
 pub fn get_router(
     database: Pool<Postgres>,
     config: Configuration,
-) -> Result<Router, BackendError> {
-    // Wraps our database pool in an Atomic Reference Counted (ARC).
+) -> Result<
+    tonic_transport::server::Router<
+        tower_layer::Stack<
+            tonic_web::GrpcWebLayer,
+            tower_layer::Stack<cors::CorsLayer, tower_layer::Identity>,
+        >,
+    >,
+    BackendError,
+> {
+    // Wraps our database pool and config in an Atomic Reference Counted (ARC).
     // Each instance of the backend will get a pointer to the pool instead of getting a raw copy.
     let database = Arc::new(database);
-
-    // Wrap config in an Atomic Reference Counted (ARC).
     let config = Arc::new(config);
 
-    // Wrap token_secret string in a Secret
+    // Get the token secret and issuer from the config
     let token_secret = config.application.token_secret.clone();
-
     let issuer = config.application.get_issuer();
 
-    // Intercept request and verify Access Token
-    let access_token_interceptor =
-        middleware::AccessTokenInterceptor { token_secret, issuer };
+    // Create the interceptor
+    let access_token_interceptor = middleware::AccessTokenInterceptor {
+        token_secret,
+        issuer,
+    };
+
+    // Build CORS layer
+    let cors_layer = tower_http::cors::CorsLayer::new()
+        .allow_origin(cors::AllowOrigin::mirror_request())
+        .allow_credentials(true)
+        .max_age(DEFAULT_MAX_AGE)
+        .expose_headers(
+            DEFAULT_EXPOSED_HEADERS
+                .iter()
+                .cloned()
+                .map(HeaderName::from_static)
+                .collect::<Vec<HeaderName>>(),
+        )
+        .allow_headers(
+            DEFAULT_ALLOW_HEADERS
+                .iter()
+                .cloned()
+                .map(HeaderName::from_static)
+                .collect::<Vec<HeaderName>>(),
+        );
 
     //-- Build the Utilities Service
     // Create a new UtilitiesService instance
@@ -77,28 +146,24 @@ pub fn get_router(
         services::SessionsService::new(Arc::clone(&database), Arc::clone(&config));
 
     // Wrap the SessionsService in the SessionsServiceServer
-    let sessions_server = SessionsServer::with_interceptor(
-        sessions_service,
-        access_token_interceptor.clone(),
-    );
+    let sessions_server =
+        SessionsServer::with_interceptor(sessions_service, access_token_interceptor);
 
-    // Build reflections server
-    // let reflections_server = services::ReflectionsService::new();
-
-    // https://github.com/nicktretyakov/gRUSTpcWEB
-
-    let router = Server::builder()
-        // Start log tracing
+    let router = tonic_transport::Server::builder()
+        // Start tonic log tracing
         .trace_fn(|_| tracing::info_span!("Tonic"))
         // GRPC-web requires http/1.1
         .accept_http1(true)
-        // Add reflection service
-        // .add_service(reflections_server)
-        // .add_service(utilities_server)
-        .add_service(tonic_web::enable(utilities_server))
-        .add_service(tonic_web::enable(authentication_server))
-        .add_service(tonic_web::enable(users_server))
-        .add_service(tonic_web::enable(sessions_server));
+        // Add the cors layer
+        .layer(cors_layer)
+        // Wrpa the router in a GRPC-Web layer
+        .layer(tonic_web::GrpcWebLayer::new()) // Add the gRPC-Web layer
+        // Add services
+        .add_service(rpc::spec_service()?)
+        .add_service(utilities_server)
+        .add_service(authentication_server)
+        .add_service(users_server)
+        .add_service(sessions_server);
 
     Ok(router)
 }

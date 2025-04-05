@@ -41,12 +41,13 @@ sqlx = { version = "0.8.0", features = [
     "runtime-tokio-rustls",
     "uuid",
 ] }
-strum = { version = "0.26", features = ["derive"] }
-thiserror = "1"
+strum = { version = "0.27.1", features = ["derive"] }
+thiserror = "2.0.12"
 tokio = { version = "1.38.0", features = ["full"] }
 tokio-stream = "0.1"
-tonic = { version = "0.12.0", features = ["tls"] }
-tonic-reflection = "0.12.0"
+tonic = "0.13.0"
+tonic-reflection = "0.13.0"
+tonic-web = "0.13.0"
 tracing = { version = "0.1" }
 tracing-log = { version = "0.2" }
 tracing-subscriber = { version = "0.3", features = [
@@ -64,13 +65,19 @@ rand = "0.8.5"
 jsonwebtoken = "9.3.0"
 once_cell = "1.19.0"
 time = "0.3.36"
-tonic-web = "0.12.3"
+
 cookie = "0.18.1"
 http = "1.3.1"
 serde_with = "3.12.0"
+tower-layer = "0.3.3"
+tower = "0.5.2"
+tower-http = { version="0.6.2", features = [
+    "cors",
+    "trace",
+] }
 
 [build-dependencies]
-tonic-build = { version = "0.12", features = ["prost"] }
+tonic-build = { version = "0.13", features = ["prost"] }
 
 [dev-dependencies]
 claims = "0.7.0"
