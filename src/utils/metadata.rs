@@ -16,12 +16,12 @@
 
 use cookie::{Cookie, CookieJar};
 
-use crate::BackendError;
+use crate::AuthenticationError;
 
 /// # Get Cookies
 ///
 /// Retrive all the cookies in the request metadata, returning a cookie jar
-pub fn get_cookie_jar(metadata: &tonic::metadata::MetadataMap) -> Result<CookieJar, BackendError> {
+pub fn get_cookie_jar(metadata: &tonic::metadata::MetadataMap) -> Result<CookieJar, AuthenticationError> {
     // Collect all cookies from the request metadata into a cookies vector
     let cookies = metadata.get_all("cookie").into_iter().collect::<Vec<_>>();
     tracing::debug!("Cookies vector: {cookies:#?}");
@@ -32,7 +32,7 @@ pub fn get_cookie_jar(metadata: &tonic::metadata::MetadataMap) -> Result<CookieJ
     for cookie in cookies {
       // Convert the cookie to a string
       let cookie = cookie.to_str().map_err(|_| {
-          BackendError::AuthenticationError(
+          AuthenticationError::AuthenticationError(
               "Error converting cookie Ascii to string".to_string(),
           )
       })?;
@@ -40,7 +40,7 @@ pub fn get_cookie_jar(metadata: &tonic::metadata::MetadataMap) -> Result<CookieJ
       // Parse the cookie string into a cookie object
       let cookie = Cookie::parse(cookie).map_err(|_| {
         tracing::error!("Error parsing string to cookie");
-        BackendError::AuthenticationError(
+        AuthenticationError::AuthenticationError(
             "Error converting cookie Ascii to string".to_string(),
         )
       })?;

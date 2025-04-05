@@ -9,7 +9,7 @@ use chrono::{DateTime, SubsecRound, Utc};
 use std::{net::Ipv4Addr, time};
 use uuid::Uuid;
 
-use crate::{database, domain, prelude::BackendError};
+use crate::{database, domain, prelude::AuthenticationError};
 
 #[derive(Debug, serde::Deserialize, sqlx::FromRow, Clone, PartialEq)]
 pub struct Sessions {
@@ -42,7 +42,7 @@ impl Sessions {
         login_ip: &Option<i32>,
         duration: &time::Duration,
         refresh_token: &domain::RefreshToken,
-    ) -> Result<Self, BackendError> {
+    ) -> Result<Self, AuthenticationError> {
         /// The unique (primary key) session id as a UUid v7
         let id = Uuid::now_v7();
 
@@ -93,7 +93,7 @@ impl Sessions {
     /// ## Parameters
     /// 
     /// `user: &database::Users` - The user that will be used as a foreign key
-    pub async fn mock_data(user: &database::Users) -> Result<Self, BackendError> {
+    pub async fn mock_data(user: &database::Users) -> Result<Self, AuthenticationError> {
         use chrono::SubsecRound;
         use fake::faker::boolean::en::Boolean;
         use fake::faker::chrono::en::DateTime;

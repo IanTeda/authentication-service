@@ -25,7 +25,7 @@ pub struct Users {
 
 impl Users {
     #[cfg(test)]
-    pub fn mock_data() -> Result<Self, crate::prelude::BackendError> {
+    pub fn mock_data() -> Result<Self, crate::prelude::AuthenticationError> {
         use fake::faker::boolean::en::Boolean;
         use fake::faker::chrono::en::DateTime;
         use fake::Fake;

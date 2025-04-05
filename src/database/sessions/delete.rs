@@ -28,7 +28,7 @@ impl Sessions {
     pub async fn delete(
         &self,
         database: &Pool<Postgres>,
-    ) -> Result<u64, BackendError> {
+    ) -> Result<u64, AuthenticationError> {
         let rows_affected = sqlx::query!(
             r#"
                     Delete
@@ -61,7 +61,7 @@ impl Sessions {
     pub async fn delete_by_id(
         id: &Uuid,
         database: &Pool<Postgres>,
-    ) -> Result<u64, BackendError> {
+    ) -> Result<u64, AuthenticationError> {
         let rows_affected = sqlx::query!(
             r#"
                     Delete
@@ -94,7 +94,7 @@ impl Sessions {
     pub async fn delete_all_user(
         user_id: &Uuid,
         database: &Pool<Postgres>,
-    ) -> Result<u64, BackendError> {
+    ) -> Result<u64, AuthenticationError> {
         let rows_affected = sqlx::query!(
             r#"
                     Delete
@@ -123,7 +123,7 @@ impl Sessions {
         name = "Delete all Sessions from the database: ",
         skip(database)
     )]
-    pub async fn delete_all(database: &Pool<Postgres>) -> Result<u64, BackendError> {
+    pub async fn delete_all(database: &Pool<Postgres>) -> Result<u64, AuthenticationError> {
         let rows_affected = sqlx::query!(
             r#"
                 Delete

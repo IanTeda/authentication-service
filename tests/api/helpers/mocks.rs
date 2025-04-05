@@ -1,6 +1,6 @@
 // #![allow(unused)] // For beginning only.
 
-use authentication_service::BackendError;
+use authentication_service::AuthenticationError;
 use chrono::{DateTime, SubsecRound, Utc};
 use fake::faker::boolean::en::Boolean;
 use fake::faker::chrono::en::DateTime;
@@ -28,7 +28,7 @@ pub fn uuid_v7() -> Uuid {
     Uuid::new_v7(random_uuid_timestamp)
 }
 
-pub fn password() -> Result<String, BackendError> {
+pub fn password() -> Result<String, AuthenticationError> {
     // Get a random count to repeat minimum password requirements
     let random_count = (5..30).fake::<i64>() as usize;
     // Password must have a lower and upper case plus a number and special character
@@ -37,7 +37,7 @@ pub fn password() -> Result<String, BackendError> {
     Ok(password)
 }
 
-pub fn users(password: &String) -> Result<database::Users, BackendError> {
+pub fn users(password: &String) -> Result<database::Users, AuthenticationError> {
     //-- Generate a random id (Uuid V7) by first generating a random timestamp
     // Generate Uuid V7
     let random_id: Uuid = uuid_v7();
@@ -82,7 +82,7 @@ pub fn users(password: &String) -> Result<database::Users, BackendError> {
 pub fn sessions(
     user: &database::Users,
     refresh_token: &domain::RefreshToken,
-) -> Result<database::Sessions, BackendError> {
+) -> Result<database::Sessions, AuthenticationError> {
     use chrono::SubsecRound;
     use std::time;
     use fake::faker::boolean::en::Boolean;

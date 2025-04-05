@@ -7,7 +7,7 @@
 
 // Re-export the crate Error.
 // #[allow(unused_imports)]
-pub use crate::error::BackendError;
+pub use crate::error::AuthenticationError;
 
 // Alias Result to be the crate Result.
 // pub type Result<T> = core::result::Result<T, BackendError>;

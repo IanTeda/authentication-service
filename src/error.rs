@@ -13,7 +13,7 @@
 
 /// Static errors types
 #[derive(thiserror::Error, Debug)]
-pub enum BackendError {
+pub enum AuthenticationError {
     //-- Generic Errors
     /// For starter, to remove as code matures.
     #[error("Generic error: {0}")]
@@ -93,10 +93,10 @@ pub enum BackendError {
 
 }
 
-impl From<BackendError> for tonic::Status {
-    fn from(backend_error: BackendError) -> tonic::Status {
-        match backend_error {
-            BackendError::AuthenticationError(m) => tonic::Status::unauthenticated(m),
+impl From<AuthenticationError> for tonic::Status {
+    fn from(authentication_error: AuthenticationError) -> tonic::Status {
+        match authentication_error {
+            AuthenticationError::AuthenticationError(m) => tonic::Status::unauthenticated(m),
             // BackendError::EmailFormatInvalid(_) => {
             //     Status::invalid_argument(format!("{:?}", backend_error))
             // }

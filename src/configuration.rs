@@ -143,7 +143,7 @@ impl TryFrom<String> for Environment {
 
 impl Configuration {
     /// Parse the application configuration, returning a `Configuration` result.
-    pub fn parse() -> Result<Configuration, BackendError> {
+    pub fn parse() -> Result<Configuration, AuthenticationError> {
         // Get the directory that the binary is being run from
         let base_path = std::env::current_dir()
             .expect("Failed to determine the current directory");

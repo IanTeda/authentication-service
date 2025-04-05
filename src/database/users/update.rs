@@ -23,7 +23,7 @@ impl Users {
     pub async fn update(
         &self,
         database: &sqlx::Pool<sqlx::Postgres>,
-    ) -> Result<Users, BackendError> {
+    ) -> Result<Users, AuthenticationError> {
         let database_record = sqlx::query_as!(
 			Users,
 			r#"

@@ -40,7 +40,7 @@ impl std::fmt::Display for UserName {
 }
 
 impl UserName {
-    pub fn parse(name: impl Into<String>) -> Result<UserName, BackendError> {
+    pub fn parse(name: impl Into<String>) -> Result<UserName, AuthenticationError> {
         let name: String = name.into();
 
         // `.trim()` returns a view over the input `name` without trailing whitespace-like
@@ -63,14 +63,14 @@ impl UserName {
             name.chars().any(|g| forbidden_characters.contains(&g));
 
         if is_empty_or_whitespace || is_too_long || contains_forbidden_characters {
-            Err(BackendError::UserNameFormatInvalid(name))
+            Err(AuthenticationError::UserNameFormatInvalid(name))
         } else {
             Ok(Self(name))
         }
     }
 
     #[cfg(test)]
-    pub fn mock_data() -> Result<Self, BackendError> {
+    pub fn mock_data() -> Result<Self, AuthenticationError> {
         use fake::faker::name::en::Name;
         use fake::Fake;
 
@@ -86,7 +86,7 @@ mod tests {
     use fake::faker::name::en::Name;
     use fake::Fake;
 
-    use super::{BackendError, UserName};
+    use super::{AuthenticationError, UserName};
 
     // Override with more flexible error
     pub type Result<T> = core::result::Result<T, Error>;
@@ -115,7 +115,7 @@ mod tests {
         assert_err!(UserName::parse(name.clone()));
         assert!(matches!(
             UserName::parse(name),
-            Err(BackendError::UserNameFormatInvalid { .. })
+            Err(AuthenticationError::UserNameFormatInvalid { .. })
         ));
 
         Ok(())
@@ -127,7 +127,7 @@ mod tests {
         assert_err!(UserName::parse(name.clone()));
         assert!(matches!(
             UserName::parse(name),
-            Err(BackendError::UserNameFormatInvalid { .. })
+            Err(AuthenticationError::UserNameFormatInvalid { .. })
         ));
 
         Ok(())
@@ -139,7 +139,7 @@ mod tests {
         assert_err!(UserName::parse(name.clone()));
         assert!(matches!(
             UserName::parse(name),
-            Err(BackendError::UserNameFormatInvalid { .. })
+            Err(AuthenticationError::UserNameFormatInvalid { .. })
         ));
 
         Ok(())
@@ -152,7 +152,7 @@ mod tests {
             assert_err!(UserName::parse(name.clone()));
             assert!(matches!(
                 UserName::parse(name),
-                Err(BackendError::UserNameFormatInvalid { .. })
+                Err(AuthenticationError::UserNameFormatInvalid { .. })
             ));
         }
 

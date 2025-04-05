@@ -56,7 +56,7 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
         .map_err(|_| {
             tracing::error!("Access Token is invalid! Unable to parse token claim.");
             // Return error
-            BackendError::AuthenticationError(
+            AuthenticationError::AuthenticationError(
                 "Authentication Failed!".to_string(),
             )
         })?;
@@ -71,7 +71,7 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
             .map_err(|_| {
                 tracing::error!("Access Token user role is invalid!");
                 // Return error
-                BackendError::AuthenticationError(
+                AuthenticationError::AuthenticationError(
                     "Authentication Failed! No valid auth token.".to_string(),
                 )
             })?;

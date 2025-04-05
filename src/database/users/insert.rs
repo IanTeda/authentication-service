@@ -37,7 +37,7 @@ impl Users {
     pub async fn insert(
         &self,
         database: &sqlx::Pool<sqlx::Postgres>,
-    ) -> Result<Self, BackendError> {
+    ) -> Result<Self, AuthenticationError> {
         // Insert a new user
         let database_record = sqlx::query_as!(
             Users,

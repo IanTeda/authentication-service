@@ -20,21 +20,21 @@ pub struct EmailAddress(String);
 impl EmailAddress {
     /// Returns a Result of EmailAddress if the input satisfies all our validation
     /// constraints
-    pub fn parse(email: impl Into<String>) -> Result<EmailAddress, BackendError> {
+    pub fn parse(email: impl Into<String>) -> Result<EmailAddress, AuthenticationError> {
         let email = email.into();
         if email.trim().is_empty() {
-            return Err(BackendError::EmailIsEmpty);
+            return Err(AuthenticationError::EmailIsEmpty);
         }
 
         if email.validate_email() {
             Ok(Self(email))
         } else {
-            Err(BackendError::EmailFormatInvalid(email))
+            Err(AuthenticationError::EmailFormatInvalid(email))
         }
     }
 
     #[cfg(test)]
-    pub fn mock_data() -> Result<Self, BackendError> {
+    pub fn mock_data() -> Result<Self, AuthenticationError> {
         use fake::faker::internet::en::SafeEmail;
         use fake::Fake;
 

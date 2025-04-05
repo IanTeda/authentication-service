@@ -28,7 +28,7 @@ impl Sessions {
     pub async fn from_id(
         id: &Uuid,
         database: &Pool<Postgres>,
-    ) -> Result<Sessions, BackendError> {
+    ) -> Result<Sessions, AuthenticationError> {
         let database_record = sqlx::query_as!(
             Sessions,
             r#"
@@ -63,7 +63,7 @@ impl Sessions {
     pub async fn from_token(
         refresh_token: &str,
         database: &Pool<Postgres>,
-    ) -> Result<Sessions, BackendError> {
+    ) -> Result<Sessions, AuthenticationError> {
         let database_record = sqlx::query_as!(
             Sessions,
             r#"
@@ -102,7 +102,7 @@ impl Sessions {
         limit: &i64,
         offset: &i64,
         database: &Pool<Postgres>,
-    ) -> Result<Vec<Sessions>, BackendError> {
+    ) -> Result<Vec<Sessions>, AuthenticationError> {
         let database_records = sqlx::query_as!(
             Sessions,
             r#"
@@ -143,7 +143,7 @@ impl Sessions {
         limit: &i64,
         offset: &i64,
         database: &Pool<Postgres>,
-    ) -> Result<Vec<Sessions>, BackendError> {
+    ) -> Result<Vec<Sessions>, AuthenticationError> {
         let database_records = sqlx::query_as!(
             Sessions,
             r#"

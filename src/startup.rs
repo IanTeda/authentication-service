@@ -30,7 +30,7 @@ impl TonicServer {
     pub async fn build(
         config: Configuration,
         database: Pool<Postgres>,
-    ) -> Result<Self, BackendError> {
+    ) -> Result<Self, AuthenticationError> {
 
         // Get the address from the configuration
         let address = config.application.get_address();
@@ -46,7 +46,7 @@ impl TonicServer {
     }
 
     /// Run the Tonic server instance
-    pub async fn run(self) -> Result<(), BackendError> {
+    pub async fn run(self) -> Result<(), AuthenticationError> {
         let address = format!(
             "{}:{}",
             self.listener.local_addr()?.ip(),

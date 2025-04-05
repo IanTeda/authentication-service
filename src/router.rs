@@ -75,7 +75,7 @@ pub fn get_router(
             tower_layer::Stack<cors::CorsLayer, tower_layer::Identity>,
         >,
     >,
-    BackendError,
+    AuthenticationError,
 > {
     // Wraps our database pool and config in an Atomic Reference Counted (ARC).
     // Each instance of the backend will get a pointer to the pool instead of getting a raw copy.
@@ -152,11 +152,11 @@ pub fn get_router(
     let router = tonic_transport::Server::builder()
         // Start tonic log tracing
         .trace_fn(|_| tracing::info_span!("Tonic"))
-        // GRPC-web requires http/1.1
+        // Enable http/1.1 support. GRPC-web requires http/1.1.
         .accept_http1(true)
         // Add the cors layer
         .layer(cors_layer)
-        // Wrpa the router in a GRPC-Web layer
+        // Add a single GrpcWebLayer for all services
         .layer(tonic_web::GrpcWebLayer::new()) // Add the gRPC-Web layer
         // Add services
         .add_service(rpc::spec_service()?)

@@ -37,7 +37,7 @@ use tracing_subscriber::{
     EnvFilter,
 };
 
-pub fn init(log_level: LevelFilter) -> Result<(), BackendError>{
+pub fn init(log_level: LevelFilter) -> Result<(), AuthenticationError>{
     //-- 1. Filter events
     // Set default log level based on configuration file
     let default_env_filter = EnvFilter::builder()

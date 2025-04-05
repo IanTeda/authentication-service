@@ -27,7 +27,7 @@ impl Sessions {
     pub async fn insert(
         &self,
         database: &Pool<Postgres>,
-    ) -> Result<Self, BackendError> {
+    ) -> Result<Self, AuthenticationError> {
         let database_record = sqlx::query_as!(
             Sessions,
             r#"

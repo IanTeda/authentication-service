@@ -26,7 +26,7 @@ impl Users {
     pub async fn delete(
         &self,
         database: &sqlx::Pool<sqlx::Postgres>,
-    ) -> Result<u64, BackendError> {
+    ) -> Result<u64, AuthenticationError> {
         let rows_affected = sqlx::query!(
             r#"
 					Delete

@@ -73,7 +73,7 @@ impl std::fmt::Display for UserRole {
 }
 
 impl std::str::FromStr for UserRole {
-    type Err = BackendError;
+    type Err = AuthenticationError;
 
     fn from_str(input: &str) -> Result<UserRole, Self::Err> {
         match input {
@@ -83,7 +83,7 @@ impl std::str::FromStr for UserRole {
             "user" => Ok(UserRole::User),
             "Guest" => Ok(UserRole::Guest),
             "guest" => Ok(UserRole::Guest),
-            _ => Err(BackendError::UserRole),
+            _ => Err(AuthenticationError::UserRole),
         }
     }
 }

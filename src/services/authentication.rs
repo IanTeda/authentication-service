@@ -115,7 +115,7 @@ impl Authentication for AuthenticationService {
                     "Error parsing authentication request email address: {}",
                     request_message.email
                 );
-                BackendError::AuthenticationError(
+                AuthenticationError::AuthenticationError(
                     "Authentication failed!".to_string(),
                 )
             })?;
@@ -130,7 +130,7 @@ impl Authentication for AuthenticationService {
                         "User email not found in database: {}",
                         request_email.as_ref()
                     );
-                    BackendError::AuthenticationError(
+                    AuthenticationError::AuthenticationError(
                         "Authentication Failed!".to_string(),
                     )
                 })?;
@@ -144,7 +144,7 @@ impl Authentication for AuthenticationService {
         let is_password_valid =
             user.password_hash.verify_password(&password).map_err(|_| {
                 tracing::error!("Password verification failed.");
-                BackendError::AuthenticationError(
+                AuthenticationError::AuthenticationError(
                     "Authentication Failed!".to_string(),
                 )
             })?;
@@ -308,7 +308,7 @@ impl Authentication for AuthenticationService {
         )
         .map_err(|_| {
             tracing::error!("Refresh Token is invalid!");
-            BackendError::AuthenticationError("Authentication Failed!".to_string())
+            AuthenticationError::AuthenticationError("Authentication Failed!".to_string())
         })?;
 
         //-- 2. Check the Session & User are Valid
@@ -322,20 +322,20 @@ impl Authentication for AuthenticationService {
         .await
         .map_err(|_| {
             tracing::error!("Refresh token not in sessions database");
-            BackendError::AuthenticationError("Authentication Failed!".to_string())
+            AuthenticationError::AuthenticationError("Authentication Failed!".to_string())
         })?;
 
         // Check if the session is active
         if session.is_active == false {
             tracing::error!("Session is not active");
-            BackendError::AuthenticationError("Authentication Failed!".to_string());
+            AuthenticationError::AuthenticationError("Authentication Failed!".to_string());
         }
         tracing::info!("Session is active.");
 
         // Get user id from the refresh token claim
         let user_id = Uuid::try_parse(&refresh_token_claim.sub).map_err(|_| {
             tracing::error!("Unable to parse Uuid");
-            BackendError::AuthenticationError("Authentication Failed!".to_string())
+            AuthenticationError::AuthenticationError("Authentication Failed!".to_string())
         })?;
 
         // Check user id in the token claim is in the database
@@ -453,7 +453,7 @@ impl Authentication for AuthenticationService {
                         "Access Token is invalid! Unable to parse token claim."
                     );
                     // Return error
-                    BackendError::AuthenticationError(
+                    AuthenticationError::AuthenticationError(
                         "Authentication Failed!".to_string(),
                     )
                 })?;
@@ -466,7 +466,7 @@ impl Authentication for AuthenticationService {
         // Parse token claim user_id string into a UUID
         let user_id: Uuid = access_token_claim.sub.parse().map_err(|_| {
             tracing::error!("Unable to parse user id to UUID!");
-            return BackendError::AuthenticationError(
+            return AuthenticationError::AuthenticationError(
                 "Authentication Failed!".to_string(),
             );
         })?;
@@ -477,7 +477,7 @@ impl Authentication for AuthenticationService {
             .await
             .map_err(|_| {
                 tracing::error!("User id not found in database: {}", user_id);
-                return BackendError::AuthenticationError(
+                return AuthenticationError::AuthenticationError(
                     "Authentication Failed!".to_string(),
                 );
             })?;
@@ -598,7 +598,7 @@ impl Authentication for AuthenticationService {
         )
         .map_err(|_| {
             tracing::error!("Refresh Token is invalid!");
-            BackendError::AuthenticationError("Authentication Failed!".to_string())
+            AuthenticationError::AuthenticationError("Authentication Failed!".to_string())
         })?;
 
         //-- 2. Check the Session & User are Valid
@@ -612,20 +612,20 @@ impl Authentication for AuthenticationService {
         .await
         .map_err(|_| {
             tracing::error!("Refresh token not in sessions database");
-            BackendError::AuthenticationError("Authentication Failed!".to_string())
+            AuthenticationError::AuthenticationError("Authentication Failed!".to_string())
         })?;
 
         // Check if the session is active
         if session.is_active == false {
             tracing::error!("Session is not active");
-            BackendError::AuthenticationError("Authentication Failed!".to_string());
+            AuthenticationError::AuthenticationError("Authentication Failed!".to_string());
         }
         tracing::info!("Session is active.");
 
         // Get user id from the refresh token claim
         let user_id = Uuid::try_parse(&refresh_token_claim.sub).map_err(|_| {
             tracing::error!("Unable to parse Uuid");
-            BackendError::AuthenticationError("Authentication Failed!".to_string())
+            AuthenticationError::AuthenticationError("Authentication Failed!".to_string())
         })?;
 
         // Check user id in the token claim is in the database

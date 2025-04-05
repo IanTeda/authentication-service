@@ -15,7 +15,7 @@ use uuid::Uuid;
 
 use crate::configuration::Configuration;
 use crate::database;
-use crate::prelude::BackendError;
+use crate::prelude::AuthenticationError;
 use crate::rpc::proto::sessions_service_server::SessionsService as Sessions;
 use crate::rpc::proto::{
     Empty, SessionsDeleteRequest, SessionsDeleteResponse, SessionsDeleteUserRequest,
@@ -96,7 +96,7 @@ impl Sessions for SessionsService {
         // Parse the request message string into a Uuid
         let id = Uuid::parse_str(&request_message.id).map_err(|_| {
             tracing::error!("Unable to parse Session id to UUID!");
-            return BackendError::Generic(
+            return AuthenticationError::Generic(
                 "Unable to parse user id to UUID!".to_string(),
             );
         })?;
@@ -156,7 +156,7 @@ impl Sessions for SessionsService {
         // Parse the request message string into a Uuid
         let id = Uuid::parse_str(&request_message.id).map_err(|_| {
             tracing::error!("Unable to parse Session id to UUID!");
-            return BackendError::Generic(
+            return AuthenticationError::Generic(
                 "Unable to parse user id to UUID!".to_string(),
             );
         })?;
@@ -188,7 +188,7 @@ impl Sessions for SessionsService {
         // Parse the request message string into a Uuid
         let user_id = Uuid::parse_str(&request_message.user_id).map_err(|_| {
             tracing::error!("Unable to parse User id to UUID!");
-            return BackendError::Generic(
+            return AuthenticationError::Generic(
                 "Unable to parse user id to UUID!".to_string(),
             );
         })?;
@@ -242,7 +242,7 @@ impl Sessions for SessionsService {
         // Parse the request message string into a Uuid
         let id = Uuid::parse_str(&request_message.id).map_err(|_| {
             tracing::error!("Unable to parse Sessionid to UUID!");
-            return BackendError::Generic(
+            return AuthenticationError::Generic(
                 "Unable to parse user id to UUID!".to_string(),
             );
         })?;
@@ -274,7 +274,7 @@ impl Sessions for SessionsService {
         // Parse the request message string into a Uuid
         let user_id = Uuid::parse_str(&request_message.user_id).map_err(|_| {
             tracing::error!("Unable to parse User id to UUID!");
-            return BackendError::Generic(
+            return AuthenticationError::Generic(
                 "Unable to parse user id to UUID!".to_string(),
             );
         })?;

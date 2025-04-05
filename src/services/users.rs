@@ -17,7 +17,7 @@ use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
 use crate::configuration::Configuration;
-use crate::prelude::BackendError;
+use crate::prelude::AuthenticationError;
 use crate::rpc::proto::users_service_server::UsersService as Users;
 use crate::rpc::proto::{
     CreateUserRequest, DeleteUserRequest, DeleteUserResponse, ReadUserRequest,
@@ -53,7 +53,7 @@ impl UsersService {
 
 /// Convert a User Request message into a database::Users
 impl TryFrom<CreateUserRequest> for database::Users {
-    type Error = BackendError;
+    type Error = AuthenticationError;
 
     fn try_from(value: CreateUserRequest) -> Result<Self, Self::Error> {
         let id = Uuid::now_v7();
@@ -81,7 +81,7 @@ impl TryFrom<CreateUserRequest> for database::Users {
 
 /// Convert a User Request message into a database::Users
 impl TryFrom<UpdateUserRequest> for database::Users {
-    type Error = BackendError;
+    type Error = AuthenticationError;
 
     fn try_from(value: UpdateUserRequest) -> Result<Self, Self::Error> {
         let id = Uuid::parse_str(value.id.as_str())?;
@@ -177,7 +177,7 @@ impl Users for UsersService {
 
         let id = Uuid::parse_str(&request_message.id).map_err(|_| {
             tracing::error!("Unable to parse user id to UUID!");
-            return BackendError::Generic(
+            return AuthenticationError::Generic(
                 "Unable to parse user id to UUID!".to_string(),
             );
         })?;
@@ -277,7 +277,7 @@ impl Users for UsersService {
 
         let id = Uuid::parse_str(&request_message.id).map_err(|_| {
             tracing::error!("Unable to parse user id to UUID!");
-            return BackendError::Generic(
+            return AuthenticationError::Generic(
                 "Unable to parse user id to UUID!".to_string(),
             );
         })?;

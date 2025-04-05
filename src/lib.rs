@@ -2,7 +2,7 @@
 
 #![doc = include_str!("../README.md")]
 
-pub use error::BackendError;
+pub use error::AuthenticationError;
 
 pub mod configuration;
 pub mod database;

@@ -24,7 +24,7 @@ use crate::prelude::*;
 
 /// Binary entry point
 #[tokio::main]
-async fn main() -> Result<(), BackendError> {
+async fn main() -> Result<(), AuthenticationError> {
     // Parse configuration files
     let config = Configuration::parse()?;
 

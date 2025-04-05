@@ -9,7 +9,7 @@ use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 use crate::database::Sessions;
-use crate::prelude::BackendError;
+use crate::prelude::AuthenticationError;
 
 impl Sessions {
     /// Update a self in the database, returning a result with a Sessions instance
@@ -27,7 +27,7 @@ impl Sessions {
     pub async fn update(
         &self,
         database: &Pool<Postgres>,
-    ) -> Result<Sessions, BackendError> {
+    ) -> Result<Sessions, AuthenticationError> {
         let database_record = sqlx::query_as!(
             Sessions,
             r#"
@@ -64,7 +64,7 @@ impl Sessions {
     pub async fn revoke(
         &self,
         database: &Pool<Postgres>,
-    ) -> Result<u64, BackendError> {
+    ) -> Result<u64, AuthenticationError> {
         let rows_affected = sqlx::query_as!(
             Sessions,
             r#"
@@ -98,7 +98,7 @@ impl Sessions {
     pub async fn revoke_by_id(
         id: &Uuid,
         database: &Pool<Postgres>,
-    ) -> Result<u64, BackendError> {
+    ) -> Result<u64, AuthenticationError> {
         let rows_affected = sqlx::query_as!(
             Sessions,
             r#"
@@ -133,7 +133,7 @@ impl Sessions {
     pub async fn revoke_associated(
         &self,
         database: &Pool<Postgres>,
-    ) -> Result<u64, BackendError> {
+    ) -> Result<u64, AuthenticationError> {
         let rows_affected = sqlx::query_as!(
             Sessions,
             r#"
@@ -167,7 +167,7 @@ impl Sessions {
     pub async fn revoke_user_id(
         user_id: &Uuid,
         database: &Pool<Postgres>,
-    ) -> Result<u64, BackendError> {
+    ) -> Result<u64, AuthenticationError> {
         let rows_affected = sqlx::query_as!(
             Sessions,
             r#"
@@ -197,7 +197,7 @@ impl Sessions {
         name = "Revoke all Sessions in the database: ",
         skip(database)
     )]
-    pub async fn revoke_all(database: &Pool<Postgres>) -> Result<u64, BackendError> {
+    pub async fn revoke_all(database: &Pool<Postgres>) -> Result<u64, AuthenticationError> {
         let rows_affected = sqlx::query_as!(
             Sessions,
             r#"

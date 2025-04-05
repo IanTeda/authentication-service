@@ -55,7 +55,7 @@ impl AccessToken {
         issuer: &SecretString ,
         duration: &time::Duration,
         user: &database::Users,
-    ) -> Result<Self, BackendError> {
+    ) -> Result<Self, AuthenticationError> {
         // Build the Access Token Claim
         let token_claim =
             TokenClaim::new(issuer, duration, user, &TokenType::Access);

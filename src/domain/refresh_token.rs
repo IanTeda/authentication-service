@@ -73,7 +73,7 @@ impl RefreshToken {
         issuer: &SecretString,
         duration: &time::Duration,
         user: &database::Users,
-    ) -> Result<Self, BackendError> {
+    ) -> Result<Self, AuthenticationError> {
         // Build the Access Token Claim
         let token_claim =
             TokenClaim::new(issuer, duration, user, &TokenType::Refresh);
@@ -89,7 +89,7 @@ impl RefreshToken {
     }
 
     #[cfg(test)]
-    pub fn mock_data(user: &database::Users) -> Result<Self, BackendError> {
+    pub fn mock_data(user: &database::Users) -> Result<Self, AuthenticationError> {
         use fake::faker::company::en::CompanyName;
         use fake::faker::internet::en::Password;
         use fake::Fake;
@@ -167,7 +167,7 @@ impl RefreshToken {
     pub fn from_header(
         token_secret: &SecretString,
         request_metadata: &tonic::metadata::MetadataMap,
-    ) -> Result<Self, BackendError> {
+    ) -> Result<Self, AuthenticationError> {
         // Collect all cookies from the request metadata into a vector
         let cookies = request_metadata
             .get_all("cookie")
@@ -182,7 +182,7 @@ impl RefreshToken {
         for cookie in cookies {
             // Convert the cookie to a string
             let cookie = cookie.to_str().map_err(|_| {
-                BackendError::AuthenticationError(
+                AuthenticationError::AuthenticationError(
                     "Error converting cookie Ascii to string".to_string(),
                 )
             })?;
@@ -192,7 +192,7 @@ impl RefreshToken {
 
             // Ensure that the cookie has a key and a value
             if parts.len() != 2 {
-                BackendError::AuthenticationError(
+                AuthenticationError::AuthenticationError(
                     "Key or value missing from cookie string".to_string(),
                 );
             }
@@ -202,7 +202,7 @@ impl RefreshToken {
         }
 
         let refresh_token = cookies_map.get("refresh_token").ok_or(
-            BackendError::AuthenticationError(
+            AuthenticationError::AuthenticationError(
                 "No refresh token in cookie map".to_string(),
             ),
         )?;

@@ -29,7 +29,7 @@ impl Users {
     pub async fn from_user_id(
         id: &Uuid,
         database: &sqlx::Pool<sqlx::Postgres>,
-    ) -> Result<Self, BackendError> {
+    ) -> Result<Self, AuthenticationError> {
         let database_record = sqlx::query_as!(
 				Users,
 				r#"
@@ -65,7 +65,7 @@ impl Users {
     pub async fn from_user_email(
         email: &domain::EmailAddress,
         database: &sqlx::Pool<sqlx::Postgres>,
-    ) -> Result<Self, BackendError> {
+    ) -> Result<Self, AuthenticationError> {
         let database_record = sqlx::query_as!(
 				Users,
 				r#"
@@ -99,7 +99,7 @@ impl Users {
         limit: &i64,
         offset: &i64,
         database: &sqlx::Pool<sqlx::Postgres>,
-    ) -> Result<Vec<Users>, BackendError> {
+    ) -> Result<Vec<Users>, AuthenticationError> {
         let database_records = sqlx::query_as!(
 				Users,
 				r#"

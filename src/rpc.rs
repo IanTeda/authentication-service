@@ -25,7 +25,7 @@ pub mod proto {
 }
 
 // spec_service returns reflection server to allow reading proto definition at runtime.
-pub fn spec_service() -> Result<ServerReflectionServer<impl ServerReflection>, BackendError> {
+pub fn spec_service() -> Result<ServerReflectionServer<impl ServerReflection>, AuthenticationError> {
     // Create the reflection service
     // This service allows us to read the proto definition at runtime
     // and is used by gRPC-Web to generate the client code.

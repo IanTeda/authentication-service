@@ -33,7 +33,7 @@ impl PasswordHash {
     ///
     /// * `password`: The password in a string
     /// ---
-    pub fn parse(password: SecretString) -> Result<PasswordHash, BackendError> {
+    pub fn parse(password: SecretString) -> Result<PasswordHash, AuthenticationError> {
         // Parse String into Secret struct
         // let password = Secret::new(password.into());
 
@@ -82,7 +82,7 @@ impl PasswordHash {
             || no_number
             || no_special
         {
-            Err(BackendError::PasswordFormatInvalid)
+            Err(AuthenticationError::PasswordFormatInvalid)
         } else {
             // Generate encryption salt hash
             let salt = SaltString::generate(&mut rand::thread_rng());
@@ -114,7 +114,7 @@ impl PasswordHash {
     pub fn verify_password(
         &self,
         password: &SecretString,
-    ) -> Result<bool, BackendError> {
+    ) -> Result<bool, AuthenticationError> {
         // Initiate new Argon2 instance
         let argon2 = Argon2::new(
             Algorithm::Argon2id,
@@ -137,7 +137,7 @@ impl PasswordHash {
     }
 
     #[cfg(test)]
-    pub fn mock_data() -> Result<Self, BackendError> {
+    pub fn mock_data() -> Result<Self, AuthenticationError> {
         use fake::Fake;
 
         let random_count = (5..30).fake::<i64>() as usize;

@@ -17,7 +17,7 @@ mod users;
 
 pub async fn init_pool(
     database_configuration: &DatabaseConfiguration,
-) -> Result<PgPool, BackendError> {
+) -> Result<PgPool, AuthenticationError> {
     // Build connection pool
     let database =
         PgPoolOptions::new().connect_lazy_with(database_configuration.connection());

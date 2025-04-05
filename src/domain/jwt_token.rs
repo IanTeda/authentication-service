@@ -173,7 +173,7 @@ impl TokenClaim {
         token: &str,
         secret: &SecretString,
         issuer: &SecretString,
-    ) -> Result<Self, BackendError> {
+    ) -> Result<Self, AuthenticationError> {
         // Build token validation requirements. By default, the decoding will 
         // automatically validate the expiration (exp) claim
         let mut validation = Validation::default();
