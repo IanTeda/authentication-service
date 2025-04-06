@@ -25,7 +25,6 @@ pub type Error = Box<dyn std::error::Error>;
 // Ensure that the `tracing` stack is only initialised once using `once_cell`
 // Lazy makes it gloally available
 static TRACING: Lazy<()> = Lazy::new(|| {
-    // TODO: Does the log level need to be configured somewhere
     let testing_log_level = LevelFilter::ERROR;
     let _telemetry = telemetry::init(testing_log_level);
 });

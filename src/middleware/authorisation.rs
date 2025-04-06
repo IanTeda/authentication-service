@@ -1,23 +1,29 @@
 //-- ./src/middleware/access_token.rs
 
-#![allow(unused)] // For beginning only.
+// #![allow(unused)] // For beginning only.
+
+/// # Access Token Interceptor
+///
+/// This interceptor is used to validate the access token in the request
+/// metadata. It checks if the access token is present and valid.
+/// If the access token is not present or invalid, it returns an error.
 
 use secrecy::SecretString;
 
-use crate::{domain, middleware::access_token, prelude::*, utils};
+use crate::{domain, prelude::*, utils};
 use std::str::FromStr;
 
-/// Check
 #[derive(Clone)]
-pub struct AccessTokenInterceptor {
+pub struct AuthorisationInterceptor {
     pub(crate) token_secret: SecretString,
     pub(crate) issuer: SecretString,
+    pub(crate) allowable_roles: Vec<domain::UserRole>,
 }
 
-impl tonic::service::Interceptor for AccessTokenInterceptor {
+impl tonic::service::Interceptor for AuthorisationInterceptor {
     fn call(
         &mut self,
-        mut request: tonic::Request<()>,
+        request: tonic::Request<()>,
     ) -> Result<tonic::Request<()>, tonic::Status> {
         // Get the metadata from the tonic request
         let metadata: &tonic::metadata::MetadataMap = request.metadata();
@@ -27,11 +33,11 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
         let cookie_jar = utils::metadata::get_cookie_jar(metadata)?;
 
         // Initiate the access token string
-        let mut access_token_string: String;
+        let access_token_string: String;
 
         // Get the access token cookie from the request metadata and return the
         // token string without the extra cookie metadata
-        let access_token_cookie = match cookie_jar.get("access_token") {
+        let _access_token_cookie = match cookie_jar.get("access_token") {
             Some(cookie) => {
                 access_token_string = cookie.value_trimmed().to_string();
             }
@@ -65,8 +71,7 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
             access_token_claim.sub
         );
 
-        // Parse Token Claim user role into domain type
-        // TODO: Implement authorisation function to confirm request authorisation
+        // Parse Token Claim user role into domain user role
         let role = domain::UserRole::from_str(access_token_claim.jur.as_str())
             .map_err(|_| {
                 tracing::error!("Access Token user role is invalid!");
@@ -75,6 +80,16 @@ impl tonic::service::Interceptor for AccessTokenInterceptor {
                     "Authentication Failed! No valid auth token.".to_string(),
                 )
             })?;
+
+        // Check if the access token user role is in the list of allowable roles
+        // If not, return an error
+        if !self.allowable_roles.contains(&role) {
+            tracing::error!("Access Token user role is not authorised!");
+            // Return error
+            return Err(tonic::Status::unauthenticated(
+                "Authentication Failed!",
+            ));
+        }
 
         Ok(request)
     }

@@ -22,8 +22,6 @@
 //! * [Getting started with Tracing](https://tokio.rs/tokio/topics/tracing)
 //! * [Can we have easier pretty log for development?](https://github.com/LukeMathWalker/tracing-bunyan-formatter/issues/17)
 
-// TODO: Pull level from files
-
 // TODO: Add https://prometheus.io/
 // TODO: Add https://opentelemetry.io/
 // TODO: Add tracing console

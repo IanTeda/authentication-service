@@ -23,6 +23,7 @@ use tonic::transport as tonic_transport;
 use tower_http::cors;
 
 use crate::configuration::Configuration;
+use crate::domain;
 use crate::middleware;
 use crate::prelude::*;
 use crate::rpc;
@@ -87,10 +88,10 @@ pub fn get_router(
     let issuer = config.application.get_issuer();
 
     // Create the interceptor
-    let access_token_interceptor = middleware::AccessTokenInterceptor {
-        token_secret,
-        issuer,
-    };
+    // let access_token_interceptor = middleware::AccessTokenInterceptor {
+    //     token_secret,
+    //     issuer,
+    // };
 
     // Build CORS layer
     let cors_layer = tower_http::cors::CorsLayer::new()
@@ -137,7 +138,11 @@ pub fn get_router(
     // Wrap the UsersService in the UsersServiceServer
     let users_server = UsersServer::with_interceptor(
         users_service,
-        access_token_interceptor.clone(),
+        middleware::AuthorisationInterceptor {
+            token_secret: token_secret.clone(),
+            issuer: issuer.clone(),
+            allowable_roles: vec![domain::UserRole::Admin, domain::UserRole::User],
+        },
     );
 
     //-- Build the Sessions Service
@@ -146,8 +151,14 @@ pub fn get_router(
         services::SessionsService::new(Arc::clone(&database), Arc::clone(&config));
 
     // Wrap the SessionsService in the SessionsServiceServer
-    let sessions_server =
-        SessionsServer::with_interceptor(sessions_service, access_token_interceptor);
+    let sessions_server = SessionsServer::with_interceptor(
+        sessions_service,
+        middleware::AuthorisationInterceptor {
+            token_secret: token_secret.clone(),
+            issuer: issuer.clone(),
+            allowable_roles: vec![domain::UserRole::Admin, domain::UserRole::User],
+        },
+    );
 
     let router = tonic_transport::Server::builder()
         // Start tonic log tracing

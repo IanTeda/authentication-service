@@ -1,5 +1,5 @@
 // #![allow(unused)] // For beginning only.
 
-mod access_token;
+mod authorisation;
 
-pub use access_token::AccessTokenInterceptor;
+pub use authorisation::AuthorisationInterceptor;
