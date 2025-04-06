@@ -51,9 +51,9 @@ impl UserRole {
 
 /// Random pick during mocking
 /// let random_role: UserRole = rand::random();
-impl rand::distributions::Distribution<UserRole> for rand::distributions::Standard {
+impl rand::distr::Distribution<UserRole> for rand::distr::StandardUniform {
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> UserRole {
-        match rng.gen_range(0..=2) {
+        match rng.random_range(0..=2) {
             0 => UserRole::Admin,
             1 => UserRole::User,
             _ => UserRole::Guest,

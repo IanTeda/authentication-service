@@ -77,7 +77,8 @@ mod tests {
     use fake::faker::company::en::CompanyName;
     use fake::faker::number::en::Digit;
     use fake::Fake;
-    use rand::distributions::{Alphanumeric, DistString};
+    use rand::distr::{Alphanumeric, SampleString};
+    // use rand::distributions::{Alphanumeric, DistString};
 
     use crate::database;
 
@@ -93,7 +94,7 @@ mod tests {
         //-- 1. Setup and Fixtures (Arrange)
 
         // Generate random secret string
-        let random_secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
+        let random_secret = Alphanumeric.sample_string(&mut rand::rng(), 60);
         let random_secret = SecretString::from(random_secret);
 
         // Get a random user_id for subject

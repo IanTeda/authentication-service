@@ -93,11 +93,13 @@ impl RefreshToken {
         use fake::faker::company::en::CompanyName;
         use fake::faker::internet::en::Password;
         use fake::Fake;
-        use rand::distributions::DistString;
+        // use rand::distr::DistString;
+        use rand::distr::SampleString;
+
 
         // Generate a random token secret
-        let random_secret = rand::distributions::Alphanumeric
-            .sample_string(&mut rand::thread_rng(), 60);
+        let random_secret = rand::distr::Alphanumeric
+            .sample_string(&mut rand::rng(), 60);
         let random_secret = SecretString::from(random_secret);
 
         // Generate a random issuer company
@@ -220,7 +222,8 @@ mod tests {
     use fake::faker::company::en::CompanyName;
     use fake::faker::internet::en::DomainSuffix;
     use fake::Fake;
-    use rand::distributions::{Alphanumeric, DistString};
+    use rand::distr::{Alphanumeric, SampleString};
+    // use rand::distributions::{Alphanumeric, DistString};
 
     use crate::database;
 
@@ -234,7 +237,7 @@ mod tests {
     #[tokio::test]
     async fn generate_new_refresh_token() -> Result<()> {
         // Generate random secret string
-        let secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
+        let secret = Alphanumeric.sample_string(&mut rand::rng(), 60);
         let secret = SecretString::from(secret);
 
         // Get a random user_id for subject
@@ -268,7 +271,7 @@ mod tests {
     #[tokio::test]
     async fn build_refresh_cookie() -> Result<()> {
         // Generate random secret string
-        let random_secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
+        let random_secret = Alphanumeric.sample_string(&mut rand::rng(), 60);
         let random_secret = SecretString::from(random_secret);
 
         // Generate a random duration between 1 and 10 hours

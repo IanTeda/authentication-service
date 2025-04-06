@@ -8,8 +8,7 @@ use fake::faker::company::en::CompanyName;
 use fake::Fake;
 use http::header::COOKIE;
 use http::HeaderMap;
-use rand::distributions::Alphanumeric;
-use rand::distributions::DistString;
+use rand::distr::{Alphanumeric, SampleString};
 use secrecy::SecretString;
 use sqlx::{Pool, Postgres};
 use tonic::metadata::MetadataMap;
@@ -163,7 +162,7 @@ async fn incorrect_refresh_token_is_unauthorised(database: Pool<Postgres>) -> Re
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     // Generate random secret string
-    let secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
+    let secret = Alphanumeric.sample_string(&mut rand::rng(), 60);
     let secret = SecretString::from(secret);
 
     //-- 2. Execute Test (Act)

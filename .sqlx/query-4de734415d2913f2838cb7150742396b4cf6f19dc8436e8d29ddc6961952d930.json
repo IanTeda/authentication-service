@@ -15,18 +15,38 @@
       },
       {
         "ordinal": 2,
+        "name": "login_on",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 3,
+        "name": "login_ip",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "expires_on",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
         "name": "refresh_token",
         "type_info": "Text"
       },
       {
-        "ordinal": 3,
+        "ordinal": 6,
         "name": "is_active",
         "type_info": "Bool"
       },
       {
-        "ordinal": 4,
-        "name": "created_on",
+        "ordinal": 7,
+        "name": "logout_on",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "logout_ip",
+        "type_info": "Int4"
       }
     ],
     "parameters": {
@@ -40,8 +60,12 @@
       false,
       false,
       false,
+      true,
       false,
-      false
+      false,
+      false,
+      true,
+      true
     ]
   },
   "hash": "4de734415d2913f2838cb7150742396b4cf6f19dc8436e8d29ddc6961952d930"

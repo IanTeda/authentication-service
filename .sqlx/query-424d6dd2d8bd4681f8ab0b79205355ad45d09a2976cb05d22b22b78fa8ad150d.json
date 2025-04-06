@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n\t\t\t\tUPDATE sessions \n\t\t\t\tSET user_id = $2, refresh_token = $3, is_active = $4\n\t\t\t\tWHERE id = $1 \n\t\t\t\tRETURNING *\n\t\t\t",
+  "query": "\n\t\t\t\tINSERT INTO sessions (id, user_id, login_on, login_ip, expires_on, refresh_token, is_active, logout_on, logout_ip)\n\t\t\t\tVALUES ($1, $2, $3, $4, $5, $6, $7,$8, $9) \n\t\t\t\tRETURNING *\n\t\t\t",
   "describe": {
     "columns": [
       {
@@ -53,8 +53,13 @@
       "Left": [
         "Uuid",
         "Uuid",
+        "Timestamptz",
+        "Int4",
+        "Timestamptz",
         "Text",
-        "Bool"
+        "Bool",
+        "Timestamptz",
+        "Int4"
       ]
     },
     "nullable": [
@@ -69,5 +74,5 @@
       true
     ]
   },
-  "hash": "cb3fdf445b97b1956920879d0c8a74a4ac7ee88a62bbeff735e211b756a78efc"
+  "hash": "424d6dd2d8bd4681f8ab0b79205355ad45d09a2976cb05d22b22b78fa8ad150d"
 }

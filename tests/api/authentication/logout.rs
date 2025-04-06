@@ -8,8 +8,7 @@ use fake::faker::company::en::CompanyName;
 use fake::Fake;
 use http::header::COOKIE;
 use http::HeaderMap;
-use rand::distributions::Alphanumeric;
-use rand::distributions::DistString;
+use rand::distr::{Alphanumeric, SampleString};
 use secrecy::SecretString;
 use sqlx::{Pool, Postgres};
 use tonic::metadata::MetadataMap;
@@ -80,11 +79,12 @@ async fn returns_logout_true(database: Pool<Postgres>) -> Result<()> {
     *request.metadata_mut() = MetadataMap::from_headers(http_header);
 
     // Send token refresh request to server
-    let logout_response_message: authentication_service::rpc::proto::LogoutResponse = tonic_client
-        .authentication()
-        .logout(request)
-        .await?
-        .into_inner();
+    let logout_response_message: authentication_service::rpc::proto::LogoutResponse =
+        tonic_client
+            .authentication()
+            .logout(request)
+            .await?
+            .into_inner();
     // println!("{logout_response_message:#?}");
 
     //-- 3. Checks (Assertions)
@@ -95,9 +95,10 @@ async fn returns_logout_true(database: Pool<Postgres>) -> Result<()> {
     Ok(())
 }
 
-
 #[sqlx::test]
-async fn incorrect_refresh_token_is_unauthorised(database: Pool<Postgres>) -> Result<()> {
+async fn incorrect_refresh_token_is_unauthorised(
+    database: Pool<Postgres>,
+) -> Result<()> {
     //-- 1. Setup and Fixtures (Arrange)
     // Generate random user and insert into database for testing
     let random_password = helpers::mocks::password()?;
@@ -113,7 +114,7 @@ async fn incorrect_refresh_token_is_unauthorised(database: Pool<Postgres>) -> Re
     let mut tonic_client = helpers::TonicClient::spawn_client(&tonic_server).await?;
 
     // Generate random secret string
-    let secret = Alphanumeric.sample_string(&mut rand::thread_rng(), 60);
+    let secret = Alphanumeric.sample_string(&mut rand::rng(), 60);
     let secret = SecretString::from(secret);
 
     //-- 2. Execute Test (Act)
@@ -138,7 +139,8 @@ async fn incorrect_refresh_token_is_unauthorised(database: Pool<Postgres>) -> Re
     )?;
 
     // Build the incorrect Refresh Token cookie for fail authentication
-    let incorrect_refresh_cookie = incorrect_refresh_token.build_cookie(&tonic_server.address, &random_duration);
+    let incorrect_refresh_cookie = incorrect_refresh_token
+        .build_cookie(&tonic_server.address, &random_duration);
 
     // Build tonic request message
     let request_message = Empty {};
@@ -150,7 +152,10 @@ async fn incorrect_refresh_token_is_unauthorised(database: Pool<Postgres>) -> Re
     let mut http_header = HeaderMap::new();
 
     // Add refresh cookie to the http header map
-    http_header.insert(COOKIE, incorrect_refresh_cookie.to_string().parse().unwrap());
+    http_header.insert(
+        COOKIE,
+        incorrect_refresh_cookie.to_string().parse().unwrap(),
+    );
 
     // Add the http header to the rpc response
     *request.metadata_mut() = MetadataMap::from_headers(http_header);
@@ -169,7 +174,6 @@ async fn incorrect_refresh_token_is_unauthorised(database: Pool<Postgres>) -> Re
 
     // Confirm Tonic response message
     assert_eq!(refresh_response.message(), "Authentication Failed!");
-
 
     Ok(())
 }

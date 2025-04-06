@@ -43,7 +43,7 @@ sqlx = { version = "0.8.0", features = [
 ] }
 strum = { version = "0.27.1", features = ["derive"] }
 thiserror = "2.0.12"
-tokio = { version = "1.38.0", features = ["full"] }
+tokio = { version = "1.44.2", features = ["full"] }
 tokio-stream = "0.1"
 tonic = "0.13.0"
 tonic-reflection = "0.13.0"
@@ -57,11 +57,11 @@ tracing-subscriber = { version = "0.3", features = [
 ] }
 unicode-segmentation = "1.11.0"
 uuid = { version = "1", features = ["v4", "v7", "serde"] }
-validator = { version = "0.18", features = ["derive"] }
-derive_more = "0.99.18"
+validator = { version = "0.20", features = ["derive"] }
+derive_more = { version = "2.0.1", features = ["from"] }
 argon2 = "0.5.3"
 telemetry = "0.1.3"
-rand = "0.8.5"
+rand = "0.9.0"
 jsonwebtoken = "9.3.0"
 once_cell = "1.19.0"
 time = "0.3.36"
@@ -80,8 +80,8 @@ tower-http = { version="0.6.2", features = [
 tonic-build = { version = "0.13", features = ["prost"] }
 
 [dev-dependencies]
-claims = "0.7.0"
-fake = { version = "2.9.2", features = [
+claims = "0.8.0"
+fake = { version = "4.2.0", features = [
     "derive",
     "chrono-tz",
     "uuid",

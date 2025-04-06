@@ -18,7 +18,7 @@
 use crate::prelude::*;
 
 use crate::domain::RefreshToken;
-use argon2::password_hash::SaltString;
+use argon2::password_hash::{rand_core, SaltString};
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, PasswordVerifier, Version};
 use secrecy::{ExposeSecret, SecretString};
 
@@ -85,7 +85,7 @@ impl PasswordHash {
             Err(AuthenticationError::PasswordFormatInvalid)
         } else {
             // Generate encryption salt hash
-            let salt = SaltString::generate(&mut rand::thread_rng());
+            let salt = SaltString::generate(&mut rand_core::OsRng);
 
             // Initiate new Argon2 instance
             let argon2 = Argon2::new(

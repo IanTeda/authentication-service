@@ -45,9 +45,9 @@ pub enum TokenType {
 /// let random_token_type: TokenType = rand::random();
 /// assert!(matches!(random_token_type, TokenType::Access | TokenType::Refresh));
 /// ```
-impl rand::distributions::Distribution<TokenType> for rand::distributions::Standard {
+impl rand::distr::Distribution<TokenType> for rand::distr::StandardUniform {
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> TokenType {
-        match rng.gen_range(0..2) {
+        match rng.random_range(0..2) {
             0 => TokenType::Access,
             _ => TokenType::Refresh,
         }
@@ -207,7 +207,7 @@ mod tests {
     use fake::faker::company::en::CompanyName;
     use fake::faker::number::en::Digit;
     use fake::Fake;
-    use rand::distributions::{Alphanumeric, DistString};
+    // use rand::distributions::{Alphanumeric, DistString};
 
     use crate::database;
 

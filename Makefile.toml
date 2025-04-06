@@ -85,7 +85,7 @@ args = ["--features", "mock"]
 [tasks.sqlx_offline]
 install_crate = "sqlx-cli"
 command = "cargo"
-args = ["sqlx", "prepare", "--", "--bin", "authentication_microservice"]
+args = ["sqlx", "prepare", "--", "--bin", "authentication_service"]
 
 [tasks.docker_build]
 command = "docker"

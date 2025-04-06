@@ -100,7 +100,7 @@ impl Sessions {
         use fake::faker::company::en::CompanyName;
         use fake::faker::internet::en::IPv4;
         use fake::Fake;
-        use rand::distributions::DistString;
+        // use rand::distributions::DistString;
 
         use crate::utils;
 
