@@ -57,7 +57,7 @@ pub fn init(log_level: LevelFilter) -> Result<(), AuthenticationError>{
         .with(console_collector);
 
     // Convert all log records into tracing events.
-    let _log_tracer = tracing_log::LogTracer::init()?;
+    tracing_log::LogTracer::init()?;
 
     //-- 3. Initiate tracing
     set_global_default(registry)?;

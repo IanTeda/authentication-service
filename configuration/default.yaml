@@ -1,12 +1,15 @@
 # Server configuration
 application:
-  ip_address: "127.0.0.1"
-  port: 8091
+  ip_address: "localhost" # does this need to be an ip as cookies cannot use an ip address as a domain
+  port: 8081
   log_level: "debug"
   token_secret: "Super_Secret4_Key"
   access_token_duration_minutes: 15
   # Thirty days 30 x 24 x 60
   refresh_token_duration_minutes: 43200
+  # Where to get the tls certificate and key from
+  # tls_certificate: "certs/server.pem"
+  # tls_key: "certs/server-key.pem"
 
 # Postgres database config
 database:

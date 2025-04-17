@@ -125,6 +125,11 @@ impl RefreshToken {
     ///
     /// # Build the Refresh Token Cookie
     /// 
+    /// !Important notes: 
+    ///  - Chrome does not like ports in domain 
+    ///  - Browsers will not accept a cookie with a domain that is set as a ip address.
+    ///  - GrpcWebFetchTransport on the browser end needs `fetchInit: { credentials: "include", },` set to let cookies header through to the browser
+    /// 
     /// TODO: Change to a impl into method
     ///
     /// ## Parameters
@@ -145,6 +150,8 @@ impl RefreshToken {
         let refresh_cookie = Cookie::build(("refresh_token", self.to_string()))
             // Set the domain of the cookie
             .domain(domain.to_owned())
+            // Do not use http
+            // .domain("localhost") 
             // Indicates the path that must exist in the requested URL for the browser to send the Cookie header.
             .path(COOKIE_PATH)
             // Indicates the number of seconds until the cookie expires.
@@ -153,6 +160,7 @@ impl RefreshToken {
             .http_only(true)
             // Indicates that the cookie is sent to the server only when a request is made with the https or localhost
             .secure(false)
+            // .same_site(cookie::SameSite::None)
             .build();
 
         refresh_cookie

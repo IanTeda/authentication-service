@@ -10,7 +10,9 @@
 //! overwrite with runtime environment configuration `./config/production.yaml`
 //! and environmental runtime variables.
 //!
-//! # References
+//! TODO: rename ip address to domain name as this used by the cookie
+//! 
+//! ## References
 //!
 //! * [config.rs Repository](https://github.com/mehcode/config-rs)
 //! * [Configuration management in Rust web services](https://blog.logrocket.com/configuration-management-in-rust-web-services/)
@@ -216,7 +218,9 @@ impl ApplicationConfiguration {
     /// Cookies are set to website domain.
     pub fn get_domain(&self) -> String {
         let domain = format!(
-            "http://{}",
+            // !Important: browsers do not like the http/https prefix in the cookie
+            // and will not set the cookie if it is there
+            "{}",
             self.ip_address
         );
         domain

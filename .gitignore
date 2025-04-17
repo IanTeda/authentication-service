@@ -6,8 +6,11 @@
 !.vscode
 !.sqlx
 
-# By default
+# By default ignore any files prefixed with "_"
 _*
+
+# Don't store certificates in repository
+tls/
 
 # Reference books and stuff
 references/

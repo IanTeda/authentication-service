@@ -27,11 +27,15 @@
         "Hasher",
         "httponly",
         "ianteda",
+        "icns",
         "jeremychone",
         "jsonwebtoken",
+        "libnss",
         "libprotobuf",
         "lossy",
         "milli",
+        "mkcert",
+        "mocharc",
         "nanos",
         "neovim",
         "opencontainers",
@@ -42,6 +46,7 @@
         "Protobuf",
         "protoc",
         "protos",
+        "pycache",
         "quickcheck",
         "rustls",
         "RUSTTARGET",
@@ -76,5 +81,13 @@
             "name": "Backend",
             "connectString": "postgrespostgres://postgres:postgres@localhost:5432/"
         }
-    ]
+    ],
+    "todo-tree.general.tags": [
+        "BUG",
+        "HACK",
+        "FIXME",
+        "TODO",
+        "XXX",
+        "- [ ]"
+    ],
 }
