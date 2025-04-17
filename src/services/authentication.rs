@@ -32,7 +32,9 @@ use uuid::Uuid;
 use crate::configuration::Configuration;
 use crate::rpc::proto::authentication_service_server::AuthenticationService as Authentication;
 use crate::rpc::proto::{
-    Empty, LoginRequest, LoginResponse, LogoutResponse, RefreshResponse, RegisterRequest, RegisterResponse, ResetPasswordRequest, ResetPasswordResponse, UpdatePasswordRequest, UpdatePasswordResponse, UserResponse
+    Empty, LoginRequest, LoginResponse, LogoutResponse, RefreshResponse,
+    RegisterRequest, RegisterResponse, ResetPasswordRequest, ResetPasswordResponse,
+    UpdatePasswordRequest, UpdatePasswordResponse, UserResponse,
 };
 use crate::{database, domain};
 use crate::{prelude::*, utils};
@@ -202,8 +204,13 @@ impl Authentication for AuthenticationService {
             &user,
         )?;
 
-        //-- 3. Add a new user session
+        //-- 3. Revoke all user associated sessions and add a new user session
         ////////////////////////////////////////////////////////////////////////
+
+        // Revoke (make inactive) all sessions associated with the user id
+        let _revoke_number =
+            database::Sessions::revoke_user_id(&user.id, self.database_ref())
+                .await?;
 
         // Get the ip address from the request socket
         let login_ip = socket_address.ip();
@@ -308,7 +315,9 @@ impl Authentication for AuthenticationService {
         )
         .map_err(|_| {
             tracing::error!("Refresh Token is invalid!");
-            AuthenticationError::AuthenticationError("Authentication Failed!".to_string())
+            AuthenticationError::AuthenticationError(
+                "Authentication Failed!".to_string(),
+            )
         })?;
 
         //-- 2. Check the Session & User are Valid
@@ -322,20 +331,26 @@ impl Authentication for AuthenticationService {
         .await
         .map_err(|_| {
             tracing::error!("Refresh token not in sessions database");
-            AuthenticationError::AuthenticationError("Authentication Failed!".to_string())
+            AuthenticationError::AuthenticationError(
+                "Authentication Failed!".to_string(),
+            )
         })?;
 
         // Check if the session is active
         if session.is_active == false {
             tracing::error!("Session is not active");
-            AuthenticationError::AuthenticationError("Authentication Failed!".to_string());
+            AuthenticationError::AuthenticationError(
+                "Authentication Failed!".to_string(),
+            );
         }
         tracing::info!("Session is active.");
 
         // Get user id from the refresh token claim
         let user_id = Uuid::try_parse(&refresh_token_claim.sub).map_err(|_| {
             tracing::error!("Unable to parse Uuid");
-            AuthenticationError::AuthenticationError("Authentication Failed!".to_string())
+            AuthenticationError::AuthenticationError(
+                "Authentication Failed!".to_string(),
+            )
         })?;
 
         // Check user id in the token claim is in the database
@@ -498,7 +513,8 @@ impl Authentication for AuthenticationService {
         tracing::debug!("User email is verified in the database: {}", user.id);
 
         //-- Verify existing/original password
-        let original_password = SecretString::from(request_message.password_original);
+        let original_password =
+            SecretString::from(request_message.password_original);
         if user.password_hash.verify_password(&original_password)? == false {
             tracing::error!("Original password is incorrect");
             return Err(Status::unauthenticated("Authentication Failed!"));
@@ -598,7 +614,9 @@ impl Authentication for AuthenticationService {
         )
         .map_err(|_| {
             tracing::error!("Refresh Token is invalid!");
-            AuthenticationError::AuthenticationError("Authentication Failed!".to_string())
+            AuthenticationError::AuthenticationError(
+                "Authentication Failed!".to_string(),
+            )
         })?;
 
         //-- 2. Check the Session & User are Valid
@@ -612,20 +630,26 @@ impl Authentication for AuthenticationService {
         .await
         .map_err(|_| {
             tracing::error!("Refresh token not in sessions database");
-            AuthenticationError::AuthenticationError("Authentication Failed!".to_string())
+            AuthenticationError::AuthenticationError(
+                "Authentication Failed!".to_string(),
+            )
         })?;
 
         // Check if the session is active
         if session.is_active == false {
             tracing::error!("Session is not active");
-            AuthenticationError::AuthenticationError("Authentication Failed!".to_string());
+            AuthenticationError::AuthenticationError(
+                "Authentication Failed!".to_string(),
+            );
         }
         tracing::info!("Session is active.");
 
         // Get user id from the refresh token claim
         let user_id = Uuid::try_parse(&refresh_token_claim.sub).map_err(|_| {
             tracing::error!("Unable to parse Uuid");
-            AuthenticationError::AuthenticationError("Authentication Failed!".to_string())
+            AuthenticationError::AuthenticationError(
+                "Authentication Failed!".to_string(),
+            )
         })?;
 
         // Check user id in the token claim is in the database

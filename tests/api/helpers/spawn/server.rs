@@ -23,7 +23,7 @@ use crate::helpers::mocks;
 pub type Error = Box<dyn std::error::Error>;
 
 // Ensure that the `tracing` stack is only initialised once using `once_cell`
-// Lazy makes it gloally available
+// Lazy makes it globally available
 static TRACING: Lazy<()> = Lazy::new(|| {
     let testing_log_level = LevelFilter::ERROR;
     let _telemetry = telemetry::init(testing_log_level);
@@ -109,7 +109,8 @@ impl TonicServer {
         // when config sets the port to 0
         let address = format!(
             "http://{}:{}",
-            tonic_server.listener.local_addr()?.ip(),
+            // tonic_server.listener.local_addr()?.ip(),
+            config.application.ip_address,
             tonic_server.listener.local_addr()?.port()
         );
         tracing::debug!("Tonic test server at: {:?}", address);
