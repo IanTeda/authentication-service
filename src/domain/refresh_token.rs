@@ -192,6 +192,7 @@ impl RefreshToken {
         for cookie in cookies {
             // Convert the cookie to a string
             let cookie = cookie.to_str().map_err(|_| {
+                tracing::error!("Error converting cookie to Ascii string.");
                 AuthenticationError::AuthenticationError(
                     "Error converting cookie Ascii to string".to_string(),
                 )
@@ -202,6 +203,7 @@ impl RefreshToken {
 
             // Ensure that the cookie has a key and a value
             if parts.len() != 2 {
+                tracing::error!("Key or value missing from cookie string");
                 AuthenticationError::AuthenticationError(
                     "Key or value missing from cookie string".to_string(),
                 );

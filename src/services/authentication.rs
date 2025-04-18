@@ -295,6 +295,31 @@ impl Authentication for AuthenticationService {
 
         //-- 1. Check the Refresh Token is Valid
         ////////////////////////////////////////////////////////////////////////
+        
+        tracing::debug!("Check the refresh token is valid");
+
+        let cookie_jar = utils::metadata::get_cookie_jar(&request_metadata)?;
+        tracing::debug!("Cookies jar collected: {:?}", cookie_jar);
+
+        // Initiate the access token string
+        let refresh_token_string: String;
+
+        // Get the access token cookie from the request metadata and return the
+        // token string without the extra cookie metadata
+        match cookie_jar.get("refresh_token") {
+            Some(cookie) => {
+                refresh_token_string = cookie.value_trimmed().to_string();
+            }
+            None => {
+                tracing::error!(
+                    "Refresh token cookie not found in the request header."
+                );
+                return Err(tonic::Status::unauthenticated(
+                    "Authentication Failed!",
+                ));
+            }
+        };
+        tracing::debug!("Access token string: {}", refresh_token_string);
 
         // Get the Token Secret from config and wrap it in a Secret to help limit leaks
         let token_secret = &self.config_ref().application.token_secret;
@@ -302,14 +327,10 @@ impl Authentication for AuthenticationService {
         // Set the JWT issuer as the ip address of the server
         let issuer = &self.config.application.get_issuer();
 
-        // Get the refresh token from the request header (metadata)
-        let refresh_token: domain::RefreshToken =
-            domain::RefreshToken::from_header(token_secret, &request_metadata)?;
-
         // Using the Token Secret decode the token into a Token Claim
         // This also validates the token expiration, not before and Issuer
         let refresh_token_claim = domain::TokenClaim::parse(
-            &refresh_token.to_string(),
+            &refresh_token_string,
             token_secret,
             issuer,
         )
@@ -320,12 +341,14 @@ impl Authentication for AuthenticationService {
             )
         })?;
 
-        //-- 2. Check the Session & User are Valid
+        //-- 2. Check the Session & User are valid
         ////////////////////////////////////////////////////////////////////////
+
+        tracing::debug!("Check the Session and user are valid.");
 
         // Get the session from the database using the refresh token
         let session = database::Sessions::from_token(
-            &refresh_token.to_string(),
+            &refresh_token_string,
             self.database_ref(),
         )
         .await
@@ -360,6 +383,8 @@ impl Authentication for AuthenticationService {
         //-- 3. Generate new (Refreshed) Access Token
         ////////////////////////////////////////////////////////////////////////
 
+        tracing::debug!("Refresh the access token.");
+
         // Wrap the Token Secret string in a Secret type to limit accidental exposure
         let token_secret = self.config.application.token_secret.clone();
 
@@ -383,10 +408,17 @@ impl Authentication for AuthenticationService {
 
         //-- 4. Send the Tonic Refresh Response
         ////////////////////////////////////////////////////////////////////////
+        
+        tracing::debug!("Send the refresh response.");
+
+        // Cast user instance into a UserResponse instance
+        // This is a conversion from the database user instance to the RPC user instance
+        let user_response_message: UserResponse = user.into();
 
         // Build Authenticate Response with the token
         let response_message = RefreshResponse {
             access_token: access_token.to_string(),
+            user: Some(user_response_message),
         };
 
         // Create a new mutable Tonic response. It is mutable because we need to add the set-cookie header
@@ -396,7 +428,7 @@ impl Authentication for AuthenticationService {
         let mut http_header = HeaderMap::new();
 
         // Add request refresh cookie to the http header map
-        http_header.insert(SET_COOKIE, refresh_token.to_string().parse().unwrap());
+        http_header.insert(SET_COOKIE, refresh_token_string.parse().unwrap());
 
         // Add the http header to the rpc response
         *response.metadata_mut() = MetadataMap::from_headers(http_header);
