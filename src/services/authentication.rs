@@ -265,7 +265,7 @@ impl Authentication for AuthenticationService {
         // Add the http header to the rpc response
         *response.metadata_mut() = MetadataMap::from_headers(http_header);
 
-        tracing::info!("The response is: {:?}", response);
+        tracing::info!("The response is: {:#?}", response);
 
         // Send Response
         Ok(response)
@@ -299,7 +299,7 @@ impl Authentication for AuthenticationService {
         tracing::debug!("Check the refresh token is valid");
 
         let cookie_jar = utils::metadata::get_cookie_jar(&request_metadata)?;
-        tracing::debug!("Cookies jar collected: {:?}", cookie_jar);
+        tracing::debug!("Cookies jar collected: {:#?}", cookie_jar);
 
         // Initiate the access token string
         let refresh_token_string: String;
@@ -424,7 +424,7 @@ impl Authentication for AuthenticationService {
         // Create a new mutable Tonic response. It is mutable because we need to add the set-cookie header
         let response = Response::new(response_message);
 
-        tracing::debug!("The response is: {:?}", response);
+        tracing::debug!("The response is: {:#?}", response);
 
         // Send Response
         Ok(response)
@@ -682,7 +682,8 @@ impl Authentication for AuthenticationService {
         //-- 3. Revoke associated session
         ////////////////////////////////////////////////////////////////////////
 
-        let rows_revoked = session.revoke(&self.database.as_ref()).await? as i64;
+        // Revoke (make inactive) all sessions associated with the user id
+        let rows_revoked = session.revoke_associated(&self.database.as_ref()).await? as i64;
 
         if rows_revoked == 0 {
             tracing::error!("No sessions revoked");

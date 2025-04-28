@@ -127,8 +127,11 @@ impl Sessions {
     /// * `database` - An Sqlx database connection pool.
     /// ---
     #[tracing::instrument(
-        name = "Revoke all Sessions associated with Self user_id: ",
-        skip(database)
+        name = "Revoke all Sessions associated with associated user_id: ",
+        skip_all,
+        fields(
+            user_id = % self.user_id,
+        )
     )]
     pub async fn revoke_associated(
         &self,
