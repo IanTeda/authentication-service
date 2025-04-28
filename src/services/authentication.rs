@@ -422,16 +422,7 @@ impl Authentication for AuthenticationService {
         };
 
         // Create a new mutable Tonic response. It is mutable because we need to add the set-cookie header
-        let mut response = Response::new(response_message);
-
-        // Create a new http header map
-        let mut http_header = HeaderMap::new();
-
-        // Add request refresh cookie to the http header map
-        http_header.insert(SET_COOKIE, refresh_token_string.parse().unwrap());
-
-        // Add the http header to the rpc response
-        *response.metadata_mut() = MetadataMap::from_headers(http_header);
+        let response = Response::new(response_message);
 
         tracing::debug!("The response is: {:?}", response);
 
@@ -707,7 +698,27 @@ impl Authentication for AuthenticationService {
             message: "You are logged out".to_string(),
         };
 
+        let mut response = Response::new(response_message);
+
+        // Create a new http header map
+        let mut http_header = HeaderMap::new();
+
+        // Set th header key and value
+        // This is the header key that tells the browser to clear the cookies
+        // and delete them from the browser
+        let header_key = "Clear-Site-Data";
+        // The header value needs the quotes escaped
+        let header_value = format!(r##""cookies""##);
+
+        // Tell the browser to clear and delete the cookies
+        http_header.insert(header_key, http::HeaderValue::try_from(header_value).unwrap());
+
+        // Add the http header to the rpc response
+        *response.metadata_mut() = MetadataMap::from_headers(http_header);
+
+        tracing::info!("The response is: {:#?}", response);
+
         // Send Response
-        Ok(Response::new(response_message))
+        Ok(response)
     }
 }
