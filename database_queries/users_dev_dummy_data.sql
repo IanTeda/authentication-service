@@ -1,33 +1,292 @@
 -- Insert dummy data into users table
 -- https://www.uuidgenerator.net/version7
-INSERT INTO users (id, email, name, password_hash, is_active, created_on) VALUES
-    ('019071c5-a31c-7a0e-befa-594702122e75', 'ian@teda.id.au', 'Ian Teda', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7d2f-93b2-933edda75592', 'Terrance69@aol.com', 'Terrance', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7b1a-b0b0-b00bd515ed8b', 'Wilburn.Turcotte@aol.com', 'Wilburn', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'false', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-787a-b0b2-262f407ae68b', 'Geovanny_Deckow@aol.com', 'Geovanny', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7b36-946e-efb3c14294c4', 'Carolyn.Stark26@aol.com', 'Carolyn', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-74ce-a7ef-c2a156517458', 'Karlie_Boyer@aol.com', 'Karlie', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'false', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7c87-801a-511ed9e65b70', 'Kraig_Rau@aol.com', 'Kraig', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-77c7-98b9-20a9c8df9c99', 'Eva.Hyatt24@aol.com', 'Eva', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7e04-9853-4ede28017cde', 'Verdie_Rice50@aol.com', 'Verdie', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7c98-9b88-a1bcd00a2794', 'Tyrell81@aol.com', 'Tyrell', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'false', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-72d1-863e-6540228825b7', 'Ada_Swaniawski@aol.com', 'Ada', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'false', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7525-a388-d26f5b8ee192', 'Chelsie_Shields@aol.com', 'Chelsie', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7c5f-a9e6-b6542a7cd280', 'Estrella25@yahoo.com', 'Estrella', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-74f5-b9d9-ed5935b3f43b', 'Marcos.Quigley26@yahoo.com', 'Marcos', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'false', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-796d-8591-6724e42fc445', 'Albina_Boehm@yahoo.com', 'Albina', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'false', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-70c0-a76d-97d0eb0713a4', 'Kaylin81@yahoo.com', 'Kaylin', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-784f-b70f-c3affcbef3de', 'General2@yahoo.com', 'General', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-73fc-a4c6-0f4d7b466bda', 'Conrad.Vandervort39@yahoo.com', 'Conrad', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-768b-a68e-78dd578a9406', 'Yoshiko92@yahoo.com', 'Yoshiko', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7cc0-a1bf-53dac8412cc2', 'Nya.Rice72@yahoo.com', 'Nya', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7d31-9666-4e319279d76e', 'Breanne.Parisian11@yahoo.com', 'Breanne', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7ee6-96f0-7f1e713038ed', 'Tito43@yahoo.com', 'Tito43', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'false', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7709-a824-f6490f5cf1f6', 'Alanna6@yahoo.com', 'Alanna', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-762a-b7aa-bbf4139c0abf', 'Hester_Stoltenberg73@yahoo.com', 'Hester', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7268-9fd6-820d02fbd9d4', 'Fatima1@yandex.com', 'Fatima', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-791f-9df4-937cc8967fd3', 'Kadin95@yandex.com', 'Kadin', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7f9a-a0de-f581929bd433', 'Audreanne91@yandex.com', 'Audreanne', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-7642-a848-cd17fdd36bf1', 'Icie17@yandex.com', 'Icie', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'false', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-79ac-b2e1-89b46833434a', 'Kip0@yandex.com', 'Kip', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'true', '2019-10-17T00:00:00.000000Z'),
-    ('019071c5-a31c-71d3-b818-cf6994d0d3e4', 'Thurman.Jakubowski@yandex.com', 'Thurman', '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 'false', '2019-10-17T00:00:00.000000Z');
+INSERT INTO users (id, email, name, password_hash, role, is_active, is_verified, created_on) VALUES
+    (
+        '019071c5-a31c-7d2f-93b2-933edda75592', 
+        'Terrance69@aol.com', 
+        'Terrance', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'true', 
+        'false',
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-7b1a-b0b0-b00bd515ed8b', 
+        'Wilburn.Turcotte@aol.com', 
+        'Wilburn Turcotte', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'user',
+        'true',
+        'false', 
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-787a-b0b2-262f407ae68b', 
+        'Geovanny_Deckow@aol.com', 
+        'Geovanny Deckow', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'user',
+        'true', 
+        'false',
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-7b36-946e-efb3c14294c4', 
+        'Carolyn.Stark26@aol.com', 
+        'Carolyn Stark', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI',
+        'admin',
+        'true', 
+        'true',
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-74ce-a7ef-c2a156517458', 
+        'Karlie_Boyer@aol.com', 
+        'Karlie Boyer', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'admin',
+        'false', 
+        'false',
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-7c87-801a-511ed9e65b70', 
+        'Kraig_Rau@aol.com', 
+        'Kraig Rau', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'user',
+        'true', 
+        'true',
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-77c7-98b9-20a9c8df9c99', 
+        'Eva.Hyatt24@aol.com', 
+        'Eva Hyatt', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'true', 
+        'false',
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-7e04-9853-4ede28017cde', 
+        'Verdie_Rice50@aol.com',
+        'Verdie Rice', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'user',
+        'true',
+        'false', 
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-7c98-9b88-a1bcd00a2794', 
+        'Tyrell81@aol.com', 
+        'Tyrell', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'false',
+        'true', 
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-72d1-863e-6540228825b7', 
+        'Ada_Swaniawski@aol.com', 
+        'Ada Swaniawski', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'false',
+        'true', 
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-7525-a388-d26f5b8ee192', 
+        'Chelsie_Shields@aol.com', 
+        'Chelsie Shields', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'user',
+        'true',
+        'false', 
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-7c5f-a9e6-b6542a7cd280', 
+        'Estrella25@yahoo.com', 
+        'Estrella', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'true', 
+        'true',
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-74f5-b9d9-ed5935b3f43b', 
+        'Marcos.Quigley26@yahoo.com', 
+        'Marcos Quigley', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'user',
+        'false',
+        'true', 
+        '2019-10-17T00:00:00.000000Z'
+        ),
+    (
+        '019071c5-a31c-796d-8591-6724e42fc445', 
+        'Albina_Boehm@yahoo.com', 
+        'Albina Boehm', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'admin',
+        'false',
+        'true', 
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-70c0-a76d-97d0eb0713a4', 
+        'Kaylin81@yahoo.com', 
+        'Kaylin', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'true', 
+        'true',
+        '2019-10-17T00:00:00.000000Z'
+        ),
+    (
+        '019071c5-a31c-784f-b70f-c3affcbef3de', 
+        'General2@yahoo.com', 
+        'General', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'false',
+        'true', 
+        '2019-10-17T00:00:00.000000Z'
+        ),
+    (
+        '019071c5-a31c-73fc-a4c6-0f4d7b466bda', 
+        'Conrad.Vandervort39@yahoo.com', 
+        'Conrad Vandervort', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'true', 
+        'true',
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-768b-a68e-78dd578a9406', 
+        'Yoshiko92@yahoo.com', 
+        'Yoshiko', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'user',
+        'true',
+        'false', 
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-7cc0-a1bf-53dac8412cc2', 
+        'Nya.Rice72@yahoo.com', 
+        'Nya', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'user',
+        'true',
+        'true', 
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-7d31-9666-4e319279d76e', 
+        'Breanne.Parisian11@yahoo.com', 
+        'Breanne Parisian11', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'true', 
+        'true',
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-7ee6-96f0-7f1e713038ed', 
+        'Tito43@yahoo.com', 
+        'Tito43', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'false',
+        'false', 
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-7709-a824-f6490f5cf1f6', 
+        'Alanna6@yahoo.com', 
+        'Alanna', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'user',
+        'true',
+        'false', 
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-762a-b7aa-bbf4139c0abf', 'Hester_Stoltenberg73@yahoo.com', 
+        'Hester Stoltenberg', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'user',
+        'true',
+        'false', 
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-7268-9fd6-820d02fbd9d4', 
+        'Fatima1@yandex.com', 
+        'Fatima', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'true', 
+        'true',
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-791f-9df4-937cc8967fd3', 
+        'Kadin95@yandex.com', 
+        'Kadin', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'true', 
+        'true',
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-7f9a-a0de-f581929bd433', 
+        'Audreanne91@yandex.com', 
+        'Audreanne', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'true', 
+        'true',
+        '2019-10-17T00:00:00.000000Z'
+        ),
+    (
+        '019071c5-a31c-7642-a848-cd17fdd36bf1', 
+        'Icie17@yandex.com', 
+        'Icie', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'user',
+        'false',
+        'false', 
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-79ac-b2e1-89b46833434a', 
+        'Kip0@yandex.com', 
+        'Kip', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'true', 
+        'true',
+        '2019-10-17T00:00:00.000000Z'
+    ),
+    (
+        '019071c5-a31c-71d3-b818-cf6994d0d3e4', 
+        'Thurman.Jakubowski@yandex.com', 
+        'Thurman Jakubowski', 
+        '$argon2id$v=19$m=15000,t=2,p=1$ZR2xq7FIelha7b5cI1dqZQ$fqoKL/Ng1cnP7tIvdb3DZAVJEYEYNmrVCdicskhTaxI', 
+        'guest',
+        'true',
+        'false', 
+        '2019-10-17T00:00:00.000000Z'
+    );
