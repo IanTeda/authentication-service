@@ -6,34 +6,34 @@
 //!
 //! `proto` brings the Protobuf generated files into scope
 //! `get_router` returns all the rpc endpoints for building the Tonic server.
-//! 
+//!
 //! ## Install
-//! 
+//!
 //! To get localhost https certificates we need to do a few things
-//! 
+//!
 //! 1. Install MkCert
-//! 
+//!
 //! ```bash
 //! sudo apt install mkcert libnss3-tools
 //! ```
-//! 
+//!
 //! 2. Install local Certificate Authority (CA)
-//! 
+//!
 //! ```bash
 //! mkcert --install
 //! ```
-//! 
+//!
 //! 3. Generate certificates
-//! 
+//!
 //! Need a server key and pem
-//! 
+//!
 //! ```bash
 //! cd tls
 //! mkcert server
 //! ```
-//! 
+//!
 //! ## Actions and fixes
-//! 
+//!
 //! - [ ] Add cert creation to the Dockerfile
 //! - [ ] Should this be made into a struct
 //!
@@ -63,7 +63,6 @@ use crate::rpc::proto::users_service_server::UsersServiceServer as UsersServer;
 use crate::rpc::proto::utilities_service_server::UtilitiesServiceServer as UtilitiesServer;
 use crate::services;
 
-
 //-- Constants
 // Default max age for CORS preflight requests
 // This is the time the browser will cache the preflight response
@@ -84,8 +83,13 @@ const DEFAULT_EXPOSED_HEADERS: [&str; 3] =
 // The browser will not send these headers by default
 // unless they are specified in the CORS request.
 // The gRPC-web client will use these headers to send the request.
-const DEFAULT_ALLOW_HEADERS: [&str; 4] =
-    ["x-grpc-web", "content-type", "x-user-agent", "grpc-timeout"];
+const DEFAULT_ALLOW_HEADERS: [&str; 5] = [
+    "x-grpc-web",
+    "content-type",
+    "x-user-agent",
+    "grpc-timeout",
+    "authorization",
+];
 
 /// # GRPC Router
 ///
@@ -166,6 +170,7 @@ pub fn get_router(
         services::UsersService::new(Arc::clone(&database), Arc::clone(&config));
 
     // Wrap the UsersService in the UsersServiceServer
+    // let users_server = UsersServer::new(users_service); // <-- For testing with no access token
     let users_server = UsersServer::with_interceptor(
         users_service,
         middleware::AuthorisationInterceptor {
@@ -195,7 +200,6 @@ pub fn get_router(
     // let cert = std::fs::read_to_string(tls_dir.join("server.pem"))?;
     // let key = std::fs::read_to_string(tls_dir.join("server-key.pem"))?;
     // let identity = tonic_transport::Identity::from_pem(cert, key);
-
 
     let router = tonic_transport::Server::builder()
         // Start tonic log tracing

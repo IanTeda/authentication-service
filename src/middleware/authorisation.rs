@@ -7,10 +7,9 @@
 /// This interceptor is used to validate the access token in the request
 /// metadata. It checks if the access token is present and valid.
 /// If the access token is not present or invalid, it returns an error.
-
 use secrecy::SecretString;
 
-use crate::{domain, prelude::*, utils};
+use crate::{domain, prelude::*};
 use std::str::FromStr;
 
 #[derive(Clone)]
@@ -21,6 +20,14 @@ pub struct AuthorisationInterceptor {
 }
 
 impl tonic::service::Interceptor for AuthorisationInterceptor {
+    /// Intercept the request and check if the access token is valid
+    #[tracing::instrument(
+        name = "Authorisation Interceptor: ", 
+        skip(self),
+        fields(
+            header = ?request.metadata(),
+        )
+    )]
     fn call(
         &mut self,
         request: tonic::Request<()>,
@@ -28,34 +35,14 @@ impl tonic::service::Interceptor for AuthorisationInterceptor {
         // Get the metadata from the tonic request
         let metadata: &tonic::metadata::MetadataMap = request.metadata();
 
-        // Using the cookie jar utility, extract the cookies form the metadata
-        // into a Cookie Jar.
-        let cookie_jar = utils::metadata::get_cookie_jar(metadata)?;
+        // Get the access token from the header metadata
+        let access_token_bearer = domain::AccessToken::parse_header(metadata)?;
 
-        // Initiate the access token string
-        let access_token_string: String;
-
-        // Get the access token cookie from the request metadata and return the
-        // token string without the extra cookie metadata
-        let _access_token_cookie = match cookie_jar.get("access_token") {
-            Some(cookie) => {
-                access_token_string = cookie.value_trimmed().to_string();
-            }
-            None => {
-                tracing::error!(
-                    "Access token cookie not found in the request header."
-                );
-                return Err(tonic::Status::unauthenticated(
-                    "Authentication Failed!",
-                ));
-            }
-        };
-        tracing::debug!("Access token string: {}", access_token_string);
-
-        // Using the Token Secret decode the Access Token string into a Token Claim. 
+        // Using the Token Secret decode the Access Token string into a Token Claim.
         // This validates the token expiration, not before and Issuer.
+        // TODO: Map out domains and refactor tokens
         let access_token_claim = domain::TokenClaim::parse(
-            &access_token_string,
+            &access_token_bearer.to_string(),
             &self.token_secret,
             &self.issuer,
         )
@@ -86,10 +73,10 @@ impl tonic::service::Interceptor for AuthorisationInterceptor {
         if !self.allowable_roles.contains(&role) {
             tracing::error!("Access Token user role is not authorised!");
             // Return error
-            return Err(tonic::Status::unauthenticated(
-                "Authentication Failed!",
-            ));
+            return Err(tonic::Status::unauthenticated("Authentication Failed!"));
         }
+
+        tracing::info!("Authorization request header validated.");
 
         Ok(request)
     }

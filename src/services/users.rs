@@ -206,7 +206,7 @@ impl Users for UsersService {
         // Break up the request into its three parts: 1. Metadata, 2. Extensions & 3. Message
         let (_request_metadata, _request_extensions, request_message) =
             request.into_parts();
-
+        
         // Offset, where to start the records from
         let offset = request_message.offset;
 

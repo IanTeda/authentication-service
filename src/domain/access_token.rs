@@ -69,6 +69,33 @@ impl AccessToken {
 
         Ok(Self(token))
     }
+
+    /// # Parse Access Token
+    /// 
+    /// Parse the Access Token from the request header, returning a Result with
+    /// an AccessToken or BackEnd error
+    pub fn parse_header(
+        request_header: &tonic::metadata::MetadataMap
+    ) -> Result<Self, AuthenticationError> {
+        // Get authorization header from request
+        let authorization_header = request_header
+            .get("authorization")
+            .ok_or(AuthenticationError::AuthenticationError(
+                "Authorization header not found".to_string(),
+            ))?;
+        
+        // Get the access token from the authorization header bearer string
+        let access_token = authorization_header
+            .to_str()
+            .map_err(|_| {
+                AuthenticationError::AuthenticationError(
+                    "Authorization header is not a valid string".to_string(),
+                )
+            })?
+            .replace("Bearer ", "");
+
+        Ok(Self(access_token))
+    }
 }
 
 #[cfg(test)]
