@@ -1,4 +1,4 @@
-//-- ./src/middleware/access_token.rs
+//-- ./src/middleware/authorisation.rs
 
 // #![allow(unused)] // For beginning only.
 
@@ -37,6 +37,8 @@ impl tonic::service::Interceptor for AuthorisationInterceptor {
 
         // Get the access token from the header metadata
         let access_token_bearer = domain::AccessToken::parse_header(metadata)?;
+
+        println!("Access Token: {:?}", access_token_bearer);
 
         // Using the Token Secret decode the Access Token string into a Token Claim.
         // This validates the token expiration, not before and Issuer.

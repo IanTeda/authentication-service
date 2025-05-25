@@ -13,6 +13,7 @@
 pub extern crate tonic;
 
 use std::time;
+use authentication_service::domain;
 use tonic::codegen::InterceptedService;
 use tonic::transport::Channel;
 
@@ -70,16 +71,6 @@ impl TonicClient {
         let access_token = server.clone().access_token;
         let refresh_token = server.clone().refresh_token;
 
-        // Get access token duration
-        let at_duration = time::Duration::new(
-            (server.config.application.access_token_duration_minutes * 60)
-                .try_into()
-                .unwrap(),
-            0,
-        );        
-        let at_duration =
-            cookie::time::Duration::new(at_duration.as_secs() as i64, 0);
-
         // Get refresh token duration
         let rt_duration = time::Duration::new(
             (server.config.application.refresh_token_duration_minutes * 60)
@@ -88,22 +79,6 @@ impl TonicClient {
             0,
         );
 
-        // Build access cookie string
-        let access_cookie =
-            Cookie::build(("access_token", access_token.to_string()))
-                // Set the domain of the cookie
-                .domain(server.address.to_owned())
-                // Indicates the path that must exist in the requested URL for the browser to send the Cookie header.
-                .path("/")
-                // Indicates the number of seconds until the cookie expires.
-                .max_age(at_duration)
-                // Forbids JavaScript from accessing the cookie
-                .http_only(true)
-                // Indicates that the cookie is sent to the server only when a request is made with the https or localhost
-                .secure(false)
-                .build()
-                .to_string();
-
         // Build refresh token as a string
         let refresh_cookie = refresh_token
             .build_cookie(&server.address, &rt_duration)
@@ -111,7 +86,7 @@ impl TonicClient {
 
         // Create client token interceptor
         let client_interceptor = TokenInterceptor {
-            access_cookie,
+            access_token,
             refresh_cookie,
         };
 
@@ -137,11 +112,10 @@ impl TonicClient {
 /// Supplies requests with access token
 #[derive(Clone)]
 pub struct TokenInterceptor {
-    access_cookie: String,
+    access_token: domain::AccessToken,
     refresh_cookie: String,
 }
 
-use cookie::Cookie;
 use http::header::COOKIE;
 use http::HeaderMap;
 use tonic::metadata::MetadataMap;
@@ -157,8 +131,10 @@ impl tonic::service::Interceptor for TokenInterceptor {
         // println!("Access Token: {:?}", self.access_cookie);
         // println!("Refresh Token: {:?}", self.refresh_cookie);
 
-        // Add refresh cookie to the http header map
-        http_header.append(COOKIE, self.access_cookie.parse().unwrap());
+        // Add authorization bearer token to the http header
+        http_header.append("authorization", format!("Bearer {}", self.access_token.to_string()).parse().unwrap());
+
+        // Add refresh cookie to the http header
         http_header.append(COOKIE, self.refresh_cookie.parse().unwrap());
 
         // Add the http header to the rpc response

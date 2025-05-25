@@ -84,7 +84,7 @@ impl AccessToken {
                 "Authorization header not found".to_string(),
             ))?;
         
-        // Get the access token from the authorization header bearer string
+        // Get the access token string from the authorization header bearer string
         let access_token = authorization_header
             .to_str()
             .map_err(|_| {
