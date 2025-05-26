@@ -17,9 +17,8 @@ CREATE TABLE IF NOT EXISTS users (
     PRIMARY KEY (id)
 );
 
--- Create an index's for quicker find
--- https://www.slingacademy.com/article/postgresql-how-to-set-index-on-a-table-column/
-CREATE UNIQUE INDEX idx_unique_email ON users (email);
+-- Create an index for quicker lookup by created_on and id with cursor based pagination
+CREATE INDEX idx_users_created_on_id ON users (created_on, id);
 
 -- Start with an admin user and password, that one should change
 -- Password: "S3cret-Admin-Pas$word!"
@@ -34,4 +33,4 @@ INSERT INTO users (
     'true',
     'true',
     '2019-10-17T00:00:00.000000Z'
-)
+);

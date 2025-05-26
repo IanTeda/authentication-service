@@ -98,7 +98,7 @@ pub fn sessions(
 
     // Generate random login time
     let random_login_on: DateTime<Utc> = DateTime().fake();
-    let random_login_on = random_login_on.round_subsecs(0);
+    let random_logged_in_at = random_login_on.round_subsecs(0);
 
     // Generate random IPV4 address, with 25% chance of being None
     let random_ip: Ipv4Addr = IPv4().fake();
@@ -113,14 +113,14 @@ pub fn sessions(
     // Generate a random session expiration date between 1 and 30 days.
     let random_duration_days = (1..30).fake::<u64>();
     let duration = time::Duration::from_secs(random_duration_days * 24 * 60 * 60);
-    let random_expires_on = random_login_on + duration;
+    let random_expires_on = random_logged_in_at + duration;
 
     // Generate random boolean value
     let random_is_active: bool = Boolean(4).fake();
 
     // Generate random login time
-    let random_logout = random_login_on.round_subsecs(0);
-    let random_logout_on = if Boolean(4).fake() {
+    let random_logout = random_logged_in_at.round_subsecs(0);
+    let random_logged_out_at = if Boolean(4).fake() {
         Some(random_logout)
     } else {
         None
@@ -140,12 +140,12 @@ pub fn sessions(
     let mock_session = database::Sessions {
         id: random_id,
         user_id,
-        login_on: random_login_on,
+        logged_in_at: random_logged_in_at,
         login_ip: random_login_ip,
         expires_on: random_expires_on,
         refresh_token: refresh_token.to_owned(),
         is_active: random_is_active,
-        logout_on: random_logout_on,
+        logged_out_at: random_logged_out_at,
         logout_ip: random_logout_ip,
     };
 

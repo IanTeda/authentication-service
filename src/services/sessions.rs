@@ -55,27 +55,27 @@ impl From<database::Sessions> for SessionsResponse {
     fn from(value: database::Sessions) -> Self {
         let id = value.id.to_string();
         let user_id = value.user_id.to_string();
-        let login_on = value.login_on.to_string();
+        let logged_in_at = value.logged_in_at.to_string();
         let login_ip = value.login_ip;
         let expires_on = value.expires_on.to_string();
         let refresh_token = value.refresh_token.to_string();
         let is_active = value.is_active;
-        let logout_on = if value.logout_on.is_none() {
+        let logged_out_at = if value.logged_out_at.is_none() {
             None
         } else {
-            Some(value.logout_on.unwrap().to_string())
+            Some(value.logged_out_at.unwrap().to_string())
         };
         let logout_ip = value.logout_ip;
 
         Self {
             id,
             user_id,
-            login_on,
+            logged_in_at,
             login_ip,
             expires_on,
             refresh_token,
             is_active,
-            logout_on,
+            logged_out_at,
             logout_ip,
         }
     }

@@ -15,12 +15,12 @@ use crate::{database, domain, prelude::AuthenticationError};
 pub struct Sessions {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub login_on: DateTime<Utc>,
+    pub logged_in_at: DateTime<Utc>,
     pub login_ip: Option<i32>,
     pub expires_on: DateTime<Utc>,
     pub refresh_token: domain::RefreshToken,
     pub is_active: bool,
-    pub logout_on: Option<DateTime<Utc>>,
+    pub logged_out_at: Option<DateTime<Utc>>,
     pub logout_ip: Option<i32>,
 }
 
@@ -28,7 +28,7 @@ impl Sessions {
     /// # New Database Sessions Instance
     /// 
     /// Creates a new instance of the Sessions struct.
-    /// This can be used to insert, update or delete sesions from the database
+    /// This can be used to insert, update or delete sessions from the database
     /// 
     /// ## Parameters
     /// 
@@ -50,7 +50,7 @@ impl Sessions {
         let user_id = user.id.to_owned();
 
         /// The login time is the current time
-        let login_on = Utc::now().round_subsecs(0);
+        let logged_in_at = Utc::now().round_subsecs(0);
 
         /// The login IP address is the IP address of the user request
         let login_ip = login_ip.to_owned();
@@ -59,13 +59,13 @@ impl Sessions {
         let refresh_token = refresh_token.to_owned();
 
         /// The login expires on is the login time + the duration of the session
-        let expires_on = login_on + *duration;
+        let expires_on = logged_in_at + *duration;
 
         /// The is_active field is set to true by default and can be used revoke a session and thus refresh token.
         let is_active = true;
 
         /// When did the user logout of the session. Optional as they may not have logged out. So the session expires.
-        let logout_on = None;
+        let logged_out_at = None;
 
         /// The  IP address from were the logout request is sent. Optional as they may not have logged out. So the session expires.
         let logout_ip = None;
@@ -73,12 +73,12 @@ impl Sessions {
         Ok(Self {
             id,
             user_id,
-            login_on,
+            logged_in_at,
             login_ip,
             expires_on,
             refresh_token,
             is_active,
-            logout_on,
+            logged_out_at,
             logout_ip,
         })
     }
@@ -114,8 +114,8 @@ impl Sessions {
         let random_refresh_token = domain::RefreshToken::mock_data(user)?;
 
         // Generate random login time
-        let random_login_on: DateTime<Utc> = DateTime().fake();
-        let random_login_on = random_login_on.round_subsecs(0);
+        let random_logged_in_at: DateTime<Utc> = DateTime().fake();
+        let random_logged_in_at = random_logged_in_at.round_subsecs(0);
 
         // Generate random IPV4 address, with 25% chance of being None
         let random_ip: Ipv4Addr = IPv4().fake();
@@ -130,15 +130,15 @@ impl Sessions {
         // Generate a random expiration date between 1 and 30 days.
         let random_duration_days = (1..30).fake::<u64>();
         let duration = time::Duration::from_secs(random_duration_days * 24 * 60 * 60);
-        let random_expires_on = random_login_on + duration;
+        let random_expires_on = random_logged_in_at + duration;
 
         // Generate random boolean value
         let random_is_active: bool = Boolean(4).fake();
 
         // Generate random login time
-        let random_logout_on: DateTime<Utc> = DateTime().fake();
-        let random_logout = random_login_on.round_subsecs(0);
-        let random_logout_on = if Boolean(4).fake() {
+        let random_logged_out_at: DateTime<Utc> = DateTime().fake();
+        let random_logout = random_logged_in_at.round_subsecs(0);
+        let random_logged_out_at = if Boolean(4).fake() {
             Some(random_logout)
         } else {
             None
@@ -158,12 +158,12 @@ impl Sessions {
         let mock_session = Self {
             id: random_id,
             user_id,
-            login_on: random_login_on,
+            logged_in_at: random_logged_in_at,
             login_ip: random_login_ip,
             expires_on: random_expires_on,
             refresh_token: random_refresh_token,
             is_active: random_is_active,
-            logout_on: random_logout_on,
+            logged_out_at: random_logged_out_at,
             logout_ip: random_logout_ip,
         };
 

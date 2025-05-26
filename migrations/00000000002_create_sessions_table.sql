@@ -7,13 +7,24 @@
 CREATE TABLE IF NOT EXISTS sessions (
     id UUID NOT NULL,
     user_id UUID NOT NULL,
-    login_on TIMESTAMP WITH TIME ZONE NOT NULL,
+    logged_in_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     login_ip INT,
     expires_on TIMESTAMP WITH TIME ZONE NOT NULL,
     refresh_token TEXT NOT NULL,
-    is_active BOOLEAN NOT NULL,
-    logout_on TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT false NOT NULL,
+    logged_out_at TIMESTAMP WITH TIME ZONE,
     logout_ip INT,
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Create an index for quicker lookup by created_on and id with cursor based pagination
+CREATE INDEX idx_sessions_logged_in_at_id ON sessions (logged_in_at, id);
+
+-- Indexes for common queries
+
+-- Index for looking up user's sessions
+CREATE INDEX idx_sessions_user_id ON sessions (user_id);
+
+-- Index for finding active sessions
+CREATE INDEX idx_sessions_is_active ON sessions (is_active) WHERE is_active = true;

@@ -1,6 +1,6 @@
 //-- ./src/database/users/read.rs
 
-//! Read User[s] int the database, returning a Result with a UserModel instance
+//! Read User[s] in the database, returning a Result with a UserModel instance
 //! or a Vec[UserModel]
 //! ---
 
