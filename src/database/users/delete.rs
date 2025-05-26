@@ -20,7 +20,7 @@ impl Users {
         name = "Delete a User from the database with id: ",
         skip(self, database),
         fields(
-            user_id = % self.id,
+            user_id = ?self.id,
         )
     )]
     pub async fn delete(
@@ -29,7 +29,7 @@ impl Users {
     ) -> Result<u64, AuthenticationError> {
         let rows_affected = sqlx::query!(
             r#"
-					Delete
+					DELETE
 					FROM users
 					WHERE id = $1
 				"#,
@@ -49,7 +49,6 @@ impl Users {
 #[cfg(test)]
 pub mod tests {
     use sqlx::{Pool, Postgres};
-
     use crate::database;
 
     // Bring module functions into test scope
@@ -61,7 +60,7 @@ pub mod tests {
 
     // Test getting user from database using unique UUID
     #[sqlx::test]
-    async fn delete_user_record(database: Pool<Postgres>) -> Result<()> {
+    async fn delete_existing_user(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
         // Generate random user for testing
         let random_test_user = database::Users::mock_data()?;
@@ -76,22 +75,22 @@ pub mod tests {
         //-- Checks (Assertions)
         assert_eq!(rows_affected, 1);
 
+        // Try to fetch the user, should fail
+        let fetch_result = database::Users::from_user_id(&random_test_user.id, &database).await;
+        assert!(fetch_result.is_err());
+
         // -- Return
         Ok(())
     }
 
     // Test getting user from database using unique UUID
     #[sqlx::test]
-    async fn delete_user_false(database: Pool<Postgres>) -> Result<()> {
+    async fn delete_nonexistent_user(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
         // Generate random user for testing
         let mut random_test_user = database::Users::mock_data()?;
 
-        // Insert user in the database
-        random_test_user.insert(&database).await?;
-
-        // Generate a new random user id and push to instance for testing
-        random_test_user.id = database::Users::mock_data()?.id;
+        // Don not insert user in the database
 
         //-- Execute Function (Act)
         // Insert user into database
@@ -101,6 +100,40 @@ pub mod tests {
         assert_eq!(rows_affected, 0);
 
         // -- Return
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn delete_user_twice(database: Pool<Postgres>) -> Result<()> {
+        // Arrange
+        let random_test_user = database::Users::mock_data()?;
+        random_test_user.insert(&database).await?;
+
+        // Act
+        let first_delete = random_test_user.delete(&database).await?;
+        let second_delete = random_test_user.delete(&database).await?;
+
+        // Assert
+        assert_eq!(first_delete, 1);
+        assert_eq!(second_delete, 0);
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn delete_multiple_users(database: Pool<Postgres>) -> Result<()> {
+        // Arrange
+        let user1 = database::Users::mock_data()?;
+        let user2 = database::Users::mock_data()?;
+        user1.insert(&database).await?;
+        user2.insert(&database).await?;
+
+        // Act
+        let rows_affected1 = user1.delete(&database).await?;
+        let rows_affected2 = user2.delete(&database).await?;
+
+        // Assert
+        assert_eq!(rows_affected1, 1);
+        assert_eq!(rows_affected2, 1);
         Ok(())
     }
 }
