@@ -122,14 +122,18 @@ impl Sessions for SessionsService {
             request.into_parts();
 
         // Offset, where to start the records from
-        let offset: i64 = request_message.offset.into();
+        let offset: usize = request_message.offset.try_into().map_err(|_| {
+            Status::invalid_argument("Offset must be a non-negative integer within usize range")
+        })?;
 
         // The number of users to be returned
-        let limit: i64 = request_message.limit.into();
+        let limit: usize = request_message.limit.try_into().map_err(|_| {
+            Status::invalid_argument("Limit must be a non-negative integer within usize range")
+        })?;
 
         // Query the database
         let database_records =
-            database::Sessions::index(&limit, &offset, self.database_ref()).await?;
+            database::Sessions::index(limit, offset, self.database_ref()).await?;
 
         // Convert database::Users into User Response within the vector
         let sessions: Vec<SessionsResponse> = database_records

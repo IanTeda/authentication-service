@@ -2,8 +2,17 @@
 
 // #![allow(unused)] // For development only
 
-//! Update Sessions in the database
-//! ---
+//! Session update logic for the authentication service.
+//!
+//! This module provides functions to update and revoke session records in the database,
+//! including updating session fields, revoking individual sessions, revoking all sessions
+//! for a user, and revoking all sessions globally.
+//!
+//! # Contents
+//! - Update a session by instance
+//! - Revoke (deactivate) a session by instance or ID
+//! - Revoke all sessions for a user or globally
+//! - Unit tests for update and revoke scenarios
 
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
@@ -12,17 +21,27 @@ use crate::database::Sessions;
 use crate::prelude::AuthenticationError;
 
 impl Sessions {
-    /// Update a self in the database, returning a result with a Sessions instance
-    /// or Sqlx error.
+    /// Update this session in the database.
+    ///
+    /// Executes a SQL `UPDATE` statement to modify the session record identified by its `id`,
+    /// updating the `user_id`, `refresh_token`, and `is_active` fields.
     ///
     /// # Parameters
+    /// * `self` - The `Sessions` instance containing the updated data.
+    /// * `database` - The SQLx PostgreSQL connection pool.
     ///
-    /// * `self` - A Sessions instance.
-    /// * `database` - An Sqlx database connection pool.
-    /// ---
+    /// # Returns
+    /// * `Ok(Sessions)` - The updated session record as returned from the database.
+    /// * `Err(AuthenticationError)` - If the database operation fails.
+    ///
+    /// # Tracing
+    /// - Adds a tracing span for observability.
     #[tracing::instrument(
         name = "Update a Session in the database: ",
-        skip(database)
+        skip(database),
+        fields(
+            session = ?self,
+        )
     )]
     pub async fn update(
         &self,
@@ -49,29 +68,38 @@ impl Sessions {
         Ok(database_record)
     }
 
-    /// Revoke (make non-active) self in the database, returning a result
-    /// with a Sessions instance or and SQLx error
+    /// Revoke (make non-active) this session in the database.
+    ///
+    /// Executes a SQL `UPDATE` statement to set `is_active = false` for the session record
+    /// identified by this session's `id`.
     ///
     /// # Parameters
+    /// * `self` - The `Sessions` instance to be revoked.
+    /// * `database` - The SQLx PostgreSQL connection pool.
     ///
-    /// * `self` - A Sessions instance.
-    /// * `database` - An Sqlx database connection pool.
-    /// ---
+    /// # Returns
+    /// * `Ok(u64)` - The number of sessions revoked (should be 1 if the session existed, 0 otherwise).
+    /// * `Err(AuthenticationError)` - If the database operation fails.
+    ///
+    /// # Tracing
+    /// - Adds the session `id` to the tracing span for observability.
     #[tracing::instrument(
         name = "Revoke sessions in the database: ",
-        skip(database)
+        skip(database),
+        fields(
+            session_id = ?self.id,
+        )
     )]
     pub async fn revoke(
         &self,
         database: &Pool<Postgres>,
     ) -> Result<u64, AuthenticationError> {
-        let rows_affected = sqlx::query_as!(
-            Sessions,
+        let rows_affected = sqlx::query!(
             r#"
-                    UPDATE sessions
-                    SET is_active = false
-                    WHERE id = $1
-                "#,
+                UPDATE sessions
+                SET is_active = false
+                WHERE id = $1
+            "#,
             self.id
         )
         .execute(database)
@@ -83,29 +111,38 @@ impl Sessions {
         Ok(rows_affected)
     }
 
-    /// Revoke (make non-active) a Session with a give PK (id) in the database,
-    /// returning a result with the number of rows affected or and SQLx error
+    /// Revoke (make non-active) a session in the database by its unique session ID.
+    ///
+    /// Executes a SQL `UPDATE` statement to set `is_active = false` for the session record
+    /// identified by the provided `id`.
     ///
     /// # Parameters
+    /// * `id` - The UUID of the session to be revoked.
+    /// * `database` - The SQLx PostgreSQL connection pool.
     ///
-    /// * `id` - Uuid: The database row PK (id).
-    /// * `database` - An Sqlx database connection pool.
-    /// ---
+    /// # Returns
+    /// * `Ok(u64)` - The number of sessions revoked (rows updated, should be 1 if the session existed, 0 otherwise).
+    /// * `Err(AuthenticationError)` - If the database operation fails.
+    ///
+    /// # Tracing
+    /// - Adds the session `id` to the tracing span for observability.
     #[tracing::instrument(
         name = "Revoke Sessions in the database: ",
-        skip(database)
+        skip(database),
+        fields(
+            session_id = ?id,
+        )
     )]
     pub async fn revoke_by_id(
         id: &Uuid,
         database: &Pool<Postgres>,
     ) -> Result<u64, AuthenticationError> {
-        let rows_affected = sqlx::query_as!(
-            Sessions,
+        let rows_affected = sqlx::query!(
             r#"
-                    UPDATE sessions
-                    SET is_active = false
-                    WHERE id = $1
-                "#,
+                UPDATE sessions
+                SET is_active = false
+                WHERE id = $1
+            "#,
             id
         )
         .execute(database)
@@ -117,33 +154,38 @@ impl Sessions {
         Ok(rows_affected)
     }
 
-    /// Revoke (make non-active) all Sessions in the database associated to
-    /// the self (user_id), returning a result with the number of rows revoked
-    /// or an SQLx error
+    /// Revoke (make non-active) all sessions in the database associated with the same user ID as this session.
+    ///
+    /// Executes a SQL `UPDATE` statement to set `is_active = false` for all session records
+    /// that have the same `user_id` as the current session instance.
     ///
     /// # Parameters
+    /// * `self` - The `Sessions` instance whose `user_id` will be used for revocation.
+    /// * `database` - The SQLx PostgreSQL connection pool.
     ///
-    /// * `self` - Sessions instance with the user_id to revoke.
-    /// * `database` - An Sqlx database connection pool.
-    /// ---
+    /// # Returns
+    /// * `Ok(u64)` - The number of sessions revoked (rows updated).
+    /// * `Err(AuthenticationError)` - If the database operation fails.
+    ///
+    /// # Tracing
+    /// - Adds the `user_id` to the tracing span for observability.
     #[tracing::instrument(
         name = "Revoke all Sessions associated with associated user_id: ",
         skip_all,
         fields(
-            user_id = % self.user_id,
+            user_id = ?self.user_id,
         )
     )]
     pub async fn revoke_associated(
         &self,
         database: &Pool<Postgres>,
     ) -> Result<u64, AuthenticationError> {
-        let rows_affected = sqlx::query_as!(
-            Sessions,
+        let rows_affected = sqlx::query!(
             r#"
-                    UPDATE sessions
-                    SET is_active = false
-                    WHERE user_id = $1
-                "#,
+                UPDATE sessions
+                SET is_active = false
+                WHERE user_id = $1
+            "#,
             self.user_id
         )
         .execute(database)
@@ -155,29 +197,38 @@ impl Sessions {
         Ok(rows_affected)
     }
 
-    /// Revoke (make non-active) all Sessions in the database for a give user_id,
-    /// returning a result with the number Sessions revoked or an SQLx error
+    /// Revoke (make non-active) all sessions in the database for a given user ID.
+    ///
+    /// Executes a SQL `UPDATE` statement to set `is_active = false` for all session records
+    /// associated with the specified `user_id`.
     ///
     /// # Parameters
+    /// * `user_id` - The UUID of the user whose sessions should be revoked.
+    /// * `database` - The SQLx PostgreSQL connection pool.
     ///
-    /// * `user_id` - The user_id for the Sessions to be revoked.
-    /// * `database` - An Sqlx database connection pool.
-    /// ---
+    /// # Returns
+    /// * `Ok(u64)` - The number of sessions revoked (rows updated).
+    /// * `Err(AuthenticationError)` - If the database operation fails.
+    ///
+    /// # Tracing
+    /// - Adds the `user_id` to the tracing span for observability.
     #[tracing::instrument(
         name = "Revoke all Sessions in the database: ",
-        skip(database)
+        skip(database),
+        fields(
+            user_id = ?user_id,
+        )
     )]
     pub async fn revoke_user_id(
         user_id: &Uuid,
         database: &Pool<Postgres>,
     ) -> Result<u64, AuthenticationError> {
-        let rows_affected = sqlx::query_as!(
-            Sessions,
+        let rows_affected = sqlx::query!(
             r#"
-                    UPDATE sessions
-                    SET is_active = false
-                    WHERE user_id = $1
-                "#,
+                UPDATE sessions
+                SET is_active = false
+                WHERE user_id = $1
+            "#,
             user_id
         )
         .execute(database)
@@ -189,20 +240,27 @@ impl Sessions {
         Ok(rows_affected)
     }
 
-    /// Revoke (make non-active) all Sessions in the database, returning a
-    /// result with the number of rows revoked or an SQLx error.
+    /// Revoke (make non-active) all sessions in the database.
+    ///
+    /// Executes a SQL `UPDATE` statement to set `is_active = false` for all session records.
     ///
     /// # Parameters
+    /// * `database` - The SQLx PostgreSQL connection pool.
     ///
-    /// * `database` - An Sqlx database connection pool.
-    /// ---
+    /// # Returns
+    /// * `Ok(u64)` - The number of sessions revoked (rows updated).
+    /// * `Err(AuthenticationError)` - If the database operation fails.
+    ///
+    /// # Tracing
+    /// - Adds a tracing span for observability.
     #[tracing::instrument(
         name = "Revoke all Sessions in the database: ",
         skip(database)
     )]
-    pub async fn revoke_all(database: &Pool<Postgres>) -> Result<u64, AuthenticationError> {
-        let rows_affected = sqlx::query_as!(
-            Sessions,
+    pub async fn revoke_all(
+        database: &Pool<Postgres>,
+    ) -> Result<u64, AuthenticationError> {
+        let rows_affected = sqlx::query!(
             r#"
                 UPDATE sessions
                 SET is_active = false
@@ -502,6 +560,102 @@ pub mod tests {
         assert_eq!(database_record.is_active, false);
 
         // -- Return
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn update_nonexistent_session_returns_error(
+        database: Pool<Postgres>,
+    ) -> Result<()> {
+        // Arrange: Create a session that is not in the database
+        let random_user = database::Users::mock_data()?;
+        let session = database::Sessions::mock_data(&random_user).await?;
+
+        // Act: Try to update the session (should error)
+        let result = session.update(&database).await;
+
+        // Assert: Should return an error
+        assert!(
+            result.is_err(),
+            "Updating a nonexistent session should fail"
+        );
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn revoke_nonexistent_session_returns_zero(
+        database: Pool<Postgres>,
+    ) -> Result<()> {
+        // Arrange: Create a session that is not in the database
+        let random_user = database::Users::mock_data()?;
+        let session = database::Sessions::mock_data(&random_user).await?;
+
+        // Act: Try to revoke the session (should affect 0 rows)
+        let rows_affected = session.revoke(&database).await?;
+
+        // Assert: Should return 0
+        assert_eq!(rows_affected, 0);
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn revoke_by_id_nonexistent_session_returns_zero(
+        database: Pool<Postgres>,
+    ) -> Result<()> {
+        use uuid::Uuid;
+        // Act: Try to revoke a session by a random UUID
+        let random_id = Uuid::new_v4();
+        let rows_affected =
+            database::Sessions::revoke_by_id(&random_id, &database).await?;
+
+        // Assert: Should return 0
+        assert_eq!(rows_affected, 0);
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn revoke_user_id_nonexistent_user_returns_zero(
+        database: Pool<Postgres>,
+    ) -> Result<()> {
+        use uuid::Uuid;
+        // Act: Try to revoke sessions for a random user_id
+        let random_user_id = Uuid::new_v4();
+        let rows_affected =
+            database::Sessions::revoke_user_id(&random_user_id, &database).await?;
+
+        // Assert: Should return 0
+        assert_eq!(rows_affected, 0);
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn revoke_all_when_no_sessions_returns_zero(
+        database: Pool<Postgres>,
+    ) -> Result<()> {
+        // Ensure the sessions table is empty
+        sqlx::query!("TRUNCATE TABLE sessions CASCADE")
+            .execute(&database)
+            .await?;
+        let rows_affected = database::Sessions::revoke_all(&database).await?;
+
+        // Assert: Should return 0
+        assert_eq!(rows_affected, 0);
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn update_session_no_changes(database: Pool<Postgres>) -> Result<()> {
+        // Arrange: Insert a user and session
+        let random_user = database::Users::mock_data()?;
+        let random_user = random_user.insert(&database).await?;
+        let session = database::Sessions::mock_data(&random_user).await?;
+        let session = session.insert(&database).await?;
+
+        // Act: Call update without changing any fields
+        let updated_session = session.update(&database).await?;
+
+        // Assert: The session should be unchanged
+        assert_eq!(updated_session, session);
         Ok(())
     }
 }

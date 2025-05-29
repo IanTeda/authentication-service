@@ -40,13 +40,13 @@ impl Users {
         database: &sqlx::Pool<sqlx::Postgres>,
     ) -> Result<Self, AuthenticationError> {
         let database_record = sqlx::query_as!(
-				Users,
-				r#"
-					SELECT id, email, name, password_hash, role as "role:domain::UserRole", is_active, is_verified, created_on
-					FROM users
-					WHERE id = $1
-				"#,
-				id
+            Users,
+            r#"
+                SELECT id, email, name, password_hash, role as "role:domain::UserRole", is_active, is_verified, created_on
+                FROM users
+                WHERE id = $1
+            "#,
+            id
 			)
             .fetch_one(database)
             .await?;
@@ -76,13 +76,13 @@ impl Users {
         database: &sqlx::Pool<sqlx::Postgres>,
     ) -> Result<Self, AuthenticationError> {
         let database_record = sqlx::query_as!(
-				Users,
-				r#"
-					SELECT id, email, name, password_hash, role as "role:domain::UserRole", is_active, is_verified, created_on
-					FROM users
-					WHERE email = $1
-				"#,
-				email.as_ref()
+            Users,
+            r#"
+                SELECT id, email, name, password_hash, role as "role:domain::UserRole", is_active, is_verified, created_on
+                FROM users
+                WHERE email = $1
+            "#,
+            email.as_ref()
 			)
             .fetch_one(database)
             .await?;
@@ -109,20 +109,20 @@ impl Users {
         )
     )]
     pub async fn index(
-        limit: &i64,
-        offset: &i64,
+        limit: usize,
+        offset: usize,
         database: &sqlx::Pool<sqlx::Postgres>,
     ) -> Result<Vec<Users>, AuthenticationError> {
         let database_records = sqlx::query_as!(
-				Users,
-				r#"
-					SELECT id, email, name, password_hash, role as "role:domain::UserRole", is_active, is_verified, created_on
-					FROM users
-					ORDER BY id
-					LIMIT $1 OFFSET $2
-				"#,
-				limit,
-				offset,
+            Users,
+            r#"
+                SELECT id, email, name, password_hash, role as "role:domain::UserRole", is_active, is_verified, created_on
+                FROM users
+                ORDER BY id
+                LIMIT $1 OFFSET $2
+            "#,
+            limit as i64,
+            offset as i64,
 			)
             .fetch_all(database)
             .await?;
@@ -167,8 +167,8 @@ impl Users {
         database: &sqlx::Pool<sqlx::Postgres>,
     ) -> Result<Vec<Users>, AuthenticationError> {
         let database_records = sqlx::query_as!(
-				Users,
-                r#"
+            Users,
+            r#"
                 SELECT id, email, name, password_hash, role as "role:domain::UserRole", is_active, is_verified, created_on
                 FROM users
                 WHERE (created_on, id) > ($1, $2)
@@ -192,7 +192,7 @@ impl Users {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use crate::{database, domain::EmailAddress};
+    use crate::database;
     use fake::Fake;
     use sqlx::{Pool, Postgres};
 
@@ -268,21 +268,21 @@ pub mod tests {
     async fn get_users_in_database(database: Pool<Postgres>) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
         // Pick a random number of users to add to the database
-        let random_count: i64 = (10..30).fake::<i64>();
+        let random_count: usize = (10..30).fake::<usize>();
 
         // Insert random number of users into the database
         let _ = database::Users::insert_n_users(random_count, &database).await?;
 
         //-- Execute Function (Act)
-        let random_limit = (1..random_count).fake::<i64>();
-        let random_offset = (1..random_count).fake::<i64>();
+        let random_limit = (1..random_count as i64).fake::<i64>();
+        let random_offset = (1..random_count as i64).fake::<i64>();
         let database_records =
-            database::Users::index(&random_limit, &random_offset, &database).await?;
+            database::Users::index(random_limit as usize, random_offset as usize, &database).await?;
 
         //-- Checks (Assertions)
         // Calculate the count less offset
         // We need to add the default user that the database migration creates
-        let count_less_offset: i64 = (random_count - random_offset + 1);
+        let count_less_offset: i64 = random_count as i64 - random_offset + 1;
 
         // Expected records based on offset and limit
         let expected_records = if count_less_offset < random_limit {
@@ -405,7 +405,7 @@ pub mod tests {
         //-- Execute Function (Act)
         // Attempt to retrieve an index of users when there are no users in the database.
         // This should return an empty vector
-        let users = database::Users::index(&limit, &offset, &database).await?;
+        let users = database::Users::index(limit as usize, offset as usize, &database).await?;
 
         //-- Checks (Assertions)
         // Assert that the returned vector is empty
@@ -420,21 +420,21 @@ pub mod tests {
     ) -> Result<()> {
         //-- Setup and Fixtures (Arrange)
         // Insert 5 users
-        let users = database::Users::insert_n_users(5, &database).await?;
+        let _users = database::Users::insert_n_users(5, &database).await?;
         let limit = 2;
         let offset = 1;
 
         //-- Execute Function (Act)
         // Retrieve an index of users with a limit and offset. This should return 2
         // users starting from the second user. The users should be ordered by id.
-        let users = database::Users::index(&limit, &offset, &database).await?;
+        let users = database::Users::index(limit as usize, offset as usize, &database).await?;
 
         //-- Checks (Assertions)
         // Assert that the returned vector has the correct number of users. We inserted 5
         // users, so with a limit of 2 and an offset of 1, we should get 2 users
         assert_eq!(users.len(), 2);
         // The users should be ordered by id
-        let all_users = database::Users::index(&10, &0, &database).await?;
+        let all_users = database::Users::index(10, 0, &database).await?;
         assert_eq!(users[0], all_users[1]);
         assert_eq!(users[1], all_users[2]);
 

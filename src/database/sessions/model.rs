@@ -1,12 +1,22 @@
 //-- ./src/database/sessions/model.rs
 
-//! The Sessions database model
-//! ---
-
 // #![allow(unused)] // For development only
 
+//! The Sessions database model.
+//!
+//! Defines the `Sessions` struct representing a session record in the database, along with
+//! serialization, deserialization, and database mapping traits.
+//!
+//! Provides constructors for creating new session instances, as well as helper methods for
+//! generating mock session data for testing purposes.
+//!
+//! # Contents
+//! - `Sessions` struct definition
+//! - Constructor for new session instances
+//! - Mock data generation for tests
+
 use chrono::{DateTime, SubsecRound, Utc};
-use std::{net::Ipv4Addr, time};
+use std::time;
 use uuid::Uuid;
 
 use crate::{database, domain, prelude::AuthenticationError};
@@ -43,31 +53,31 @@ impl Sessions {
         duration: &time::Duration,
         refresh_token: &domain::RefreshToken,
     ) -> Result<Self, AuthenticationError> {
-        /// The unique (primary key) session id as a UUid v7
+        // The unique (primary key) session id as a UUid v7
         let id = Uuid::now_v7();
 
-        /// The unique user id (foreign key) for the session user
+        // The unique user id (foreign key) for the session user
         let user_id = user.id.to_owned();
 
-        /// The login time is the current time
+        // The login time is the current time
         let logged_in_at = Utc::now().round_subsecs(0);
 
-        /// The login IP address is the IP address of the user request
+        // The login IP address is the IP address of the user request
         let login_ip = login_ip.to_owned();
 
-        /// The refresh token is the refresh token associated with the sessions
+        // The refresh token is the refresh token associated with the sessions
         let refresh_token = refresh_token.to_owned();
 
-        /// The login expires on is the login time + the duration of the session
+        // The login expires on is the login time + the duration of the session
         let expires_on = logged_in_at + *duration;
 
-        /// The is_active field is set to true by default and can be used revoke a session and thus refresh token.
+        // The is_active field is set to true by default and can be used revoke a session and thus refresh token.
         let is_active = true;
 
-        /// When did the user logout of the session. Optional as they may not have logged out. So the session expires.
+        // When did the user logout of the session. Optional as they may not have logged out. So the session expires.
         let logged_out_at = None;
 
-        /// The  IP address from were the logout request is sent. Optional as they may not have logged out. So the session expires.
+        // The  IP address from were the logout request is sent. Optional as they may not have logged out. So the session expires.
         let logout_ip = None;
 
         Ok(Self {
@@ -94,10 +104,11 @@ impl Sessions {
     /// 
     /// `user: &database::Users` - The user that will be used as a foreign key
     pub async fn mock_data(user: &database::Users) -> Result<Self, AuthenticationError> {
+        use std::net::Ipv4Addr;
+
         use chrono::SubsecRound;
         use fake::faker::boolean::en::Boolean;
         use fake::faker::chrono::en::DateTime;
-        use fake::faker::company::en::CompanyName;
         use fake::faker::internet::en::IPv4;
         use fake::Fake;
         // use rand::distributions::DistString;
@@ -136,7 +147,7 @@ impl Sessions {
         let random_is_active: bool = Boolean(4).fake();
 
         // Generate random login time
-        let random_logged_out_at: DateTime<Utc> = DateTime().fake();
+        // let random_logged_out_at: DateTime<Utc> = DateTime().fake();
         let random_logout = random_logged_in_at.round_subsecs(0);
         let random_logged_out_at = if Boolean(4).fake() {
             Some(random_logout)
@@ -171,4 +182,59 @@ impl Sessions {
     }
 }
 
-// No need for unit tests as the mock data does that for us.
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::database::Users;
+
+    #[tokio::test]
+    async fn mock_data_produces_valid_session() {
+        let user = Users::mock_data().unwrap();
+        let session = Sessions::mock_data(&user).await.unwrap();
+
+        // Check that the session fields are set as expected
+        assert_eq!(session.user_id, user.id);
+        assert!(session.id != Uuid::nil());
+        assert!(session.expires_on > session.logged_in_at);
+        assert!(session.refresh_token.as_ref().len() > 0);
+    }
+
+    #[tokio::test]
+    async fn new_session_sets_expected_defaults() {
+        let user = Users::mock_data().unwrap();
+        let login_ip = Some(123456789);
+        let duration = std::time::Duration::from_secs(3600);
+        let refresh_token = crate::domain::RefreshToken::mock_data(&user).unwrap();
+
+        let session = Sessions::new(&user, &login_ip, &duration, &refresh_token).unwrap();
+
+        assert_eq!(session.user_id, user.id);
+        assert_eq!(session.login_ip, login_ip);
+        assert!(session.is_active);
+        assert!(session.logged_out_at.is_none());
+        assert!(session.logout_ip.is_none());
+        assert_eq!(session.refresh_token, refresh_token);
+        assert_eq!(session.expires_on, session.logged_in_at + chrono::Duration::from_std(duration).unwrap());
+    }
+
+    #[tokio::test]
+    async fn mock_data_randomises_fields() {
+        let user = Users::mock_data().unwrap();
+        let session1 = Sessions::mock_data(&user).await.unwrap();
+        let session2 = Sessions::mock_data(&user).await.unwrap();
+
+        // IDs should be unique
+        assert_ne!(session1.id, session2.id);
+
+        // Refresh tokens should be unique
+        assert_ne!(session1.refresh_token, session2.refresh_token);
+    }
+
+    #[tokio::test]
+    async fn session_struct_partial_eq_and_clone_work() {
+        let user = Users::mock_data().unwrap();
+        let session = Sessions::mock_data(&user).await.unwrap();
+        let session_clone = session.clone();
+        assert_eq!(session, session_clone);
+    }
+}

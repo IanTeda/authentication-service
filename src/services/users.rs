@@ -208,14 +208,18 @@ impl Users for UsersService {
             request.into_parts();
         
         // Offset, where to start the records from
-        let offset = request_message.offset;
+        let offset: usize = request_message.offset.try_into().map_err(|_| {
+            Status::invalid_argument("Invalid offset value")
+        })?;
 
         // The number of users to be returned
-        let limit = request_message.limit;
+        let limit: usize = request_message.limit.try_into().map_err(|_| {
+            Status::invalid_argument("Invalid limit value")
+        })?;
 
         // Query the database
         let database_records =
-            database::Users::index(&limit, &offset, self.database_ref()).await?;
+            database::Users::index(limit, offset, self.database_ref()).await?;
 
         // Convert database::Users into User Response within the vector
         let users_response: Vec<UserResponse> = database_records

@@ -55,7 +55,7 @@ impl Users {
 //-- Unit Tests
 #[cfg(test)]
 pub mod tests {
-    use super::*;
+    // use super::*;
     use sqlx::{Pool, Postgres};
     use crate::database;
 

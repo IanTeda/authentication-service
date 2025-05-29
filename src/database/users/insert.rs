@@ -76,7 +76,7 @@ impl Users {
     // Helper function to insert multiple users into the database
     /// Insert `n` users into the database, returning a vector of the inserted Users.
     pub async fn insert_n_users(
-        n: i64,
+        n: usize,
         database: &sqlx::Pool<sqlx::Postgres>,
     ) -> Result<Vec<Users>, AuthenticationError> {
         let mut users = Vec::new();
