@@ -70,7 +70,7 @@ impl Sessions {
         Ok(database_record)
     }
 
-        /// Retrieves a Sessions instance from the database by querying with the provided refresh token.
+    /// Retrieves a Sessions instance from the database by querying with the provided refresh token.
     ///
     /// # Parameters
     ///
@@ -139,8 +139,8 @@ impl Sessions {
     )]
     pub async fn index_from_user_id(
         user_id: &Uuid,
-        limit: usize,
-        offset: usize,
+        limit: &usize,
+        offset: &usize,
         database: &Pool<Postgres>,
     ) -> Result<Vec<Sessions>, AuthenticationError> {
         let database_records = sqlx::query_as!(
@@ -153,8 +153,8 @@ impl Sessions {
                 LIMIT $2 OFFSET $3
             "#,
             user_id,
-            limit as i64,
-            offset as i64,
+            *limit as i64,
+            *offset as i64,
         )
         .fetch_all(database)
         .await?;
@@ -190,8 +190,8 @@ impl Sessions {
         )
     )]
     pub async fn index(
-        limit: usize,
-        offset: usize,
+        limit: &usize,
+        offset: &usize,
         database: &Pool<Postgres>,
     ) -> Result<Vec<Sessions>, AuthenticationError> {
         let database_records = sqlx::query_as!(
@@ -202,8 +202,8 @@ impl Sessions {
                 ORDER BY id
                 LIMIT $1 OFFSET $2
             "#,
-            limit as i64,
-            offset as i64,
+            *limit as i64,
+            *offset as i64,
         )
         .fetch_all(database)
         .await?;
@@ -314,10 +314,12 @@ pub mod tests {
         let random_offset = (1..random_count).fake::<i64>();
 
         // Insert user into database
+        let random_limit_usize = random_limit as usize;
+        let random_offset_usize = random_offset as usize;
         let database_records = database::Sessions::index_from_user_id(
             &random_user.id,
-            random_limit as usize,
-            random_offset as usize,
+            &random_limit_usize,
+            &random_offset_usize,
             &database,
         )
         .await?;
@@ -364,9 +366,14 @@ pub mod tests {
         let random_offset = (1..random_count).fake::<i64>();
 
         // Insert user into database
-        let database_records =
-            database::Sessions::index(random_limit as usize, random_offset as usize, &database)
-                .await?;
+        let random_limit_usize = random_limit as usize;
+        let random_offset_usize = random_offset as usize;
+        let database_records = database::Sessions::index(
+            &random_limit_usize,
+            &random_offset_usize,
+            &database,
+        )
+        .await?;
         // println!("{rows_affected:#?}");
 
         //-- Checks (Assertions)
@@ -414,10 +421,12 @@ pub mod tests {
         let fake_user_id = Uuid::new_v4();
         let limit = 10;
         let offset = 0;
+        let limit_usize = limit as usize;
+        let offset_usize = offset as usize;
         let records = crate::database::Sessions::index_from_user_id(
             &fake_user_id,
-            limit as usize,
-            offset as usize,
+            &limit_usize,
+            &offset_usize,
             &database,
         )
         .await?;
@@ -429,8 +438,12 @@ pub mod tests {
     async fn index_empty_when_no_sessions(database: Pool<Postgres>) -> Result<()> {
         let limit = 10;
         let offset = 0;
-        let records =
-            crate::database::Sessions::index(limit as usize, offset as usize, &database).await?;
+        let records = crate::database::Sessions::index(
+            &limit,
+            &offset,
+            &database,
+        )
+        .await?;
         assert!(records.is_empty());
         Ok(())
     }

@@ -93,7 +93,7 @@ impl Sessions {
     pub async fn revoke(
         &self,
         database: &Pool<Postgres>,
-    ) -> Result<u64, AuthenticationError> {
+    ) -> Result<usize, AuthenticationError> {
         let rows_affected = sqlx::query!(
             r#"
                 UPDATE sessions
@@ -108,7 +108,7 @@ impl Sessions {
 
         tracing::debug!("Sessions database records updated: {rows_affected:#?}");
 
-        Ok(rows_affected)
+        Ok(rows_affected as usize)
     }
 
     /// Revoke (make non-active) a session in the database by its unique session ID.
@@ -136,7 +136,7 @@ impl Sessions {
     pub async fn revoke_by_id(
         id: &Uuid,
         database: &Pool<Postgres>,
-    ) -> Result<u64, AuthenticationError> {
+    ) -> Result<usize, AuthenticationError> {
         let rows_affected = sqlx::query!(
             r#"
                 UPDATE sessions
@@ -151,7 +151,7 @@ impl Sessions {
 
         tracing::debug!("Sessions database records revoked: {rows_affected:#?}");
 
-        Ok(rows_affected)
+        Ok(rows_affected as usize)
     }
 
     /// Revoke (make non-active) all sessions in the database associated with the same user ID as this session.
@@ -179,7 +179,7 @@ impl Sessions {
     pub async fn revoke_associated(
         &self,
         database: &Pool<Postgres>,
-    ) -> Result<u64, AuthenticationError> {
+    ) -> Result<usize, AuthenticationError> {
         let rows_affected = sqlx::query!(
             r#"
                 UPDATE sessions
@@ -194,7 +194,7 @@ impl Sessions {
 
         tracing::debug!("Sessions database records revoked: {rows_affected:#?}");
 
-        Ok(rows_affected)
+        Ok(rows_affected as usize)
     }
 
     /// Revoke (make non-active) all sessions in the database for a given user ID.
@@ -222,7 +222,7 @@ impl Sessions {
     pub async fn revoke_user_id(
         user_id: &Uuid,
         database: &Pool<Postgres>,
-    ) -> Result<u64, AuthenticationError> {
+    ) -> Result<usize, AuthenticationError> {
         let rows_affected = sqlx::query!(
             r#"
                 UPDATE sessions
@@ -237,7 +237,7 @@ impl Sessions {
 
         tracing::debug!("Sessions database records updated: {rows_affected:#?}");
 
-        Ok(rows_affected)
+        Ok(rows_affected as usize)
     }
 
     /// Revoke (make non-active) all sessions in the database.
@@ -259,7 +259,7 @@ impl Sessions {
     )]
     pub async fn revoke_all(
         database: &Pool<Postgres>,
-    ) -> Result<u64, AuthenticationError> {
+    ) -> Result<usize, AuthenticationError> {
         let rows_affected = sqlx::query!(
             r#"
                 UPDATE sessions
@@ -274,7 +274,7 @@ impl Sessions {
             "All Sessions revoked in the database, records updated: {rows_affected:#?}"
         );
 
-        Ok(rows_affected)
+        Ok(rows_affected as usize)
     }
 }
 
@@ -443,7 +443,7 @@ pub mod tests {
 
         //-- Checks (Assertions)
         // There is an extra row outside the loop so we can use it for association
-        assert_eq!(rows_affected, random_count as u64 + 1);
+        assert_eq!(rows_affected, random_count as usize + 1);
 
         // Get record from the database
         let database_record =
@@ -497,7 +497,7 @@ pub mod tests {
 
         //-- Checks (Assertions)
         // There is an extra row outside the loop so we can use it for association
-        assert_eq!(rows_affected, random_count as u64 + 1);
+        assert_eq!(rows_affected, random_count as usize + 1);
 
         // Get record from the database
         let database_record =
@@ -550,7 +550,7 @@ pub mod tests {
 
         //-- Checks (Assertions)
         // There is an extra row outside the loop so we can use it for association
-        assert_eq!(rows_affected, random_count as u64 + 1);
+        assert_eq!(rows_affected, random_count as usize + 1);
 
         // Get record from the database
         let database_record =

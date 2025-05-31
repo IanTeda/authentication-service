@@ -109,8 +109,8 @@ impl Users {
         )
     )]
     pub async fn index(
-        limit: usize,
-        offset: usize,
+        limit: &usize,
+        offset: &usize,
         database: &sqlx::Pool<sqlx::Postgres>,
     ) -> Result<Vec<Users>, AuthenticationError> {
         let database_records = sqlx::query_as!(
@@ -121,8 +121,8 @@ impl Users {
                 ORDER BY id
                 LIMIT $1 OFFSET $2
             "#,
-            limit as i64,
-            offset as i64,
+            *limit as i64,
+            *offset as i64,
 			)
             .fetch_all(database)
             .await?;
@@ -163,7 +163,7 @@ impl Users {
     pub async fn index_cursor(
         last_created_on: &DateTime<Utc>,
         last_id: &Uuid,
-        limit: &i64,
+        limit: &usize,
         database: &sqlx::Pool<sqlx::Postgres>,
     ) -> Result<Vec<Users>, AuthenticationError> {
         let database_records = sqlx::query_as!(
@@ -177,7 +177,7 @@ impl Users {
             "#,
             last_created_on,
             last_id,
-            limit
+            *limit as i64
 			)
             .fetch_all(database)
             .await?;
@@ -276,8 +276,10 @@ pub mod tests {
         //-- Execute Function (Act)
         let random_limit = (1..random_count as i64).fake::<i64>();
         let random_offset = (1..random_count as i64).fake::<i64>();
+        let random_limit_usize = random_limit as usize;
+        let random_offset_usize = random_offset as usize;
         let database_records =
-            database::Users::index(random_limit as usize, random_offset as usize, &database).await?;
+            database::Users::index(&random_limit_usize, &random_offset_usize, &database).await?;
 
         //-- Checks (Assertions)
         // Calculate the count less offset
@@ -405,7 +407,7 @@ pub mod tests {
         //-- Execute Function (Act)
         // Attempt to retrieve an index of users when there are no users in the database.
         // This should return an empty vector
-        let users = database::Users::index(limit as usize, offset as usize, &database).await?;
+        let users = database::Users::index(&(limit as usize), &(offset as usize), &database).await?;
 
         //-- Checks (Assertions)
         // Assert that the returned vector is empty
@@ -427,14 +429,16 @@ pub mod tests {
         //-- Execute Function (Act)
         // Retrieve an index of users with a limit and offset. This should return 2
         // users starting from the second user. The users should be ordered by id.
-        let users = database::Users::index(limit as usize, offset as usize, &database).await?;
+        let users = database::Users::index(&(limit as usize), &(offset as usize), &database).await?;
 
         //-- Checks (Assertions)
         // Assert that the returned vector has the correct number of users. We inserted 5
         // users, so with a limit of 2 and an offset of 1, we should get 2 users
         assert_eq!(users.len(), 2);
         // The users should be ordered by id
-        let all_users = database::Users::index(10, 0, &database).await?;
+        let limit = 10usize;
+        let offset = 0usize;
+        let all_users = database::Users::index(&limit, &offset, &database).await?;
         assert_eq!(users[0], all_users[1]);
         assert_eq!(users[1], all_users[2]);
 

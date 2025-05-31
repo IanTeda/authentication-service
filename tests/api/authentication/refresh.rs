@@ -136,9 +136,11 @@ async fn returns_access_refresh_access(database: Pool<Postgres>) -> Result<()> {
     assert_eq!(random_user.id, session.user_id);
 
     // Confirm Session is in the database
+    // Provide limit and offset as required by the function signature
+    let limit = 10;
+    let offset = 0;
     let sessions =
-        database::Sessions::index_from_user_id(&random_user.id, &10, &0, &database)
-            .await?;
+        database::Sessions::index_from_user_id(&random_user.id, &limit, &offset, &database,).await?;
     assert_eq!(random_user.id, sessions[0].user_id);
 
     Ok(())

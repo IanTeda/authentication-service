@@ -219,7 +219,7 @@ impl Users for UsersService {
 
         // Query the database
         let database_records =
-            database::Users::index(limit, offset, self.database_ref()).await?;
+            database::Users::index(&limit, &offset, self.database_ref()).await?;
 
         // Convert database::Users into User Response within the vector
         let users_response: Vec<UserResponse> = database_records
@@ -290,7 +290,7 @@ impl Users for UsersService {
             database::Users::from_user_id(&id, self.database_ref()).await?;
 
         let rows_affected =
-            database_record.delete(self.database_ref()).await? as i64;
+            database_record.delete(self.database_ref()).await? as u64;
 
         // Convert database user record into a user response message
         let response_message = DeleteUserResponse { rows_affected };

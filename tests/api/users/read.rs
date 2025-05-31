@@ -103,12 +103,12 @@ async fn index_returns_users(pool: Pool<Postgres>) -> Result<()> {
     //-- Execute Test (Act)
     // Generate a random offset based on number of user entries
     // This is the number of users to skip before returning the results
-    let random_offset = (1..random_count).fake::<i64>();
+    let random_offset: u64 = (1..random_count as u64).fake::<u64>();
     // println!("Random offset: {random_offset:#?}");
 
     // Generate a random limit based on number of user entries
     // This is the maximum number of users to be returned
-    let random_limit = (1..random_count).fake::<i64>();
+    let random_limit: u64 = (1..random_count as u64).fake::<u64>();
     // println!("Random limit: {random_limit:#?}");
 
     // Build Tonic request message
@@ -136,7 +136,7 @@ async fn index_returns_users(pool: Pool<Postgres>) -> Result<()> {
 
     //-- Checks (Assertions)
     // Need to add two users that the mock server adds
-    let available_records: i64 = (random_count - random_offset +2)
+    let available_records: u64 = (random_count - random_offset as i64 + 2)
         .try_into()
         .unwrap_or(0);
     // println!("Available records: {available_records}");
@@ -150,7 +150,7 @@ async fn index_returns_users(pool: Pool<Postgres>) -> Result<()> {
     // println!("Expected records: {expected_records}");
 
     // Check the number of returned users equals the limit and offset parameters
-    assert_eq!(expected_records, users_length);
+    assert_eq!(expected_records as i64, users_length);
 
     Ok(())
 }

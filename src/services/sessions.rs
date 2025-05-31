@@ -133,7 +133,7 @@ impl Sessions for SessionsService {
 
         // Query the database
         let database_records =
-            database::Sessions::index(limit, offset, self.database_ref()).await?;
+            database::Sessions::index(&limit, &offset, self.database_ref()).await?;
 
         // Convert database::Users into User Response within the vector
         let sessions: Vec<SessionsResponse> = database_records
@@ -167,7 +167,7 @@ impl Sessions for SessionsService {
 
         // Revoke Session in database based on database row PK (id)
         let rows_affected =
-            database::Sessions::revoke_by_id(&id, self.database_ref()).await? as i64;
+            database::Sessions::revoke_by_id(&id, self.database_ref()).await? as u64;
 
         // Build Session Response message
         let response_message = SessionsRevokeResponse { rows_affected };
@@ -200,7 +200,7 @@ impl Sessions for SessionsService {
         // Revoke Sessions in database based on database row PK (id)
         let rows_affected =
             database::Sessions::revoke_user_id(&user_id, self.database_ref()).await?
-                as i64;
+                as u64;
 
         // Build Sessions Response message
         let response_message = SessionsRevokeResponse { rows_affected };
@@ -224,7 +224,7 @@ impl Sessions for SessionsService {
 
         // Revoke (set is_active = false) all Access Tokens in the database
         let rows_affected =
-            database::Sessions::revoke_all(self.database_ref()).await? as i64;
+            database::Sessions::revoke_all(self.database_ref()).await? as u64;
 
         // Build Session Response message
         let response_message = SessionsRevokeResponse { rows_affected };
@@ -245,7 +245,7 @@ impl Sessions for SessionsService {
 
         // Parse the request message string into a Uuid
         let id = Uuid::parse_str(&request_message.id).map_err(|_| {
-            tracing::error!("Unable to parse Sessionid to UUID!");
+            tracing::error!("Unable to parse session_id to UUID!");
             return AuthenticationError::Generic(
                 "Unable to parse user id to UUID!".to_string(),
             );
@@ -253,7 +253,7 @@ impl Sessions for SessionsService {
 
         // Revoke Session in database based on database row PK (id)
         let rows_affected =
-            database::Sessions::delete_by_id(&id, self.database_ref()).await? as i64;
+            database::Sessions::delete_by_id(&id, self.database_ref()).await? as u64;
 
         // Build Session Response message
         let response_message = SessionsDeleteResponse { rows_affected };
@@ -286,7 +286,7 @@ impl Sessions for SessionsService {
         // Revoke Session in database based on database row PK (id)
         let rows_affected =
             database::Sessions::delete_all_user(&user_id, self.database_ref())
-                .await? as i64;
+                .await? as u64;
 
         // Build Session Response message
         let response_message = SessionsDeleteResponse { rows_affected };
@@ -310,7 +310,7 @@ impl Sessions for SessionsService {
 
         // Revoke (set is_active = false) all Access Tokens in the database
         let rows_affected =
-            database::Sessions::delete_all(self.database_ref()).await? as i64;
+            database::Sessions::delete_all(self.database_ref()).await? as u64;
 
         // Build Session Response message
         let response_message = SessionsDeleteResponse { rows_affected };
