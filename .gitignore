@@ -5,6 +5,7 @@
 !.devcontainer
 !.vscode
 !.sqlx
+!.env.sample
 
 # By default ignore any files prefixed with "_"
 _*
