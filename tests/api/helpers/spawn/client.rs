@@ -12,10 +12,10 @@
 /// This is part of public interface, so it's re-exported.
 pub extern crate tonic;
 
-use std::time;
 use authentication_service::domain;
+use std::time;
 use tonic::codegen::InterceptedService;
-use tonic::transport::Channel;
+use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
 /// Convenience type alias for authentication client.
 // pub type AuthenticationClient =
@@ -32,7 +32,8 @@ authentication_service::rpc::proto::sessions_service_client::SessionsServiceClie
 // Convenience type alias for users client
 pub type UsersClient =
     authentication_service::rpc::proto::users_service_client::UsersServiceClient<
-        InterceptedService<Channel, TokenInterceptor>>;
+        InterceptedService<Channel, TokenInterceptor>,
+    >;
 
 /// Tonic Client
 #[derive(Clone)]
@@ -64,7 +65,30 @@ impl TonicClient {
     ) -> Result<Self, Box<dyn std::error::Error>> {
         // Build Tonic Client channel
         let uri: tonic::transport::Uri = server.address.parse()?;
-        let endpoint = Channel::builder(uri);
+
+        // Create a channel builder with the server URI
+        let mut endpoint = Channel::builder(uri);
+
+        // Configure the endpoint tls if enabled. If the server is configured to use TLS, we need to load the TLS certificate and configure the endpoint to use TLS.
+        if server.config.application.use_tls {
+            // Load the server's certificate as CA
+            let cert_path = server
+                .config
+                .application
+                .tls_certificate
+                .as_ref()
+                .ok_or("TLS certificate path is not set in config")?;
+            let cert_read = std::fs::read(cert_path)?;
+            let cert = Certificate::from_pem(cert_read);
+
+            let tls_config = ClientTlsConfig::new()
+                .ca_certificate(cert)
+                .domain_name("localhost"); // Adjust if your cert uses a different domain
+
+            endpoint = endpoint.tls_config(tls_config)?;
+        }
+
+        // Add endpoint to the rpc channel
         let inner: Channel = endpoint.connect().await?;
 
         // Get tokens
@@ -132,7 +156,12 @@ impl tonic::service::Interceptor for TokenInterceptor {
         // println!("Refresh Token: {:?}", self.refresh_cookie);
 
         // Add authorization bearer token to the http header
-        http_header.append("authorization", format!("Bearer {}", self.access_token.to_string()).parse().unwrap());
+        http_header.append(
+            "authorization",
+            format!("Bearer {}", self.access_token.to_string())
+                .parse()
+                .unwrap(),
+        );
 
         // Add refresh cookie to the http header
         http_header.append(COOKIE, self.refresh_cookie.parse().unwrap());

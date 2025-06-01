@@ -1,47 +1,48 @@
 // -- ./src/router.rs
 
+// #![allow(unused)] // For development only
+
 //! # GRPC Router
 //!
-//! RPC module containing endpoint configurations
+//! This module configures and builds the gRPC server for the authentication service using Tonic.
 //!
-//! `proto` brings the Protobuf generated files into scope
-//! `get_router` returns all the rpc endpoints for building the Tonic server.
+//! It sets up all RPC endpoints, middleware (including authorization), and CORS for gRPC-Web support.
+//! TLS/HTTPS is supported and can be enabled via configuration, with certificate and key paths configurable.
 //!
-//! ## Install
+//! ## Local Development: TLS Certificates
 //!
-//! To get localhost https certificates we need to do a few things
+//! To enable HTTPS/TLS for local development, generate self-signed certificates using [mkcert](https://github.com/FiloSottile/mkcert):
 //!
-//! 1. Install MkCert
+//! 1. **Install MkCert**
+//!    ```bash
+//!    sudo apt install mkcert libnss3-tools
+//!    ```
 //!
-//! ```bash
-//! sudo apt install mkcert libnss3-tools
-//! ```
+//! 2. **Install local Certificate Authority (CA)**
+//!    ```bash
+//!    mkcert --install
+//!    ```
 //!
-//! 2. Install local Certificate Authority (CA)
+//! 3. **Generate certificates**
+//!    ```bash
+//!    cargo make generate_tls
+//!    ```
+//!    This will create `tls/server.pem` and `tls/server-key.pem`.
 //!
-//! ```bash
-//! mkcert --install
-//! ```
+//! ## Configuration
 //!
-//! 3. Generate certificates
+//! - Set `use_tls = true` in your configuration to enable TLS.
+//! - Set `tls_certificate` and `tls_private_key` to the paths of your certificate and key files.
 //!
-//! Need a server key and pem
-//!
-//! ```bash
-//! cd tls
-//! mkcert server
-//! ```
-//!
-//! ## Actions and fixes
+//! ## Actions and Fixes
 //!
 //! - [ ] Add cert creation to the Dockerfile
-//! - [ ] Should this be made into a struct
+//! - [ ] Consider refactoring into a struct for improved testability and modularity
 //!
 //! ## References
 //!
 //! - https://github.com/nicktretyakov/gRUSTpcWEB
-
-// #![allow(unused)] // For development only
+//! - https://github.com/hyperium/tonic
 
 use std::sync::Arc;
 
@@ -91,6 +92,14 @@ const DEFAULT_ALLOW_HEADERS: [&str; 5] = [
     "authorization",
 ];
 
+// Use a type alias for the gRPC router for cleaner code and easier reference
+type GrpcRouter = tonic_transport::server::Router<
+    tower_layer::Stack<
+        tonic_web::GrpcWebLayer,
+        tower_layer::Stack<cors::CorsLayer, tower_layer::Identity>,
+    >,
+>;
+
 /// # GRPC Router
 ///
 /// RPC module containing endpoint configurations
@@ -103,15 +112,7 @@ const DEFAULT_ALLOW_HEADERS: [&str; 5] = [
 pub fn get_router(
     database: Pool<Postgres>,
     config: Configuration,
-) -> Result<
-    tonic_transport::server::Router<
-        tower_layer::Stack<
-            tonic_web::GrpcWebLayer,
-            tower_layer::Stack<cors::CorsLayer, tower_layer::Identity>,
-        >,
-    >,
-    AuthenticationError,
-> {
+) -> Result<GrpcRouter, AuthenticationError> {
     // Wraps our database pool and config in an Atomic Reference Counted (ARC).
     // Each instance of the backend will get a pointer to the pool instead of getting a raw copy.
     let database = Arc::new(database);
@@ -195,23 +196,59 @@ pub fn get_router(
         },
     );
 
-    // TODO: Set up TLS
-    // let tls_dir = std::path::PathBuf::from_iter([std::env!("CARGO_MANIFEST_DIR"), "tls"]);
-    // let cert = std::fs::read_to_string(tls_dir.join("server.pem"))?;
-    // let key = std::fs::read_to_string(tls_dir.join("server-key.pem"))?;
-    // let identity = tonic_transport::Identity::from_pem(cert, key);
+    //-- Build the Tonic Router
 
-    let router = tonic_transport::Server::builder()
-        // Start tonic log tracing
+    // Create a new Tonic server builder. The Tonic server builder is used to configure
+    // the server. It allows us to add services, middlewares, and other configurations.
+    // The server builder is used to create the Tonic server
+    let mut server_builder = tonic_transport::Server::builder()
         .trace_fn(|_| tracing::info_span!("Tonic"))
-        // .tls_config(tonic_transport::ServerTlsConfig::new().identity(identity))?
-        // Enable http/1.1 support. GRPC-web requires http/1.1.
         .accept_http1(true)
-        // Add the cors layer
         .layer(cors_layer)
-        // Add a single GrpcWebLayer for all services
-        .layer(tonic_web::GrpcWebLayer::new()) // Add the gRPC-Web layer
-        // Add services
+        .layer(tonic_web::GrpcWebLayer::new());
+
+    // If the application is configured to use TLS, we need to load the TLS identity
+    // and configure the server to use TLS.
+    if config.application.use_tls {
+        // Load the TLS certificate and private key from the configuration
+        // If the paths are not set in the configuration, we return an error.
+        let cert_path =
+            config.application.tls_certificate.as_ref().ok_or_else(|| {
+                AuthenticationError::Generic(
+                    "TLS certificate path is not set in configuration".to_string(),
+                )
+            })?;
+        let cert = std::fs::read(cert_path).map_err(|e| {
+            AuthenticationError::Generic(format!(
+                "Failed to read server certificate at tls/server.pem: {e}"
+            ))
+        })?;
+        let key_path =
+            config.application.tls_private_key.as_ref().ok_or_else(|| {
+                AuthenticationError::Generic(
+                    "TLS private key path is not set in configuration".to_string(),
+                )
+            })?;
+        let key = std::fs::read(key_path).map_err(|e| {
+            AuthenticationError::Generic(format!(
+                "Failed to read private key at tls/server-key.pem: {e}"
+            ))
+        })?;
+
+        // Create a TLS identity from the certificate and private key
+        let identity = tonic::transport::Identity::from_pem(cert, key);
+
+        // Configure the server builder to use TLS with the identity. The identity
+        // is used to encrypt the communication between the client and server.
+        // This is required for gRPC over TLS.
+        server_builder = server_builder.tls_config(
+            tonic_transport::ServerTlsConfig::new().identity(identity),
+        )?;
+    }
+
+    // Add the services to the server builder. The services are added to the server
+    // builder, which will be used to create the Tonic server.
+    let router = server_builder
         .add_service(rpc::spec_service()?)
         .add_service(utilities_server)
         .add_service(authentication_server)

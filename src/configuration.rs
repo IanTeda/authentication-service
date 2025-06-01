@@ -37,6 +37,11 @@ pub struct Configuration {
     pub database: DatabaseConfiguration,
 }
 
+/// Returns the default value for the `use_tls` field in `ApplicationConfiguration`.
+fn default_use_tls() -> bool {
+    false
+}
+
 /// Configuration for running the API application
 #[serde_as]
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -61,6 +66,19 @@ pub struct ApplicationConfiguration {
     /// How many minutes to keep the access token valid for.
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub refresh_token_duration_minutes: u64,
+
+    /// Use HTTPS/TLS for the RPC server
+    #[serde(default = "default_use_tls")]
+    #[serde(deserialize_with = "serde_aux::field_attributes::deserialize_bool_from_anything")]
+    pub use_tls: bool,
+
+    /// The path to the TLS certificate file
+    /// This is used when `use_https` is true.
+    pub tls_certificate: Option<String>,
+
+    /// The path to the TLS private key file
+    /// This is used when `use_https` is true.
+    pub tls_private_key: Option<String>,
 }
 
 /// Configuration for connecting to the database server

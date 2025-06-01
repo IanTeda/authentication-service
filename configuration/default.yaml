@@ -7,9 +7,10 @@ application:
   access_token_duration_minutes: 15
   # Thirty days 30 x 24 x 60
   refresh_token_duration_minutes: 43200
-  # Where to get the tls certificate and key from
-  # tls_certificate: "certs/server.pem"
-  # tls_key: "certs/server-key.pem"
+  # Transport Layer Security (i.e. https) configuration
+  tls_enabled: true
+  tls_certificate: "tls/server.pem"
+  tls_private_key: "tls/server-key.pem"
 
 # Postgres database config
 database:
