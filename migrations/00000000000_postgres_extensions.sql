@@ -1,2 +1,13 @@
+-- ============================================================================
+-- Migration: 00000000000_postgres_extensions.sql
+-- Purpose:   Enable required PostgreSQL extensions for the authentication service.
+-- Author:    Ian Teda
+-- Date:      2025-06-02
+--
+-- This migration ensures that necessary PostgreSQL extensions are available,
+-- such as "uuid-ossp" for UUID generation functions.
+-- ============================================================================
+
 -- Enable Extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Note: The "uuid-ossp" extension is commonly used for generating UUIDs in PostgreSQL.
+-- CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; -- Uncomment this line if you need UUID generation functions.

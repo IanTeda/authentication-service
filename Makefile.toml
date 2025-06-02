@@ -11,13 +11,7 @@
 [tasks.watch]
 install_crate = "cargo-watch"
 command = "cargo"
-args = [
-    "watch",
-    "--clear",
-    "--quiet",
-    "--exec", "run",
-    "--watch", "src"
-]
+args = ["watch", "--clear", "--quiet", "--exec", "run", "--watch", "src"]
 
 ## Update git submodules in repository
 ## $ git submodule update --recursive --remote
@@ -27,12 +21,12 @@ command = "git"
 args = ["submodule", "update", "--recursive", "--remote"]
 
 [tasks.production]
-env =  { "APP_ENVIRONMENT" = "production"}
+env = { "APP_ENVIRONMENT" = "production" }
 command = "cargo"
 args = ["run"]
 
 [tasks.debug]
-env =  { "RUST_LOG" = "debug"}
+env = { "RUST_LOG" = "debug" }
 command = "cargo"
 args = ["run"]
 
@@ -42,6 +36,13 @@ args = ["run"]
 install_crate = "cargo-tarpaulin"
 command = "cargo"
 args = ["tarpaulin", "--ignore-tests"]
+
+## Warn about database lock issues
+[tasks.db_warn]
+script = [
+    'echo "WARNING: Please close VS Code to run this task and avoid database lock issues."',
+    'sleep 10'
+]
 
 ## Drop Database
 ## $ sqlx database drop
@@ -70,17 +71,22 @@ install_crate = "sqlx-cli"
 command = "cargo"
 args = ["sqlx", "prepare", "--check"]
 
-# Run Database tasks
+[tasks.db_prepare_generate]
+install_crate = "sqlx-cli"
+command = "cargo"
+args = ["sqlx", "prepare"]
+
+# Run Database tasks. You need to exit vscode before running as vscode has an open connection to the database.
 # $ cargo make db
 [tasks.db]
-dependencies = ["db_drop", "db_create", "db_migrate", "db_prepare"]
-
-## Migrate database
-## $ sqlx migrate run
-[tasks.test]
-install_crate = "cargo"
-command = "test"
-args = ["--features", "mock"]
+dependencies = [
+    "db_warn",
+    "db_drop",
+    "db_create",
+    "db_migrate",
+    "db_prepare_generate",
+    "db_prepare",
+]
 
 [tasks.sqlx_offline]
 install_crate = "sqlx-cli"
@@ -89,11 +95,7 @@ args = ["sqlx", "prepare", "--", "--bin", "authentication_service"]
 
 [tasks.docker_build]
 command = "docker"
-args = [
-    "build",
-    "--tag", "authentication:latest",
-    "--file", "Dockerfile", ".", 
-]
+args = ["build", "--tag", "authentication:latest", "--file", "Dockerfile", "."]
 
 [tasks.docker_image]
 dependencies = ["sqlx_offline", "docker_build"]
@@ -105,7 +107,9 @@ dependencies = ["sqlx_offline", "docker_build"]
 description = "Generate a self-signed TLS certificate and private key in PEM format using mkcert"
 command = "mkcert"
 args = [
-    "-key-file", "tls/server-key.pem", 
-    "-cert-file", "tls/server.pem", 
-    "localhost"
+    "-key-file",
+    "tls/server-key.pem",
+    "-cert-file",
+    "tls/server.pem",
+    "localhost",
 ]

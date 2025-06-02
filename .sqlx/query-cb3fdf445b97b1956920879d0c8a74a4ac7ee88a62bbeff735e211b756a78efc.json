@@ -15,7 +15,7 @@
       },
       {
         "ordinal": 2,
-        "name": "login_on",
+        "name": "logged_in_at",
         "type_info": "Timestamptz"
       },
       {
@@ -31,7 +31,7 @@
       {
         "ordinal": 5,
         "name": "refresh_token",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 6,
@@ -40,7 +40,7 @@
       },
       {
         "ordinal": 7,
-        "name": "logout_on",
+        "name": "logged_out_at",
         "type_info": "Timestamptz"
       },
       {
@@ -53,7 +53,7 @@
       "Left": [
         "Uuid",
         "Uuid",
-        "Text",
+        "Varchar",
         "Bool"
       ]
     },

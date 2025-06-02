@@ -21,7 +21,7 @@
       {
         "ordinal": 3,
         "name": "password_hash",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 4,
@@ -60,7 +60,7 @@
         "Uuid",
         "Text",
         "Text",
-        "Text",
+        "Varchar",
         {
           "Custom": {
             "name": "user_role",

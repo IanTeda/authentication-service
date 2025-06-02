@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n\t\t\t\tINSERT INTO sessions (id, user_id, login_on, login_ip, expires_on, refresh_token, is_active, logout_on, logout_ip)\n\t\t\t\tVALUES ($1, $2, $3, $4, $5, $6, $7,$8, $9) \n\t\t\t\tRETURNING *\n\t\t\t",
+  "query": "\n\t\t\t\tINSERT INTO sessions (id, user_id, logged_in_at, login_ip, expires_on, refresh_token, is_active, logged_out_at, logout_ip)\n\t\t\t\tVALUES ($1, $2, $3, $4, $5, $6, $7,$8, $9) \n\t\t\t\tRETURNING *\n\t\t\t",
   "describe": {
     "columns": [
       {
@@ -15,7 +15,7 @@
       },
       {
         "ordinal": 2,
-        "name": "login_on",
+        "name": "logged_in_at",
         "type_info": "Timestamptz"
       },
       {
@@ -31,7 +31,7 @@
       {
         "ordinal": 5,
         "name": "refresh_token",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 6,
@@ -40,7 +40,7 @@
       },
       {
         "ordinal": 7,
-        "name": "logout_on",
+        "name": "logged_out_at",
         "type_info": "Timestamptz"
       },
       {
@@ -56,7 +56,7 @@
         "Timestamptz",
         "Int4",
         "Timestamptz",
-        "Text",
+        "Varchar",
         "Bool",
         "Timestamptz",
         "Int4"
@@ -74,5 +74,5 @@
       true
     ]
   },
-  "hash": "424d6dd2d8bd4681f8ab0b79205355ad45d09a2976cb05d22b22b78fa8ad150d"
+  "hash": "583539dc1a89534c7d3f518e5dcbab94889e9d3a2b3b185a2bc46ec12ec2bc83"
 }

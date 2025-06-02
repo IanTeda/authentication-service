@@ -1,30 +1,32 @@
--- ./migrations/{timestamp}_migration_action.sql
+-- ============================================================================
+-- Migration: 00000000002_create_sessions_table.sql
+-- Purpose:   Create the sessions table for tracking user sessions.
+-- Author:    Ian Teda
+-- Date:      2025-06-02
+--
+-- This migration:
+--   - Creates the sessions table to store user session data (login/logout times, IPs, status, refresh token)
+--   - Adds indexes for efficient look ups by login time, user, and active status
+-- ============================================================================
 
--- # Create Sessions table
--- 
--- This table will store the user sessions. Keeping track of the user's login 
--- and logout times, IP addresses, session status (is_active) and the refresh token.
+-- Create Sessions table
 CREATE TABLE IF NOT EXISTS sessions (
-    id UUID NOT NULL,
-    user_id UUID NOT NULL,
-    logged_in_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    id UUID PRIMARY KEY NOT NULL,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    logged_in_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     login_ip INT,
-    expires_on TIMESTAMP WITH TIME ZONE NOT NULL,
-    refresh_token TEXT NOT NULL,
+    expires_on TIMESTAMPTZ NOT NULL,
+    refresh_token VARCHAR(256) NOT NULL,
     is_active BOOLEAN DEFAULT false NOT NULL,
-    logged_out_at TIMESTAMP WITH TIME ZONE,
-    logout_ip INT,
-    PRIMARY KEY (id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    logged_out_at TIMESTAMPTZ,
+    logout_ip INT
 );
 
--- Create an index for quicker lookup by created_on and id with cursor based pagination
+-- Create index's for faster look ups with cursor based pagination
+-- Index for looking up sessions by login time and id
 CREATE INDEX idx_sessions_logged_in_at_id ON sessions (logged_in_at, id);
-
--- Indexes for common queries
-
 -- Index for looking up user's sessions
 CREATE INDEX idx_sessions_user_id ON sessions (user_id);
-
 -- Index for finding active sessions
-CREATE INDEX idx_sessions_is_active ON sessions (is_active) WHERE is_active = true;
+CREATE INDEX idx_sessions_is_active ON sessions (is_active)
+  WHERE is_active = true;

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                    SELECT *\n                    FROM sessions\n                    WHERE id = $1\n                ",
+  "query": "\n                SELECT id, user_id, logged_in_at, login_ip, expires_on, refresh_token, is_active, logged_out_at, logout_ip\n                FROM sessions\n                WHERE id = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -15,7 +15,7 @@
       },
       {
         "ordinal": 2,
-        "name": "login_on",
+        "name": "logged_in_at",
         "type_info": "Timestamptz"
       },
       {
@@ -31,7 +31,7 @@
       {
         "ordinal": 5,
         "name": "refresh_token",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 6,
@@ -40,7 +40,7 @@
       },
       {
         "ordinal": 7,
-        "name": "logout_on",
+        "name": "logged_out_at",
         "type_info": "Timestamptz"
       },
       {
@@ -66,5 +66,5 @@
       true
     ]
   },
-  "hash": "e7588c591198c24bd91e0cf3cfa567756fbab897b5716b84e71367ac3141536a"
+  "hash": "7c4817925fe20be71fede68dadb3a91e40b0546ea5222582b23331ff949770c3"
 }

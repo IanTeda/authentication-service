@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                INSERT INTO users (\n                    id,\n                    email,\n                    name,\n                    password_hash,\n                    role,\n                    is_active,\n                    is_verified,\n                    created_on\n                )\n                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n                RETURNING id, email, name, password_hash, role as \"role:domain::UserRole\", is_active, is_verified, created_on\n            ",
+  "query": "\n                SELECT id, email, name, password_hash, role as \"role:domain::UserRole\", is_active, is_verified, created_on\n                FROM users\n                WHERE id = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -57,25 +57,7 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid",
-        "Text",
-        "Text",
-        "Varchar",
-        {
-          "Custom": {
-            "name": "user_role",
-            "kind": {
-              "Enum": [
-                "admin",
-                "user",
-                "guest"
-              ]
-            }
-          }
-        },
-        "Bool",
-        "Bool",
-        "Timestamptz"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -89,5 +71,5 @@
       false
     ]
   },
-  "hash": "402d86eddde8021aa94c25c52a8cc12aee6bb39bb6f11a68e2867ef772ade44f"
+  "hash": "86934b77ddd4eea0f58e41b83737e422ce3ebe1781c046b678b431d9deecce77"
 }
