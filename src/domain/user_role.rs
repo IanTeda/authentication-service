@@ -41,6 +41,11 @@ impl UserRole {
         }
     }
 
+    /// Returns true if the UserRole is considered "empty" (never, for this enum).
+    pub fn is_empty(&self) -> bool {
+        false
+    }
+
     /// Mock user role, by picking a random role
     #[cfg(test)]
     pub fn mock_data() -> Self {
