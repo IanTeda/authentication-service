@@ -16,6 +16,8 @@ use crate::{configuration::DatabaseConfiguration, prelude::*};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
 // Module imports
+mod email_verification;
+mod password_reset;
 mod sessions;
 mod users;
 
@@ -55,7 +57,7 @@ pub async fn init_pool(
 pub mod tests {
 
     #![allow(unused)]
-    
+
     use crate::domain::{self, UserRole};
 
     use sqlx::{Pool, Postgres};
@@ -64,7 +66,8 @@ pub mod tests {
     pub type Result<T> = core::result::Result<T, Error>;
     pub type Error = Box<dyn std::error::Error>;
 
-    const DEFAULT_USER_ID: uuid::Uuid = uuid::Uuid::from_u128(0x019071c5a31c7a0ebefa594702122e75);
+    const DEFAULT_USER_ID: uuid::Uuid =
+        uuid::Uuid::from_u128(0x019071c5a31c7a0ebefa594702122e75);
 
     #[sqlx::test]
     async fn test_users_table_creation_migrates_correctly(
