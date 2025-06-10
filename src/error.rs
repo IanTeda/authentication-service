@@ -44,6 +44,12 @@ pub enum AuthenticationError {
     #[error("User role does not exist.")]
     UserRole,
 
+    #[error("Invalid token: {0}")]
+    InvalidToken(String),
+
+    #[error("Token has expired")]
+    TokenExpired,
+
     //-- External errors
     /// Derive IO errors
     #[error(transparent)]

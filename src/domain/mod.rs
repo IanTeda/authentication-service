@@ -29,6 +29,7 @@ mod refresh_token;
 mod row_id;
 mod user_name;
 mod user_role;
+mod tokens;
 
 // Re-export domain structs
 pub use access_token::AccessToken;
