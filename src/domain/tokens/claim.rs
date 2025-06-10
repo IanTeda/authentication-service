@@ -13,22 +13,6 @@
 //! - **Type Safety**: Uses strong types like `Uuid` for IDs and `TokenType` enum for token types
 //! - **Security**: Uses `SecretString` for sensitive data like issuer information
 //!
-//! ## Usage
-//! ```rust
-//! use crate::domain::tokens::{TokenClaim, TokenType};
-//! use secrecy::SecretString;
-//! use chrono::Duration;
-//!
-//! // Create a new token claim
-//! let issuer = SecretString::new("https://mydomain.com".to_string());
-//! let duration = Duration::hours(1);
-//! let claim = TokenClaim::new(&issuer, &duration, &user, &TokenType::Access);
-//!
-//! // Parse an existing JWT token
-//! let secret = SecretString::new("my_secret_key".to_string());
-//! let parsed_claim = TokenClaim::parse(&jwt_string, &secret, &issuer)?;
-//! ```
-//!
 //! ## Error Handling
 //! Token parsing returns specific `AuthenticationError` variants for different failure modes:
 //! - `TokenExpired` for expired tokens
