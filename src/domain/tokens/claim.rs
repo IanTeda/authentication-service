@@ -54,7 +54,7 @@ use crate::{
 /// - Custom claims (`jty`) are included for application-specific logic.
 #[derive(Debug, Clone, Default, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
-pub struct TokenClaim {
+pub struct TokenClaimNew {
     pub jti: Uuid,      // Token unique identifier
     pub jty: TokenType, // Token type (custom)
     #[serde(
@@ -126,7 +126,7 @@ where
     Ok(SecretString::new(s.into_boxed_str()))
 }
 
-impl PartialEq for TokenClaim {
+impl PartialEq for TokenClaimNew {
     /// Compares two `TokenClaim` instances for equality.
     ///
     /// This implementation manually compares all fields, including the sensitive
@@ -148,7 +148,7 @@ impl PartialEq for TokenClaim {
     }
 }
 
-impl std::fmt::Display for TokenClaim {
+impl std::fmt::Display for TokenClaimNew {
     /// Formats the `TokenClaim` as a readable string with all fields.
     ///
     /// This implementation is useful for logging, debugging, or displaying the contents
@@ -162,7 +162,7 @@ impl std::fmt::Display for TokenClaim {
     }
 }
 
-impl TokenClaim {
+impl TokenClaimNew {
     pub fn new(
         issuer: &SecretString,
         duration: &chrono::Duration,
@@ -229,7 +229,7 @@ impl TokenClaim {
         validation.set_required_spec_claims(&["iss", "iat", "exp", "nbf"]);
 
         // Decode JWT token into a TokenClaim
-        match jsonwebtoken::decode::<TokenClaim>(
+        match jsonwebtoken::decode::<TokenClaimNew>(
             token,
             &jsonwebtoken::DecodingKey::from_secret(
                 secret.expose_secret().as_bytes(),
@@ -298,7 +298,7 @@ mod tests {
         let issuer = mock_issuer();
         let token_type = TokenType::Access;
 
-        let claim = TokenClaim::new(&issuer, &duration, &user, &token_type);
+        let claim = TokenClaimNew::new(&issuer, &duration, &user, &token_type);
 
         assert_eq!(claim.sub, user.id);
         assert_eq!(claim.jty, token_type);
@@ -315,7 +315,7 @@ mod tests {
         let issuer = mock_issuer();
         let token_type = TokenType::Refresh;
 
-        let claim = TokenClaim::new(&issuer, &duration, &user, &token_type);
+        let claim = TokenClaimNew::new(&issuer, &duration, &user, &token_type);
         let expected_exp = claim.iat + duration;
 
         assert_eq!(claim.exp, expected_exp);
@@ -328,7 +328,7 @@ mod tests {
         let issuer = mock_issuer();
         let token_type = TokenType::EmailVerification;
 
-        let claim = TokenClaim::new(&issuer, &duration, &user, &token_type);
+        let claim = TokenClaimNew::new(&issuer, &duration, &user, &token_type);
         let display_str = format!("{}", claim);
 
         assert!(display_str.contains("TokenClaim"));
@@ -343,7 +343,7 @@ mod tests {
         let issuer = mock_issuer();
         let token_type = TokenType::Access;
 
-        let claim1 = TokenClaim::new(&issuer, &duration, &user, &token_type);
+        let claim1 = TokenClaimNew::new(&issuer, &duration, &user, &token_type);
         let claim2 = claim1.clone();
 
         assert_eq!(claim1, claim2);
@@ -357,7 +357,7 @@ mod tests {
         let secret = mock_secret();
         let token_type = TokenType::Access;
 
-        let original_claim = TokenClaim::new(&issuer, &duration, &user, &token_type);
+        let original_claim = TokenClaimNew::new(&issuer, &duration, &user, &token_type);
 
         // Create a JWT token from the claim
         let token = jsonwebtoken::encode(
@@ -370,7 +370,7 @@ mod tests {
         .unwrap();
 
         // Parse the token back
-        let parsed_claim = TokenClaim::parse(&token, &secret, &issuer).unwrap();
+        let parsed_claim = TokenClaimNew::parse(&token, &secret, &issuer).unwrap();
 
         assert_eq!(parsed_claim, original_claim);
     }
@@ -385,7 +385,7 @@ mod tests {
 
         // Create a claim that will be expired
         let mut expired_claim =
-            TokenClaim::new(&issuer, &duration, &user, &token_type);
+            TokenClaimNew::new(&issuer, &duration, &user, &token_type);
 
         // Manually set the expiration to the past
         expired_claim.exp = chrono::Utc::now() - Duration::hours(1);
@@ -399,7 +399,7 @@ mod tests {
         )
         .unwrap();
 
-        let result = TokenClaim::parse(&token, &secret, &issuer);
+        let result = TokenClaimNew::parse(&token, &secret, &issuer);
 
         assert!(matches!(result, Err(AuthenticationError::TokenExpired)));
     }
@@ -410,7 +410,7 @@ mod tests {
         let issuer = mock_issuer();
         let invalid_token = "invalid.jwt.token";
 
-        let result = TokenClaim::parse(invalid_token, &secret, &issuer);
+        let result = TokenClaimNew::parse(invalid_token, &secret, &issuer);
 
         assert!(matches!(result, Err(AuthenticationError::InvalidToken(_))));
     }
@@ -424,7 +424,7 @@ mod tests {
         let secret = mock_secret();
         let token_type = TokenType::Access;
 
-        let claim = TokenClaim::new(&issuer, &duration, &user, &token_type);
+        let claim = TokenClaimNew::new(&issuer, &duration, &user, &token_type);
 
         let token = jsonwebtoken::encode(
             &jsonwebtoken::Header::default(),
@@ -435,7 +435,7 @@ mod tests {
         )
         .unwrap();
 
-        let result = TokenClaim::parse(&token, &secret, &wrong_issuer);
+        let result = TokenClaimNew::parse(&token, &secret, &wrong_issuer);
 
         assert!(matches!(result, Err(AuthenticationError::InvalidToken(_))));
     }
@@ -449,7 +449,7 @@ mod tests {
         let wrong_secret = SecretString::new("wrong_secret".to_string().into());
         let token_type = TokenType::Access;
 
-        let claim = TokenClaim::new(&issuer, &duration, &user, &token_type);
+        let claim = TokenClaimNew::new(&issuer, &duration, &user, &token_type);
 
         let token = jsonwebtoken::encode(
             &jsonwebtoken::Header::default(),
@@ -460,7 +460,7 @@ mod tests {
         )
         .unwrap();
 
-        let result = TokenClaim::parse(&token, &wrong_secret, &issuer);
+        let result = TokenClaimNew::parse(&token, &wrong_secret, &issuer);
 
         assert!(matches!(result, Err(AuthenticationError::InvalidToken(_))));
     }
@@ -472,17 +472,17 @@ mod tests {
         let issuer = mock_issuer();
 
         let access_claim =
-            TokenClaim::new(&issuer, &duration, &user, &TokenType::Access);
+            TokenClaimNew::new(&issuer, &duration, &user, &TokenType::Access);
         let refresh_claim =
-            TokenClaim::new(&issuer, &duration, &user, &TokenType::Refresh);
-        let email_claim = TokenClaim::new(
+            TokenClaimNew::new(&issuer, &duration, &user, &TokenType::Refresh);
+        let email_claim = TokenClaimNew::new(
             &issuer,
             &duration,
             &user,
             &TokenType::EmailVerification,
         );
         let password_claim =
-            TokenClaim::new(&issuer, &duration, &user, &TokenType::PasswordReset);
+            TokenClaimNew::new(&issuer, &duration, &user, &TokenType::PasswordReset);
 
         assert_eq!(access_claim.jty, TokenType::Access);
         assert_eq!(refresh_claim.jty, TokenType::Refresh);

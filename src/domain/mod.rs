@@ -40,3 +40,4 @@ pub use refresh_token::RefreshToken;
 pub use row_id::RowID;
 pub use user_name::UserName;
 pub use user_role::UserRole;
+pub use tokens::{EmailVerificationToken, TokenType, TokenClaimNew};

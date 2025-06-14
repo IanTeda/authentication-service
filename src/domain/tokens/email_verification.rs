@@ -2,7 +2,7 @@
 
 //! # Email Verification Token Module
 //!
-//! This module provides the `EmailVerificationToken` type, a specialized wrapper around JWT tokens
+//! This module provides the `EmailVerificationToken` type, a specialised wrapper around JWT tokens
 //! designed specifically for email verification workflows in the authentication service.
 //!
 //! ## Overview
@@ -151,6 +151,8 @@ impl std::fmt::Display for EmailVerificationToken {
     }
 }
 
+
+
 impl EmailVerificationToken {
     /// Creates an `EmailVerificationToken` from a `TokenClaim` and secret key.
     ///
@@ -185,7 +187,7 @@ impl EmailVerificationToken {
     /// let jwt_string = email_token.as_ref();
     /// ```
     pub fn try_from_claim(
-        claim: domain::tokens::TokenClaim,
+        claim: domain::tokens::TokenClaimNew,
         secret: &secrecy::SecretString,
     ) -> Result<Self, AuthenticationError> {
         match claim.jty {
@@ -212,20 +214,104 @@ impl EmailVerificationToken {
             )),
         }
     }
+
+    /// # Try From String
+    /// 
+    /// Creates an `EmailVerificationToken` from a string with validation.
+    ///
+    /// This method attempts to parse and validate the provided JWT string to ensure it:
+    /// - Has valid JWT structure (header.payload.signature)
+    /// - Contains proper claims including the email verification token type
+    /// - Is cryptographically valid (signature verification)
+    /// - Is not expired and within valid time bounds
+    ///
+    /// # Arguments
+    /// * `jwt_string` - The JWT string to validate and convert
+    /// * `secret` - The secret key used for JWT signature verification
+    /// * `issuer` - The expected issuer for validation
+    ///
+    /// # Returns
+    /// * `Ok(EmailVerificationToken)` if the JWT is valid and is an email verification token
+    /// * `Err(AuthenticationError)` if validation fails for any reason
+    ///
+    /// # Errors
+    /// This function will return an error if:
+    /// - The JWT structure is invalid (malformed, missing parts)
+    /// - The signature verification fails
+    /// - The token is expired or not yet valid
+    /// - The token type is not `TokenType::EmailVerification`
+    /// - The issuer doesn't match the expected value
+    ///
+    /// # Example
+    /// ```rust
+    /// use crate::domain::tokens::EmailVerificationToken;
+    /// use secrecy::SecretString;
+    ///
+    /// let jwt_str = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...";
+    /// let secret = SecretString::new("my_secret_key".to_string());
+    /// let issuer = SecretString::new("https://example.com".to_string());
+    ///
+    /// let token = EmailVerificationToken::try_from_string(jwt_str, &secret, &issuer)?;
+    /// ```
+    ///
+    /// # Security Note
+    /// This method performs full cryptographic validation of the JWT, ensuring
+    /// the token is authentic and hasn't been tampered with.
+    pub fn try_from_string(
+        jwt_string: &str,
+        secret: &secrecy::SecretString,
+        issuer: &secrecy::SecretString,
+    ) -> Result<Self, AuthenticationError> {
+        // First, parse and validate the JWT using TokenClaim::parse
+        let claim = domain::tokens::TokenClaimNew::parse(jwt_string, secret, issuer)?;
+
+        // Verify that this is specifically an email verification token
+        match claim.jty {
+            crate::domain::tokens::TokenType::EmailVerification => {
+                // If validation passes, create the EmailVerificationToken
+                Ok(EmailVerificationToken(jwt_string.to_string()))
+            }
+            _ => Err(AuthenticationError::InvalidToken(
+                "JWT is not an email verification token".to_string(),
+            )),
+        }
+    }
+
+    /// Creates an `EmailVerificationToken` from an owned String with validation.
+    ///
+    /// This is a convenience method that takes ownership of the string and validates it.
+    /// See `try_from_string` for detailed validation behaviour.
+    ///
+    /// # Arguments
+    /// * `jwt_string` - The owned JWT string to validate and convert
+    /// * `secret` - The secret key used for JWT signature verification
+    /// * `issuer` - The expected issuer for validation
+    ///
+    /// # Returns
+    /// * `Ok(EmailVerificationToken)` if the JWT is valid
+    /// * `Err(AuthenticationError)` if validation fails
+    pub fn try_from_owned_string(
+        jwt_string: String,
+        secret: &secrecy::SecretString,
+        issuer: &secrecy::SecretString,
+    ) -> Result<Self, AuthenticationError> {
+        Self::try_from_string(&jwt_string, secret, issuer)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::database::Users;
-    use crate::domain::tokens::{TokenClaim, TokenType};
+    use crate::database::{self, Users};
+    use crate::domain::tokens::{TokenClaimNew, TokenType};
     use chrono::Duration;
     use fake::faker::company::en::CompanyName;
     use fake::{Fake, Faker};
     use secrecy::SecretString;
 
-    fn mock_user() -> Users {
-        Users::mock_data().unwrap()
+    fn mock_user() -> database::Users {
+        let user = database::Users::mock_data().unwrap();
+        user
     }
 
     fn mock_secret() -> SecretString {
@@ -238,11 +324,11 @@ mod tests {
         SecretString::new(fake_company.into_boxed_str())
     }
 
-    fn create_email_verification_claim() -> (TokenClaim, SecretString) {
-        let user = mock_user();
+    fn create_email_verification_claim() -> (TokenClaimNew, SecretString) {
+        let user = database::Users::mock_data().unwrap();
         let issuer = mock_issuer();
         let duration = Duration::hours(24);
-        let claim = TokenClaim::new(
+        let claim = TokenClaimNew::new(
             &issuer,
             &duration,
             &user,
@@ -251,11 +337,11 @@ mod tests {
         (claim, mock_secret())
     }
 
-    fn create_non_email_verification_claim() -> (TokenClaim, SecretString) {
+    fn create_non_email_verification_claim() -> (TokenClaimNew, SecretString) {
         let user = mock_user();
         let issuer = mock_issuer();
         let duration = Duration::hours(1);
-        let claim = TokenClaim::new(&issuer, &duration, &user, &TokenType::Access);
+        let claim = TokenClaimNew::new(&issuer, &duration, &user, &TokenType::Access);
         (claim, mock_secret())
     }
 
@@ -380,7 +466,7 @@ mod tests {
                 .unwrap();
 
         // Parse token back to claim
-        let parsed_claim = TokenClaim::parse(token.as_ref(), &secret, &issuer);
+        let parsed_claim = TokenClaimNew::parse(token.as_ref(), &secret, &issuer);
 
         // Note: This test might fail if the issuer doesn't match what was used in the original claim
         // In a real implementation, you'd want to use the same issuer
@@ -396,7 +482,7 @@ mod tests {
         // Test with different expiration times
         for hours in [1, 24, 48, 72] {
             let duration = Duration::hours(hours);
-            let claim = TokenClaim::new(
+            let claim = TokenClaimNew::new(
                 &issuer,
                 &duration,
                 &user,
@@ -442,7 +528,7 @@ mod tests {
         let user = mock_user();
         let issuer = mock_issuer();
         let duration = Duration::hours(24);
-        let claim = TokenClaim::new(
+        let claim = TokenClaimNew::new(
             &issuer,
             &duration,
             &user,
