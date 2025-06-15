@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     logged_in_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     login_ip INT,
     expires_on TIMESTAMPTZ NOT NULL,
-    refresh_token VARCHAR(256) NOT NULL,
+    refresh_token VARCHAR(512) NOT NULL,
     is_active BOOLEAN DEFAULT false NOT NULL,
     logged_out_at TIMESTAMPTZ,
     logout_ip INT

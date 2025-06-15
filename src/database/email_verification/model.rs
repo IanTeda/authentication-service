@@ -25,16 +25,16 @@ use uuid::Uuid;
 #[derive(
     Debug, serde::Deserialize, serde::Serialize, sqlx::FromRow, Clone, PartialEq,
 )]
-pub struct EmailVerification {
+pub struct EmailVerifications {
     pub id: domain::RowID,
     pub user_id: Uuid,
     pub token: domain::EmailVerificationToken,
     pub expires_at: chrono::DateTime<chrono::Utc>,
-    pub used: bool,
+    pub is_used: bool,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-impl EmailVerification {
+impl EmailVerifications {
     /// Creates a new instance of the EmailVerification struct.
     ///
     /// ## Parameters
@@ -75,7 +75,7 @@ impl EmailVerification {
             user_id,
             token,
             expires_at,
-            used,
+            is_used: used,
             created_at,
         }
     }
@@ -127,11 +127,11 @@ mod unit_validation_tests {
         let token = mock_token();
         let duration = Duration::hours(24);
 
-        let verification = EmailVerification::new(&user, &token, &duration);
+        let verification = EmailVerifications::new(&user, &token, &duration);
 
         assert_eq!(verification.user_id, user.id);
         assert_eq!(verification.token, token);
-        assert!(!verification.used);
+        assert!(!verification.is_used);
         assert!(verification.expires_at > verification.created_at);
         assert!(verification.created_at <= chrono::Utc::now());
     }
@@ -142,7 +142,7 @@ mod unit_validation_tests {
         let token = mock_token();
         let duration = Duration::hours(48);
 
-        let verification = EmailVerification::new(&user, &token, &duration);
+        let verification = EmailVerifications::new(&user, &token, &duration);
 
         let expected_duration = verification.expires_at - verification.created_at;
         assert_eq!(expected_duration, duration);
@@ -162,11 +162,11 @@ mod unit_validation_tests {
         ];
 
         for duration in test_durations {
-            let verification = EmailVerification::new(&user, &token, &duration);
+            let verification = EmailVerifications::new(&user, &token, &duration);
             
             let actual_duration = verification.expires_at - verification.created_at;
             assert_eq!(actual_duration, duration);
-            assert!(!verification.used);
+            assert!(!verification.is_used);
         }
     }
 
@@ -176,8 +176,8 @@ mod unit_validation_tests {
         let token = mock_token();
         let duration = Duration::hours(1);
 
-        let verification1 = EmailVerification::new(&user, &token, &duration);
-        let verification2 = EmailVerification::new(&user, &token, &duration);
+        let verification1 = EmailVerifications::new(&user, &token, &duration);
+        let verification2 = EmailVerifications::new(&user, &token, &duration);
 
         assert_ne!(verification1.id, verification2.id);
     }
@@ -189,8 +189,8 @@ mod unit_validation_tests {
         let token = mock_token();
         let duration = Duration::hours(1);
 
-        let verification1 = EmailVerification::new(&user1, &token, &duration);
-        let verification2 = EmailVerification::new(&user2, &token, &duration);
+        let verification1 = EmailVerifications::new(&user1, &token, &duration);
+        let verification2 = EmailVerifications::new(&user2, &token, &duration);
 
         assert_eq!(verification1.user_id, user1.id);
         assert_eq!(verification2.user_id, user2.id);
@@ -203,9 +203,9 @@ mod unit_validation_tests {
         let token = mock_token();
         let duration = Duration::hours(1);
 
-        let verification = EmailVerification::new(&user, &token, &duration);
+        let verification = EmailVerifications::new(&user, &token, &duration);
 
-        assert_eq!(verification.used, false);
+        assert_eq!(verification.is_used, false);
         assert!(verification.created_at <= chrono::Utc::now());
         assert!(verification.expires_at > verification.created_at);
     }
@@ -216,7 +216,7 @@ mod unit_validation_tests {
         let token = mock_token();
         let duration = Duration::zero();
 
-        let verification = EmailVerification::new(&user, &token, &duration);
+        let verification = EmailVerifications::new(&user, &token, &duration);
 
         // With zero duration, expires_at should be approximately equal to created_at
         let time_diff = verification.expires_at - verification.created_at;
@@ -229,7 +229,7 @@ mod unit_validation_tests {
         let token = mock_token();
         let duration = Duration::hours(-1); // Negative duration
 
-        let verification = EmailVerification::new(&user, &token, &duration);
+        let verification = EmailVerifications::new(&user, &token, &duration);
 
         // Should create an already-expired token
         assert!(verification.expires_at < verification.created_at);
@@ -242,7 +242,7 @@ mod unit_validation_tests {
         let duration = Duration::hours(1);
 
         let before = chrono::Utc::now();
-        let verification = EmailVerification::new(&user, &token, &duration);
+        let verification = EmailVerifications::new(&user, &token, &duration);
         let after = chrono::Utc::now();
 
         assert!(verification.created_at >= before);

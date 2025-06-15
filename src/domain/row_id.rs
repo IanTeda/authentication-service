@@ -23,7 +23,9 @@
 /// By default, it uses UUID version 7, which is time-ordered and suitable for efficient indexing and sharding.
 ///
 /// Use `RowID` in place of raw UUIDs to improve type safety and domain clarity.
-#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Copy, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize,
+)]
 pub struct RowID(uuid::Uuid);
 
 impl From<uuid::Uuid> for RowID {
@@ -56,17 +58,62 @@ impl std::str::FromStr for RowID {
 }
 
 impl std::fmt::Display for RowID {
-  /// Formats the `RowID` as a hyphenated UUID string.
-  ///
-  /// # Example
-  /// ```
-  /// let row_id = RowID::new();
-  /// println!("{}", row_id); // prints a UUID string
-  /// ```
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-      write!(f, "{}", self.0)
-  }
+    /// Formats the `RowID` as a hyphenated UUID string.
+    ///
+    /// # Example
+    /// ```
+    /// let row_id = RowID::new();
+    /// println!("{}", row_id); // prints a UUID string
+    /// ```
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
+
+impl PartialOrd for RowID {
+    /// Compares two `RowID` instances for ordering.
+    ///
+    /// Since `RowID` uses UUID v7 which is time-ordered, this comparison
+    /// provides chronological ordering based on creation time.
+    ///
+    /// # Returns
+    /// - `Some(Ordering::Less)` if this RowID was created before the other
+    /// - `Some(Ordering::Greater)` if this RowID was created after the other
+    /// - `Some(Ordering::Equal)` if the RowIDs are identical
+    /// - `None` should never occur since UUIDs are always comparable
+    ///
+    /// # Example
+    /// ```rust
+    /// let id1 = RowID::new();
+    /// std::thread::sleep(std::time::Duration::from_millis(1));
+    /// let id2 = RowID::new();
+    ///
+    /// assert!(id1 < id2); // id1 was created first
+    /// ```
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for RowID {
+    /// Provides total ordering for `RowID` instances.
+    ///
+    /// UUID v7 values are designed to be sortable by creation time,
+    /// making this ordering both deterministic and chronologically meaningful.
+    /// This enables efficient range queries and time-based operations.
+    ///
+    /// # Example
+    /// ```rust
+    /// let mut ids = vec![RowID::new(), RowID::new(), RowID::new()];
+    /// ids.sort();
+    /// // ids are now sorted by creation time
+    /// ```
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.cmp(&other.0)
+    }
+}
+
+impl Eq for RowID {}
 
 impl RowID {
     /// Creates a new `RowID` using a UUID version 7 (time-ordered).
@@ -91,8 +138,172 @@ impl RowID {
     /// let uuid: uuid::Uuid = row_id.into_uuid();
     /// ```
     pub fn into_uuid(self) -> uuid::Uuid {
-      self.0
-  }
+        self.0
+    }
+
+    /// Sorts a slice of `RowID` values in ascending chronological order.
+    ///
+    /// This is a convenience method that sorts RowIDs by their creation time,
+    /// with the earliest created IDs appearing first.
+    ///
+    /// # Arguments
+    /// * `ids` - A mutable slice of `RowID` values to sort
+    ///
+    /// # Example
+    /// ```rust
+    /// let mut ids = vec![
+    ///     RowID::new(),
+    ///     RowID::new(),
+    ///     RowID::new()
+    /// ];
+    /// RowID::sort_ascending(&mut ids);
+    /// // ids[0] is the earliest created, ids[2] is the latest
+    /// ```
+    pub fn sort_ascending(ids: &mut [RowID]) {
+        ids.sort();
+    }
+
+    /// Sorts a slice of `RowID` values in descending chronological order.
+    ///
+    /// This sorts RowIDs with the most recently created IDs appearing first,
+    /// useful for displaying recent records at the top.
+    ///
+    /// # Arguments
+    /// * `ids` - A mutable slice of `RowID` values to sort
+    ///
+    /// # Example
+    /// ```rust
+    /// let mut ids = vec![
+    ///     RowID::new(),
+    ///     RowID::new(),
+    ///     RowID::new()
+    /// ];
+    /// RowID::sort_descending(&mut ids);
+    /// // ids[0] is the latest created, ids[2] is the earliest
+    /// ```
+    pub fn sort_descending(ids: &mut [RowID]) {
+        ids.sort_by(|a, b| b.cmp(a));
+    }
+
+    /// Returns a sorted vector of `RowID` values in ascending order.
+    ///
+    /// This creates a new vector without modifying the original collection.
+    ///
+    /// # Arguments
+    /// * `ids` - An iterator of `RowID` values to sort
+    ///
+    /// # Returns
+    /// A new `Vec<RowID>` sorted in ascending chronological order
+    ///
+    /// # Example
+    /// ```rust
+    /// let ids = vec![RowID::new(), RowID::new(), RowID::new()];
+    /// let sorted = RowID::sorted_ascending(ids.iter().cloned());
+    /// ```
+    pub fn sorted_ascending<I>(ids: I) -> Vec<RowID>
+    where
+        I: IntoIterator<Item = RowID>,
+    {
+        let mut result: Vec<RowID> = ids.into_iter().collect();
+        result.sort();
+        result
+    }
+
+    /// Returns a sorted vector of `RowID` values in descending order.
+    ///
+    /// This creates a new vector without modifying the original collection.
+    ///
+    /// # Arguments
+    /// * `ids` - An iterator of `RowID` values to sort
+    ///
+    /// # Returns
+    /// A new `Vec<RowID>` sorted in descending chronological order
+    ///
+    /// # Example
+    /// ```rust
+    /// let ids = vec![RowID::new(), RowID::new(), RowID::new()];
+    /// let sorted = RowID::sorted_descending(ids.iter().cloned());
+    /// ```
+    pub fn sorted_descending<I>(ids: I) -> Vec<RowID>
+    where
+        I: IntoIterator<Item = RowID>,
+    {
+        let mut result: Vec<RowID> = ids.into_iter().collect();
+        result.sort_by(|a, b| b.cmp(a));
+        result
+    }
+
+    /// Finds the minimum (earliest created) `RowID` in a collection.
+    ///
+    /// # Arguments
+    /// * `ids` - An iterator of `RowID` values
+    ///
+    /// # Returns
+    /// * `Some(RowID)` - The earliest created RowID
+    /// * `None` - If the collection is empty
+    ///
+    /// # Example
+    /// ```rust
+    /// let ids = vec![RowID::new(), RowID::new(), RowID::new()];
+    /// let earliest = RowID::min(ids.iter().cloned()).unwrap();
+    /// ```
+    pub fn min<I>(ids: I) -> Option<RowID>
+    where
+        I: IntoIterator<Item = RowID>,
+    {
+        ids.into_iter().min()
+    }
+
+    /// Finds the maximum (latest created) `RowID` in a collection.
+    ///
+    /// # Arguments
+    /// * `ids` - An iterator of `RowID` values
+    ///
+    /// # Returns
+    /// * `Some(RowID)` - The latest created RowID
+    /// * `None` - If the collection is empty
+    ///
+    /// # Example
+    /// ```rust
+    /// let ids = vec![RowID::new(), RowID::new(), RowID::new()];
+    /// let latest = RowID::max(ids.iter().cloned()).unwrap();
+    /// ```
+    pub fn max<I>(ids: I) -> Option<RowID>
+    where
+        I: IntoIterator<Item = RowID>,
+    {
+        ids.into_iter().max()
+    }
+
+    /// Checks if this `RowID` was created before another `RowID`.
+    ///
+    /// # Example
+    /// ```rust
+    /// let id1 = RowID::new();
+    /// std::thread::sleep(std::time::Duration::from_millis(1));
+    /// let id2 = RowID::new();
+    ///
+    /// assert!(id1.is_before(&id2));
+    /// assert!(!id2.is_before(&id1));
+    /// ```
+    pub fn is_before(&self, other: &RowID) -> bool {
+        self < other
+    }
+
+    /// Checks if this `RowID` was created after another `RowID`.
+    ///
+    /// # Example
+    /// ```rust
+    /// let id1 = RowID::new();
+    /// std::thread::sleep(std::time::Duration::from_millis(1));
+    /// let id2 = RowID::new();
+    ///
+    /// assert!(id2.is_after(&id1));
+    /// assert!(!id1.is_after(&id2));
+    /// ```
+    pub fn is_after(&self, other: &RowID) -> bool {
+        self > other
+    }
 
     /// Generates a mock `RowID` with a random, realistic UUID v7 timestamp.
     ///
@@ -131,7 +342,7 @@ impl RowID {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::str::FromStr;
+    use std::{str::FromStr, thread, time::Duration};
 
     #[test]
     fn test_rowid_new_creates_uuid_v7() {
@@ -181,5 +392,149 @@ mod tests {
         let invalid_str = "not-a-uuid";
         let result = RowID::from_str(invalid_str);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_rowid_ordering() {
+        let id1 = RowID::new();
+        thread::sleep(Duration::from_millis(1));
+        let id2 = RowID::new();
+        thread::sleep(Duration::from_millis(1));
+        let id3 = RowID::new();
+
+        assert!(id1 < id2);
+        assert!(id2 < id3);
+        assert!(id1 < id3);
+    }
+
+    #[test]
+    fn test_sort_ascending() {
+        let id1 = RowID::new();
+        thread::sleep(Duration::from_millis(1));
+        let id2 = RowID::new();
+        thread::sleep(Duration::from_millis(1));
+        let id3 = RowID::new();
+
+        let mut ids = vec![id3, id1, id2];
+        RowID::sort_ascending(&mut ids);
+
+        assert_eq!(ids, vec![id1, id2, id3]);
+    }
+
+    #[test]
+    fn test_sort_descending() {
+        let id1 = RowID::new();
+        thread::sleep(Duration::from_millis(1));
+        let id2 = RowID::new();
+        thread::sleep(Duration::from_millis(1));
+        let id3 = RowID::new();
+
+        let mut ids = vec![id1, id3, id2];
+        RowID::sort_descending(&mut ids);
+
+        assert_eq!(ids, vec![id3, id2, id1]);
+    }
+
+    #[test]
+    fn test_sorted_ascending() {
+        let id1 = RowID::new();
+        thread::sleep(Duration::from_millis(1));
+        let id2 = RowID::new();
+        thread::sleep(Duration::from_millis(1));
+        let id3 = RowID::new();
+
+        let ids = vec![id3, id1, id2];
+        let sorted = RowID::sorted_ascending(ids.iter().cloned());
+
+        assert_eq!(sorted, vec![id1, id2, id3]);
+    }
+
+    #[test]
+    fn test_sorted_descending() {
+        let id1 = RowID::new();
+        thread::sleep(Duration::from_millis(1));
+        let id2 = RowID::new();
+        thread::sleep(Duration::from_millis(1));
+        let id3 = RowID::new();
+
+        let ids = vec![id1, id3, id2];
+        let sorted = RowID::sorted_descending(ids.iter().cloned());
+
+        assert_eq!(sorted, vec![id3, id2, id1]);
+    }
+
+    #[test]
+    fn test_min_max() {
+        let id1 = RowID::new();
+        thread::sleep(Duration::from_millis(1));
+        let id2 = RowID::new();
+        thread::sleep(Duration::from_millis(1));
+        let id3 = RowID::new();
+
+        let ids = vec![id2, id1, id3];
+
+        assert_eq!(RowID::min(ids.iter().cloned()).unwrap(), id1);
+        assert_eq!(RowID::max(ids.iter().cloned()).unwrap(), id3);
+    }
+
+    #[test]
+    fn test_min_max_empty() {
+        let ids: Vec<RowID> = vec![];
+        assert!(RowID::min(ids.iter().cloned()).is_none());
+        assert!(RowID::max(ids.iter().cloned()).is_none());
+    }
+
+    #[test]
+    fn test_is_before_after() {
+        let id1 = RowID::new();
+        thread::sleep(Duration::from_millis(1));
+        let id2 = RowID::new();
+
+        assert!(id1.is_before(&id2));
+        assert!(!id2.is_before(&id1));
+        assert!(id2.is_after(&id1));
+        assert!(!id1.is_after(&id2));
+    }
+
+    #[test]
+    fn test_equality() {
+        let id = RowID::new();
+        let same_id = RowID(id.0);
+
+        assert!(!(id.is_before(&same_id)));
+        assert!(!(id.is_after(&same_id)));
+        assert_eq!(id, same_id);
+    }
+
+    #[test]
+    fn test_mock_ids_are_sortable() {
+        let mut mock_ids = vec![RowID::mock(), RowID::mock(), RowID::mock()];
+        
+        // Should not panic when sorting mock IDs
+        RowID::sort_ascending(&mut mock_ids);
+        
+        // All should be different (very high probability with UUIDs)
+        assert_ne!(mock_ids[0], mock_ids[1]);
+        assert_ne!(mock_ids[1], mock_ids[2]);
+        assert_ne!(mock_ids[0], mock_ids[2]);
+    }
+
+    #[test]
+    fn test_large_collection_sorting() {
+        let mut ids: Vec<RowID> = (0..1000).map(|_| RowID::new()).collect();
+        let original_ids = ids.clone();
+        
+        RowID::sort_descending(&mut ids);
+        
+        // Should be in reverse chronological order
+        for i in 0..ids.len()-1 {
+            assert!(ids[i] >= ids[i+1]);
+        }
+        
+        // All original IDs should still be present
+        let mut sorted_original = original_ids;
+        sorted_original.sort();
+        ids.sort();
+        assert_eq!(ids, sorted_original);
     }
 }

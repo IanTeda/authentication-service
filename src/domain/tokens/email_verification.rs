@@ -23,32 +23,6 @@
 //! 3. **Verification**: Parse and validate the token when the user clicks the verification link
 //! 4. **Validation**: Confirm the token is valid, not expired, and has correct claims
 //!
-//! ## Example
-//! ```rust
-//! use crate::domain::tokens::{TokenClaim, EmailVerificationToken, TokenType};
-//! use secrecy::SecretString;
-//! use chrono::Duration;
-//!
-//! // Create an email verification token
-//! let claim = TokenClaim::new(
-//!     &issuer,
-//!     &Duration::hours(24),  // 24-hour expiration
-//!     &user,
-//!     &TokenType::EmailVerification
-//! );
-//! let secret = SecretString::new("jwt_secret".to_string());
-//! let token = EmailVerificationToken::try_from_claim(claim, &secret)?;
-//!
-//! // Use in email verification URL
-//! let verification_url = format!("https://example.com/verify?token={}", token);
-//! send_verification_email(&user.email, &verification_url)?;
-//! ```
-//!
-//! ## Security Considerations
-//! - Tokens should have short expiration times (typically 24-48 hours)
-//! - Always transmit over HTTPS
-//! - Invalidate tokens after successful verification
-//! - Log verification attempts for audit purposes
 
 use crate::{domain, AuthenticationError};
 use secrecy::ExposeSecret;
@@ -151,7 +125,49 @@ impl std::fmt::Display for EmailVerificationToken {
     }
 }
 
+// Use for trusted sources like database records
+impl From<String> for EmailVerificationToken {
+    /// Creates an `EmailVerificationToken` from an owned `String` without validation.
+    ///
+    /// This conversion simply wraps the provided string as a JWT token, without performing
+    /// any cryptographic validation, signature verification, or claims checking. It is
+    /// intended for use with trusted sources, such as database records or internal APIs,
+    /// where the token is already known to be valid or will be validated separately.
+    ///
+    /// # Arguments
+    /// * `token` - An owned `String` containing the JWT token value.
+    ///
+    /// # Returns
+    /// An `EmailVerificationToken` wrapping the provided string.
+    ///
+    /// # Security Warning
+    /// ⚠️ **This method does NOT validate the token.** For user-provided tokens or
+    /// security-critical operations, use [`EmailVerificationToken::try_from_string()`]
+    /// or similar validation methods instead.
+    ///
+    /// # Example
+    /// ```rust
+    /// use crate::domain::tokens::EmailVerificationToken;
+    ///
+    /// // From a trusted database query result
+    /// let db_token_string = String::from("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJhdXRoLXNlcnZpY2UiLCJleHAiOjE2NDE5OTg0MDAsImp0eSI6ImVtYWlsX3ZlcmlmaWNhdGlvbiJ9.signature");
+    /// let token: EmailVerificationToken = db_token_string.into();
+    ///
+    /// // Direct conversion from owned string
+    /// let token_string = get_token_from_database();
+    /// let token = EmailVerificationToken::from(token_string);
+    /// ```
+    fn from(token: String) -> Self {
+        EmailVerificationToken(token)
+    }
+}
 
+// Use for trusted sources like database records
+impl From<&str> for EmailVerificationToken {
+    fn from(token: &str) -> Self {
+        EmailVerificationToken(token.to_string())
+    }
+}
 
 impl EmailVerificationToken {
     /// Creates an `EmailVerificationToken` from a `TokenClaim` and secret key.
@@ -216,7 +232,7 @@ impl EmailVerificationToken {
     }
 
     /// # Try From String
-    /// 
+    ///
     /// Creates an `EmailVerificationToken` from a string with validation.
     ///
     /// This method attempts to parse and validate the provided JWT string to ensure it:
@@ -263,7 +279,8 @@ impl EmailVerificationToken {
         issuer: &secrecy::SecretString,
     ) -> Result<Self, AuthenticationError> {
         // First, parse and validate the JWT using TokenClaim::parse
-        let claim = domain::tokens::TokenClaimNew::parse(jwt_string, secret, issuer)?;
+        let claim =
+            domain::tokens::TokenClaimNew::parse(jwt_string, secret, issuer)?;
 
         // Verify that this is specifically an email verification token
         match claim.jty {
@@ -341,8 +358,38 @@ mod tests {
         let user = mock_user();
         let issuer = mock_issuer();
         let duration = Duration::hours(1);
-        let claim = TokenClaimNew::new(&issuer, &duration, &user, &TokenType::Access);
+        let claim =
+            TokenClaimNew::new(&issuer, &duration, &user, &TokenType::Access);
         (claim, mock_secret())
+    }
+
+    #[test]
+    fn from_string_creates_token() {
+        let jwt = String::from("header.payload.signature");
+        let token = EmailVerificationToken::from(jwt.clone());
+        assert_eq!(token.as_ref(), "header.payload.signature");
+    }
+
+    #[test]
+    fn from_string_accepts_empty() {
+        let jwt = String::new();
+        let token = EmailVerificationToken::from(jwt.clone());
+        assert_eq!(token.as_ref(), "");
+    }
+
+    #[test]
+    fn from_string_accepts_non_jwt() {
+        let s = String::from("not_a_jwt");
+        let token = EmailVerificationToken::from(s.clone());
+        assert_eq!(token.as_ref(), "not_a_jwt");
+    }
+
+    #[test]
+    fn from_string_moves_ownership() {
+        let jwt = String::from("move_test");
+        let token = EmailVerificationToken::from(jwt);
+        // jwt is now moved and cannot be used
+        assert_eq!(token.as_ref(), "move_test");
     }
 
     #[test]

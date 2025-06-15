@@ -169,7 +169,6 @@ impl Sessions {
             r#"
                 DELETE
                 FROM sessions
-
             "#,
         )
         .execute(database)

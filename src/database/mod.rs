@@ -22,6 +22,7 @@ mod sessions;
 mod users;
 
 // Reexport modules for cleaner code
+pub use email_verification::EmailVerifications;
 pub use sessions::Sessions;
 pub use users::Users;
 

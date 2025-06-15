@@ -1,7 +1,9 @@
 
 
-mod delete;
+// mod delete;
 mod insert;
 mod model;
-mod read;
-mod update;
+// mod read;
+// mod update;
+
+pub use model::EmailVerifications;
