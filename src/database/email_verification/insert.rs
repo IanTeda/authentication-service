@@ -1,58 +1,29 @@
 //-- ./src/database/email_verification/insert.rs
 
-#![allow(unused)] // For development only
+// #![allow(unused)] // For development only
 
 use crate::{database::EmailVerifications, AuthenticationError};
 
 impl EmailVerifications {
-    /// Inserts this email verification record into the database.
-    ///
-    /// This function creates a new row in the `email_verifications` table using the values
-    /// from this `EmailVerifications` instance. It returns the inserted record as stored in
-    /// the database, including any fields that may be set or modified by the database itself.
-    ///
-    /// # Arguments
-    /// * `database` - A reference to the PostgreSQL connection pool.
-    ///
-    /// # Returns
-    /// * `Ok(Self)` - The inserted email verification record as returned by the database.
-    /// * `Err(AuthenticationError)` - If the insertion fails due to a database error,
-    ///   constraint violation, or connection issue.
-    ///
-    /// # Behaviour
-    /// - Inserts all fields from the struct into the corresponding database columns.
-    /// - Fails if a record with the same `id` or `token` already exists.
-    /// - Fails if the referenced `user_id` does not exist.
-    /// - Returns the full inserted record, including any database-generated values.
-    ///
-    /// # Example
-    /// ```
-    /// let verification = EmailVerifications::new(&user, &token, &duration);
-    /// let inserted = verification.insert(&pool).await?;
-    /// assert_eq!(inserted.user_id, user.id);
-    /// ```
-    ///
-    /// # Errors
-    /// Returns an error if:
-    /// - The database connection fails.
-    /// - A unique or foreign key constraint is violated.
-    /// - Any required field is missing or invalid.
-    ///
-    /// # Security
-    /// This function does not validate the token; it assumes the token is already valid.
-    ///
-    /// # See Also
-    /// - [`EmailVerifications::insert_batch`] for inserting multiple records in a transaction.
-    /// - [`EmailVerifications::upsert`] for insert-or-update
+    #[tracing::instrument(
+        name = "Insert email verification",
+        skip(database),
+        fields(
+            verification_id = %self.id,
+            user_id = %self.user_id,
+            expires_at = %self.expires_at,
+            is_used = %self.is_used
+        )
+    )]
     pub async fn insert(
         &self,
         database: &sqlx::Pool<sqlx::Postgres>,
     ) -> Result<Self, AuthenticationError> {
-        let database_record = sqlx::query_as!(
+        let query = sqlx::query_as!(
             EmailVerifications,
             r#"
-                INSERT INTO email_verifications (id, user_id, token, expires_at, is_used, created_at)
-                VALUES ($1, $2, $3, $4, $5, $6)
+                INSERT INTO email_verifications (id, user_id, token, expires_at, is_used, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, NULL)
                 RETURNING *
             "#,
             self.id.into_uuid(),
@@ -63,61 +34,65 @@ impl EmailVerifications {
             self.created_at
         )
         .fetch_one(database)
-        .await?;
+        .await;
 
-        tracing::debug!(
-            "Email verification database insert record: {database_record:#?}"
-        );
-
-        Ok(database_record)
+        match query {
+            Ok(email_verification) => Ok(email_verification),
+            Err(e) => {
+                tracing::error!(
+                    "Failed to insert email verification: {} (verification: {:?})",
+                    e,
+                    self
+                );
+                Err(AuthenticationError::DatabaseError(e.to_string()))
+            }
+        }
     }
 
-    /// Inserts multiple email verification records in a single database transaction.
-    ///
-    /// This function attempts to insert all provided `EmailVerifications` records into the
-    /// `email_verifications` table atomically. If any insertion fails (for example, due to
-    /// a constraint violation), the entire batch is rolled back and no records are inserted.
-    ///
-    /// # Arguments
-    /// * `verifications` - A slice of `EmailVerifications` instances to insert.
-    /// * `database` - A reference to the PostgreSQL connection pool.
-    ///
-    /// # Returns
-    /// * `Ok(Vec<EmailVerifications>)` - A vector of the inserted records as returned by the database.
-    /// * `Err(AuthenticationError)` - If any insertion fails or the transaction cannot be completed.
-    ///
-    /// # Behaviour
-    /// - All insertions are performed within a single transaction.
-    /// - If any record fails to insert (e.g., duplicate ID or token, invalid user), the transaction is rolled back.
-    /// - Returns all successfully inserted records if the batch succeeds.
-    ///
-    /// # Example
-    /// ```
-    /// let verifications = vec![
-    ///     EmailVerifications::new(&user, &token1, &duration),
-    ///     EmailVerifications::new(&user, &token2, &duration),
-    /// ];
-    /// let inserted = EmailVerifications::insert_batch(&verifications, &pool).await?;
-    /// assert_eq!(inserted.len(), 2);
-    /// ```
-    ///
-    /// # Errors
-    /// Returns an error if:
-    /// - Any record violates a unique or foreign key constraint.
-    /// - The database connection fails.
-    /// - The transaction cannot be committed.
-    ///
-    /// # Use Cases
-    /// - Efficiently inserting multiple verification tokens for testing or bulk operations.
-    /// - Ensuring all-or-nothing semantics for related verification records.
-    ///
-    /// # See Also
-    /// - [`EmailVerifications::insert`] for inserting a single record.
-    /// - [`EmailVerifications::upsert`] for insert-or-
+    #[tracing::instrument(
+        name = "Insert email verifications batch in database",
+        skip(database, verifications),
+        fields(
+            total_verifications = verifications.len(),
+            operation = "insert_batch"
+        )
+    )]
     pub async fn insert_batch(
         verifications: &[EmailVerifications],
         database: &sqlx::Pool<sqlx::Postgres>,
     ) -> Result<Vec<EmailVerifications>, AuthenticationError> {
+        // Input validation
+        if verifications.is_empty() {
+            tracing::warn!(
+                verifications_count = 0,
+                "Attempted to insert empty batch of email verifications"
+            );
+            return Err(AuthenticationError::ValidationError {
+                field: "verifications".to_string(),
+                message:
+                    "Cannot insert empty batch. Use insert() for single records."
+                        .to_string(),
+            });
+        }
+
+        tracing::info!(
+            verifications_count = verifications.len(),
+            batch_size = verifications.len(),
+            "Starting email verification batch insert transaction"
+        );
+
+        const MAX_BATCH_SIZE: usize = 1000;
+        if verifications.len() > MAX_BATCH_SIZE {
+            return Err(AuthenticationError::ValidationError {
+                field: "verifications".to_string(),
+                message: format!(
+                    "Batch size {} exceeds limit of {}",
+                    verifications.len(),
+                    MAX_BATCH_SIZE
+                ),
+            });
+        }
+
         let mut tx = database.begin().await?;
         let mut inserted = Vec::with_capacity(verifications.len());
 
@@ -125,8 +100,8 @@ impl EmailVerifications {
             let db_record = sqlx::query_as!(
                 EmailVerifications,
                 r#"
-                    INSERT INTO email_verifications (id, user_id, token, expires_at, is_used, created_at)
-                    VALUES ($1, $2, $3, $4, $5, $6)
+                    INSERT INTO email_verifications (id, user_id, token, expires_at, is_used, created_at, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, NULL)
                     RETURNING *
                 "#,
                 verification.id.into_uuid(),
@@ -138,6 +113,7 @@ impl EmailVerifications {
             )
             .fetch_one(&mut *tx)
             .await?;
+
             inserted.push(db_record);
         }
 
@@ -145,62 +121,31 @@ impl EmailVerifications {
         Ok(inserted)
     }
 
-    /// Inserts or updates an email verification record in the database ("upsert").
-    ///
-    /// This function attempts to insert the current `EmailVerifications` instance into the
-    /// `email_verifications` table. If a record with the same primary key (`id`) already exists,
-    /// it updates the existing record with the new values provided. The resulting record as stored
-    /// in the database is returned.
-    ///
-    /// # Arguments
-    /// * `database` - A reference to the PostgreSQL connection pool.
-    ///
-    /// # Returns
-    /// * `Ok(Self)` - The inserted or updated email verification record as returned by the database.
-    /// * `Err(AuthenticationError)` - If the operation fails due to a database error or constraint violation.
-    ///
-    /// # Behaviour
-    /// - If no record with the same `id` exists, a new record is inserted.
-    /// - If a record with the same `id` exists, its fields are updated with the new values.
-    /// - Unique and foreign key constraints are enforced.
-    /// - Returns the full record as stored in the database after the operation.
-    ///
-    /// # Example
-    /// ```
-    /// let verification = EmailVerifications::new(&user, &token, &duration);
-    /// let upserted = verification.upsert(&pool).await?;
-    /// assert_eq!(upserted.id, verification.id);
-    /// ```
-    ///
-    /// # Errors
-    /// Returns an error if:
-    /// - The database connection fails.
-    /// - A unique or foreign key constraint is violated.
-    /// - Any required field is missing or invalid.
-    ///
-    /// # Use Cases
-    /// - Idempotent creation or update of verification tokens.
-    /// - Ensuring a user has at most one active verification record per ID.
-    /// - Simplifying logic where insert-or-update is needed in one call.
-    ///
-    /// # See Also
-    /// - [`EmailVerifications::insert`] for inserting a single record.
-    /// - [`EmailVerifications::insert_batch`] for inserting multiple records in
+    #[tracing::instrument(
+        name = "Upsert email verification",
+        skip(database),
+        fields(
+            verification_id = %self.id,
+            user_id = %self.user_id,
+            expires_at = %self.expires_at,
+            is_used = %self.is_used
+        )
+    )]
     pub async fn upsert(
         &self,
         database: &sqlx::Pool<sqlx::Postgres>,
     ) -> Result<Self, AuthenticationError> {
-        let database_record = sqlx::query_as!(
+        let query = sqlx::query_as!(
         EmailVerifications,
         r#"
-            INSERT INTO email_verifications (id, user_id, token, expires_at, is_used, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO email_verifications (id, user_id, token, expires_at, is_used, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, now())
             ON CONFLICT (id) DO UPDATE
             SET user_id = EXCLUDED.user_id,
                 token = EXCLUDED.token,
                 expires_at = EXCLUDED.expires_at,
                 is_used = EXCLUDED.is_used,
-                created_at = EXCLUDED.created_at
+                updated_at = NOW()
             RETURNING *
         "#,
         self.id.into_uuid(),
@@ -209,11 +154,21 @@ impl EmailVerifications {
         self.expires_at,
         self.is_used,
         self.created_at
-    )
-    .fetch_one(database)
-    .await?;
+        )
+        .fetch_one(database)
+        .await;
 
-        Ok(database_record)
+        match query {
+            Ok(email_verification) => Ok(email_verification),
+            Err(e) => {
+                tracing::error!(
+                    "Failed to insert email verification: {} (verification: {:?})",
+                    e,
+                    self
+                );
+                Err(AuthenticationError::DatabaseError(e.to_string()))
+            }
+        }
     }
 }
 
@@ -294,6 +249,7 @@ pub mod unit_tests {
             expires_at: verification1.expires_at,
             is_used: false,
             created_at: verification1.created_at,
+            updated_at: None,
         };
 
         //-- Execute Function (Act)
@@ -600,6 +556,7 @@ pub mod unit_tests {
             expires_at: verification1.expires_at + Duration::hours(24), // Different expiry
             is_used: true, // Different used status
             created_at: verification1.created_at,
+            updated_at: None,
         };
 
         //-- Execute Function (Act)
@@ -686,6 +643,83 @@ pub mod unit_tests {
         assert_ne!(db_record1.id, db_record2.id);
         assert_ne!(db_record1.token.as_ref(), db_record2.token.as_ref());
 
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_insert_batch_empty_slice(pool: PgPool) -> Result<()> {
+        let empty_batch: Vec<EmailVerifications> = vec![];
+
+        let result = EmailVerifications::insert_batch(&empty_batch, &pool).await;
+
+        assert!(result.is_err());
+        if let Err(AuthenticationError::ValidationError { field, message }) = result
+        {
+            assert_eq!(field, "verifications");
+            assert!(message.contains("empty batch"));
+        } else {
+            panic!("Expected ValidationError for empty batch");
+        }
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_insert_batch_exceeds_size_limit(pool: PgPool) -> Result<()> {
+        let user = Users::mock_data()?.insert(&pool).await?;
+        let oversized_batch: Vec<_> = (0..1001)
+            .map(|_| {
+                EmailVerifications::new(&user, &mock_token(), &Duration::hours(24))
+            })
+            .collect();
+
+        let result = EmailVerifications::insert_batch(&oversized_batch, &pool).await;
+
+        assert!(result.is_err());
+        if let Err(AuthenticationError::ValidationError { field, message }) = result
+        {
+            assert_eq!(field, "verifications");
+            assert!(message.contains("exceeds maximum limit"));
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_new_email_verification_with_empty_token() -> Result<()> {
+        let user = Users::mock_data()?;
+        let empty_token = domain::EmailVerificationToken::from("".to_string());
+        let duration = Duration::hours(24);
+
+        // This should be caught at the domain level or during insert
+        let verification = EmailVerifications::new(&user, &empty_token, &duration);
+        assert_eq!(verification.token.as_ref(), "");
+        Ok(())
+    }
+
+    #[test]
+    fn test_new_email_verification_with_zero_duration() -> Result<()> {
+        let user = Users::mock_data()?;
+        let token = mock_token();
+        let duration = Duration::zero();
+
+        let verification = EmailVerifications::new(&user, &token, &duration);
+
+        // Should create verification that expires immediately
+        assert!(
+            verification.expires_at <= chrono::Utc::now() + Duration::seconds(1)
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_new_email_verification_with_negative_duration() -> Result<()> {
+        let user = Users::mock_data()?;
+        let token = mock_token();
+        let duration = Duration::hours(-1);
+
+        let verification = EmailVerifications::new(&user, &token, &duration);
+
+        // Should create already expired verification
+        assert!(verification.expires_at < verification.created_at);
         Ok(())
     }
 }

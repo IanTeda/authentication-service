@@ -17,7 +17,7 @@ use sqlx::{postgres::PgPoolOptions, PgPool};
 
 // Module imports
 mod email_verification;
-mod password_reset;
+// mod password_reset;
 mod sessions;
 mod users;
 

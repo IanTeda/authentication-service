@@ -70,6 +70,9 @@
     "rust-analyzer.discoverProjectRunner": null,
     "rust-analyzer.cargo.buildScripts.enable": true,
     "rust-analyzer.check.command": "check",
+    "rust-analyzer.server.extraEnv": {
+        "RUST_LOG": "error"
+    },
     "rust-analyzer.completion.snippets.custom": {},
     "protoc": {
         "path": "/usr/bin/protoc",
@@ -96,4 +99,5 @@
         "XXX",
         "- [ ]"
     ],
+    "rust-analyzer.checkOnSave": true,
 }

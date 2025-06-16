@@ -66,11 +66,11 @@ pub struct TokenClaimNew {
     pub aud: String,    // Audience
     // De/Serialize to timestamp seconds that JWT expects
     #[serde(with = "chrono::serde::ts_seconds")]
-    pub iat: DateTime<Utc>, // Issued at
+    pub iat: chrono::DateTime<chrono::Utc>, // Issued at
     #[serde(with = "chrono::serde::ts_seconds")]
-    pub nbf: DateTime<Utc>, // Not before
+    pub nbf: chrono::DateTime<chrono::Utc>, // Not before
     #[serde(with = "chrono::serde::ts_seconds")]
-    pub exp: DateTime<Utc>, // Expiration
+    pub exp: chrono::DateTime<chrono::Utc>, // Expiration
 }
 
 /// Custom serializer for `SecretString` fields in JWT claims.
@@ -266,6 +266,41 @@ impl TokenClaimNew {
             }
         }
     }
+
+    // #[cfg(test)]
+    // pub async fn mock_data(
+    //     database: &sqlx::Pool<sqlx::Postgres>,
+    //     token_type: &domain::TokenType,
+    // ) -> Result<(database::Users, SecretString, SecretString, domain::TokenClaimNew), AuthenticationError> {
+
+    //     use fake::{faker::company::en::CompanyName, Fake, Faker};
+
+    //     // Generate a mock user and insert in database
+    //     let random_user = database::Users::mock_data().unwrap();
+    //     let random_user = random_user.insert(database).await.unwrap();
+
+    //     // Generate a random secret for the email verification token
+    //     let random_secret: String = Faker.fake();
+    //     let random_secret = SecretString::new(random_secret.into_boxed_str());
+
+    //     // Generate a random issuer for the email verification token
+    //     let random_issuer: String = CompanyName().fake();
+    //     let random_issuer = SecretString::new(random_issuer.into_boxed_str());
+
+    //     // Generate a random duration for the email verification token
+    //     let random_hours: i64 = (1..168).fake(); // 168 hours = 7 days
+    //     let random_duration = chrono::Duration::hours(random_hours);
+
+    //     // Create a new token claim using the random issuer, duration, user, and token type
+    //     let random_token_claim = domain::TokenClaimNew::new(
+    //         &random_issuer,
+    //         &random_duration,
+    //         &random_user,
+    //         &token_type,
+    //     );
+
+    //     Ok(random_user, random_secret, random_issuer, random_token_claim)
+    // }
 }
 
 #[cfg(test)]
@@ -357,7 +392,8 @@ mod tests {
         let secret = mock_secret();
         let token_type = TokenType::Access;
 
-        let original_claim = TokenClaimNew::new(&issuer, &duration, &user, &token_type);
+        let original_claim =
+            TokenClaimNew::new(&issuer, &duration, &user, &token_type);
 
         // Create a JWT token from the claim
         let token = jsonwebtoken::encode(

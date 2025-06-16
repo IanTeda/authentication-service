@@ -50,6 +50,24 @@ pub enum AuthenticationError {
     #[error("Token has expired")]
     TokenExpired,
 
+    #[error("Database error: {0}")]
+    DatabaseError(String),
+
+    //-- Updated structured error types
+    /// Validation error with field-specific information
+    #[error("Validation error in field '{field}': {message}")]
+    ValidationError { field: String, message: String },
+
+    /// Database constraint violation with detailed context
+    #[error(
+        "Database constraint violation: {constraint} in field '{field}': {message}"
+    )]
+    ConstraintViolation {
+        constraint: String,
+        field: String,
+        message: String,
+    },
+
     //-- External errors
     /// Derive IO errors
     #[error(transparent)]
@@ -96,13 +114,14 @@ pub enum AuthenticationError {
 
     #[error(transparent)]
     Chrono(#[from] chrono::ParseError),
-
 }
 
 impl From<AuthenticationError> for tonic::Status {
     fn from(authentication_error: AuthenticationError) -> tonic::Status {
         match authentication_error {
-            AuthenticationError::AuthenticationError(m) => tonic::Status::unauthenticated(m),
+            AuthenticationError::AuthenticationError(m) => {
+                tonic::Status::unauthenticated(m)
+            }
             // BackendError::EmailFormatInvalid(_) => {
             //     Status::invalid_argument(format!("{:?}", backend_error))
             // }
