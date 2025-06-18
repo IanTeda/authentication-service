@@ -55,8 +55,8 @@ pub enum AuthenticationError {
 
     //-- Updated structured error types
     /// Validation error with field-specific information
-    #[error("Validation error in field '{field}': {message}")]
-    ValidationError { field: String, message: String },
+    #[error("Validation error in field: {0}")]
+    ValidationError(String),
 
     /// Database constraint violation with detailed context
     #[error(
