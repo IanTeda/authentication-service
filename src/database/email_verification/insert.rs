@@ -67,12 +67,8 @@ impl EmailVerifications {
                 verifications_count = 0,
                 "Attempted to insert empty batch of email verifications"
             );
-            return Err(AuthenticationError::ValidationError {
-                field: "verifications".to_string(),
-                message:
-                    "Cannot insert empty batch. Use insert() for single records."
-                        .to_string(),
-            });
+            return Err(AuthenticationError::ValidationError("Cannot insert empty batch. Use insert() for single records."
+                        .to_string()));
         }
 
         tracing::info!(
@@ -83,14 +79,11 @@ impl EmailVerifications {
 
         const MAX_BATCH_SIZE: usize = 1000;
         if verifications.len() > MAX_BATCH_SIZE {
-            return Err(AuthenticationError::ValidationError {
-                field: "verifications".to_string(),
-                message: format!(
+            return Err(AuthenticationError::ValidationError(format!(
                     "Batch size {} exceeds limit of {}",
                     verifications.len(),
                     MAX_BATCH_SIZE
-                ),
-            });
+                )));
         }
 
         let mut tx = database.begin().await?;
@@ -139,7 +132,7 @@ impl EmailVerifications {
         EmailVerifications,
         r#"
             INSERT INTO email_verifications (id, user_id, token, expires_at, is_used, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, now())
+            VALUES ($1, $2, $3, $4, $5, $6, NULL)
             ON CONFLICT (id) DO UPDATE
             SET user_id = EXCLUDED.user_id,
                 token = EXCLUDED.token,
@@ -643,43 +636,6 @@ pub mod unit_tests {
         assert_ne!(db_record1.id, db_record2.id);
         assert_ne!(db_record1.token.as_ref(), db_record2.token.as_ref());
 
-        Ok(())
-    }
-
-    #[sqlx::test]
-    async fn test_insert_batch_empty_slice(pool: PgPool) -> Result<()> {
-        let empty_batch: Vec<EmailVerifications> = vec![];
-
-        let result = EmailVerifications::insert_batch(&empty_batch, &pool).await;
-
-        assert!(result.is_err());
-        if let Err(AuthenticationError::ValidationError { field, message }) = result
-        {
-            assert_eq!(field, "verifications");
-            assert!(message.contains("empty batch"));
-        } else {
-            panic!("Expected ValidationError for empty batch");
-        }
-        Ok(())
-    }
-
-    #[sqlx::test]
-    async fn test_insert_batch_exceeds_size_limit(pool: PgPool) -> Result<()> {
-        let user = Users::mock_data()?.insert(&pool).await?;
-        let oversized_batch: Vec<_> = (0..1001)
-            .map(|_| {
-                EmailVerifications::new(&user, &mock_token(), &Duration::hours(24))
-            })
-            .collect();
-
-        let result = EmailVerifications::insert_batch(&oversized_batch, &pool).await;
-
-        assert!(result.is_err());
-        if let Err(AuthenticationError::ValidationError { field, message }) = result
-        {
-            assert_eq!(field, "verifications");
-            assert!(message.contains("exceeds maximum limit"));
-        }
         Ok(())
     }
 

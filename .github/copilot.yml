@@ -1,0 +1,71 @@
+# Repository Copilot guidance for authentication_service
+# This file documents project-specific guidance for AI-assisted code completion
+# and provides quick hints for contributors. It is intentionally advisory —
+# human review is required for all AI-generated code.
+
+# Primary language and frameworks used in this repository
+language: Rust
+frameworks:
+  - sqlx (Postgres)
+  - chrono
+  - jsonwebtoken
+  - thiserror
+
+# Style & conventions for generated code
+style:
+  - Prefer explicit type annotations on public functions
+  - Keep public APIs stable; prefer non-breaking additions
+  - Use `chrono::Utc` + `DateTime<Utc>` for timestamps
+  - Prefer `secrecy::Secret` for secrets and tokens in memory
+  - Use `thiserror::Error` for domain errors and map `sqlx::Error` to
+    structured error variants
+  - Avoid `SELECT *` in SQL queries; list explicit columns
+  - Prefer small, focused functions over very large ones
+
+# Database & SQL guidance
+database:
+  dialect: postgres
+  notes:
+    - Use `timestamptz` for time columns
+    - Avoid volatile functions (e.g., `now()`) in index predicates
+    - Keep migrations idempotent and add comment headers describing intent
+
+# Testing guidance
+testing:
+  - Add unit tests under `src/` for pure logic
+  - Add integration tests under `tests/` using `sqlx::test` for DB-backed
+    behaviour
+  - Mock external dependencies where possible in unit tests
+  - Use deterministic seeds for random/fake data in tests
+
+# Security guidance
+security:
+  - Never commit secrets, keys, or environment files to the repo
+  - Use CI secrets or vaults for credentials
+  - Ensure JWT secrets and private keys are loaded from secure sources
+
+# Commit message guidance
+commit_message:
+  style: "<area>: <short description>"
+  examples:
+    - "email-verification: add updated_at to model and migration"
+    - "tests: add cursor pagination tests for email_verifications"
+
+# How to ask Copilot in this repo
+instructions: |
+  When requesting code generation or edits from Copilot, include:
+  - The target file path (e.g., `src/database/email_verification/insert.rs`)
+  - The function or API signature you want implemented or modified
+  - Any relevant DB schema or SQL migration files
+  - Whether the change requires tests, and what kind (unit/integration)
+
+# Suggested review checklist for AI-generated changes
+review_checklist:
+  - Does the change compile (cargo build)?
+  - Are there new or updated tests, and do they pass?
+  - Are DB migrations backward-compatible and idempotent?
+  - Did you avoid leaking secrets into code or tests?
+  - Are tracing/logging fields informative and non-sensitive?
+
+# A short pointer to the project README
+project_readme: "See README.md at repository root for setup and running instructions"
